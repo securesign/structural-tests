@@ -1,5 +1,3 @@
-//go:build acceptance
-
 package acceptance_tests
 
 import (
