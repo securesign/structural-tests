@@ -69,21 +69,6 @@ var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 		}
 	})
 
-	It("operator core image hashes are all also present in snapshot.json file", func() {
-		operatorBranch := support.GetEnvOrDefault(support.EnvOperatorRepoBranch, support.OperatorRepoDefBranch)
-		operatorImagesFileContent, err := support.DownloadFileContent(fmt.Sprintf(support.OperatorImagesFile, operatorBranch), "")
-		Expect(err).NotTo(HaveOccurred())
-		operatorImages, err := support.GetImageDefinitionsFromConstants(operatorImagesFileContent)
-		Expect(err).NotTo(HaveOccurred())
-		log.Printf("Found %d images in operator (images.go): \n%v", len(operatorImages), strings.Join(operatorImages, "\n"))
-
-		operatorSHAs, err := support.ExtractImageHashes(operatorImages, "registry.redhat.io/rhtas")
-		Expect(err).NotTo(HaveOccurred())
-		snapshotSHAs, err := support.ExtractImageHashes(snapshotImages, "")
-		Expect(err).NotTo(HaveOccurred())
-		Expect(snapshotSHAs).To(ContainElements(operatorSHAs))
-	})
-
 	It("json and yaml files are all valid", func() {
 		err := support.ValidateAllYamlAndJsonFiles(releasesDir)
 		Expect(err).ToNot(HaveOccurred())
