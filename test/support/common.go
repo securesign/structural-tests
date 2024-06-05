@@ -1,12 +1,15 @@
 package support
 
 import (
-	"encoding/json"
+	"bytes"
+	"context"
 	"fmt"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/client"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
-	"gopkg.in/yaml.v3"
 	"io"
 	"log"
 	"net/http"
@@ -96,20 +99,53 @@ func GitCloneWithAuth(url string, branch string, auth transport.AuthMethod) (str
 	return dir, repo, err
 }
 
-func ValidateJson(filePath string) error {
-	content, err := os.ReadFile(filePath)
+func RunImage(imageDefinition string, commands []string) (string, error) {
+	ctx := context.TODO()
+	log.Printf("Running image %s with commands %v\n", imageDefinition, commands)
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		return err
+		return "", fmt.Errorf("error while initializing docker client: %w", err)
 	}
-	var js interface{}
-	return json.Unmarshal(content, &js)
-}
+	reader, err := cli.ImagePull(ctx, imageDefinition, image.PullOptions{})
+	if err != nil {
+		return "", fmt.Errorf("cannot pull image %s: %w", imageDefinition, err)
+	}
+	_, _ = io.Copy(os.Stdout, reader)
+	_ = reader.Close()
 
-func ValidateYaml(filePath string) error {
-	content, err := os.ReadFile(filePath)
+	resp, err := cli.ContainerCreate(ctx, &container.Config{
+		Image: imageDefinition,
+		Cmd:   commands,
+	}, nil, nil, nil, "")
 	if err != nil {
-		return err
+		return "", fmt.Errorf("failed while creating container: %w", err)
 	}
-	var yml interface{}
-	return yaml.Unmarshal(content, &yml)
+
+	err = cli.ContainerStart(ctx, resp.ID, container.StartOptions{})
+	if err != nil {
+		return "", fmt.Errorf("failed while starting container: %w", err)
+	}
+
+	// Wait for the container to finish
+	statusCh, errCh := cli.ContainerWait(ctx, resp.ID, "")
+	select {
+	case err := <-errCh:
+		if err != nil {
+			return "", fmt.Errorf("failed while waiting for container to finish: %w", err)
+		}
+	case <-statusCh:
+	}
+
+	out, err := cli.ContainerLogs(ctx, resp.ID, container.LogsOptions{ShowStdout: true, ShowStderr: true})
+	if err != nil {
+		return "", fmt.Errorf("cannot get container logs: %w", err)
+	}
+
+	var buf bytes.Buffer
+	_, err = io.Copy(&buf, out)
+	if err != nil {
+		return "", fmt.Errorf("getting logs from the stream failed: %w", err)
+	}
+
+	return buf.String(), nil
 }

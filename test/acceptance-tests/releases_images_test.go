@@ -10,14 +10,13 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 
 	var (
 		err              error
-		snapshotJsonData map[string]interface{}
+		snapshotJsonData support.Snapshot
 		snapshotImages   []string
 		releasesDir      string
 	)
@@ -46,9 +45,10 @@ var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 	})
 
 	It("snapshot.json file contains valid image definitions", func() {
-		snapshotImages = support.GetImageDefinitionsFromJson(snapshotJsonData)
-		log.Printf("Found %d images: \n%v", len(snapshotImages), strings.Join(snapshotImages, "\n"))
+		snapshotImages = support.GetImageDefinitionsFromSnapshot(snapshotJsonData)
 		Expect(snapshotImages).NotTo(BeEmpty())
+		Expect(snapshotImages).NotTo(ContainElement(BeEmpty()))
+		Expect(snapshotImages).To(HaveEach(MatchRegexp(`\S\w+@sha256:\w{64}$`)))
 	})
 
 	It("snapshot.json file image definitions are all unique", func() {
@@ -58,14 +58,6 @@ var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 				Fail("Not unique image: " + image)
 			}
 			existingImages[image] = struct{}{}
-		}
-	})
-
-	It("snapshot.json file image definitions have hashes as tags", func() {
-		for _, image := range snapshotImages {
-			parts := strings.Split(image, "@sha256:")
-			Expect(parts).To(HaveLen(2), fmt.Sprintf("Not a hash tag for %s", image))
-			Expect(support.HasValidSHA(parts[1])).To(BeTrue(), fmt.Sprintf("Image has invalid hash for %s", image))
 		}
 	})
 
