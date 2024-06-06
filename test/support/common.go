@@ -78,6 +78,20 @@ func DownloadFileContent(url string, accessToken string) (string, error) {
 	return string(body), nil
 }
 
+func LoadFileContent(filePath string) (string, error) {
+	log.Printf("Loading file %s\n", filePath)
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+	contentBuffer, err := io.ReadAll(file)
+	if err != nil {
+		return "", err
+	}
+	return string(contentBuffer), nil
+}
+
 func GitCloneWithAuth(url string, branch string, auth transport.AuthMethod) (string, *git.Repository, error) {
 	dir, err := os.MkdirTemp("", "securesign-")
 	if err != nil {

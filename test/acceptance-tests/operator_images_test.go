@@ -18,11 +18,15 @@ var _ = Describe("Trusted Artifact Signer Operator", func() {
 	)
 
 	It("get and parse snapshot.json file", func() {
-		releasesBranch := support.GetEnvOrDefault(support.EnvReleasesRepoBranch, support.ReleasesRepoDefBranch)
-		snapshotFileFolder := support.GetEnvOrDefault(support.EnvReleasesSnapshotFolder, support.ReleasesSnapshotDefFolder)
-		snapshotFile := fmt.Sprintf(support.ReleasesSnapshotFile, releasesBranch, snapshotFileFolder)
-		githubToken := support.GetEnvOrDefaultSecret(support.EnvTestGithubToken, "")
-		content, err := support.DownloadFileContent(snapshotFile, githubToken)
+		var content string
+		var err error
+		snapshotFile, isLocal := support.GetReleasesSnapshotFilePath()
+		if isLocal {
+			content, err = support.LoadFileContent(snapshotFile)
+		} else {
+			githubToken := support.GetEnvOrDefaultSecret(support.EnvTestGithubToken, "")
+			content, err = support.DownloadFileContent(snapshotFile, githubToken)
+		}
 		Expect(err).NotTo(HaveOccurred())
 		Expect(content).NotTo(BeEmpty())
 

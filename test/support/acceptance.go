@@ -2,6 +2,8 @@ package support
 
 import (
 	"encoding/json"
+	"fmt"
+	gitAuth "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"gopkg.in/yaml.v3"
 	"log"
 	"os"
@@ -39,6 +41,51 @@ func GetImageDefinitionsFromSnapshot(jsonData Snapshot) []string {
 		jsonData.Trillian.Logsigner,
 		jsonData.Trillian.Redis,
 	}
+}
+
+func GetReleasesProjectPath() (string, error) {
+	localReleasesPath := GetEnv(EnvLocalReleasesProjectPath)
+	if localReleasesPath != "" {
+		localReleasesPath := localPathCleanup(localReleasesPath)
+		log.Printf("Using local folder %s\n", localReleasesPath)
+		return localReleasesPath, nil
+	} else {
+		releasesBranch := GetEnvOrDefault(EnvReleasesRepoBranch, ReleasesRepoDefBranch)
+		githubUsername := GetEnv(EnvTestGithubUser)
+		githubToken := GetEnvOrDefaultSecret(EnvTestGithubToken, "")
+		releasesPath, _, err := GitCloneWithAuth(ReleasesRepo, releasesBranch,
+			&gitAuth.BasicAuth{
+				Username: githubUsername,
+				Password: githubToken,
+			})
+
+		return releasesPath, err
+	}
+}
+
+func GetReleasesSnapshotFilePath() (string, bool) {
+	localReleasesPath := GetEnv(EnvLocalReleasesProjectPath)
+	snapshotFileFolder := GetEnvOrDefault(EnvReleasesSnapshotFolder, ReleasesSnapshotDefFolder)
+	if localReleasesPath != "" {
+		localReleasesPath := localPathCleanup(localReleasesPath)
+		snapshotFile := filepath.Join(localReleasesPath, snapshotFileFolder, "snapshot.json")
+		return snapshotFile, true
+	} else {
+		releasesBranch := GetEnvOrDefault(EnvReleasesRepoBranch, ReleasesRepoDefBranch)
+		snapshotFile := fmt.Sprintf(ReleasesSnapshotFile, releasesBranch, snapshotFileFolder)
+		return snapshotFile, false
+	}
+}
+
+func localPathCleanup(origPath string) string {
+	finalPath := origPath
+	if !filepath.IsAbs(origPath) {
+		// not ideal solution
+		// want to have path relative to the project directory
+		// without test/acceptance-tests
+		finalPath = filepath.Join("..", "..", origPath)
+	}
+	return filepath.Clean(finalPath)
 }
 
 func GetCorrespondingSnapshotImage(operatorImageKey string, snapshotJsonData Snapshot) string {

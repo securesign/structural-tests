@@ -3,7 +3,6 @@ package acceptance_tests
 import (
 	"encoding/json"
 	"fmt"
-	gitAuth "github.com/go-git/go-git/v5/plumbing/transport/http"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/securesign/structural-tests/test/support"
@@ -21,15 +20,8 @@ var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 		releasesDir      string
 	)
 
-	It("cloning repository", func() {
-		releasesBranch := support.GetEnvOrDefault(support.EnvReleasesRepoBranch, support.ReleasesRepoDefBranch)
-		githubUsername := support.GetEnv(support.EnvTestGithubUser)
-		githubToken := support.GetEnvOrDefaultSecret(support.EnvTestGithubToken, "")
-		releasesDir, _, err = support.GitCloneWithAuth(support.ReleasesRepo, releasesBranch,
-			&gitAuth.BasicAuth{
-				Username: githubUsername,
-				Password: githubToken,
-			})
+	It("preparing repository folder", func() {
+		releasesDir, err = support.GetReleasesProjectPath()
 		Expect(err).NotTo(HaveOccurred())
 	})
 
