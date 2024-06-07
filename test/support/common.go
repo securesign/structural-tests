@@ -7,18 +7,13 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/transport"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 )
-
-func GetEnv(key string) string {
-	return getEnvOrDefault(key, "", true)
-}
 
 func GetEnvOrDefault(key, defaultValue string) string {
 	return getEnvOrDefault(key, defaultValue, true)
@@ -51,7 +46,37 @@ func getEnvOrDefault(key, defaultValue string, isLogged bool) string {
 	return returnValue
 }
 
-func DownloadFileContent(url string, accessToken string) (string, error) {
+func GetFileContent(filePath string) (string, error) {
+	snapshotFile, isLocal := checkFilePath(filePath)
+	if isLocal {
+		return loadFileContent(snapshotFile)
+	} else {
+		githubToken := GetEnvOrDefaultSecret(EnvTestGithubToken, "")
+		return downloadFileContent(snapshotFile, githubToken)
+	}
+}
+
+func checkFilePath(filePath string) (string, bool) {
+	if strings.HasPrefix(filePath, "http://") || strings.HasPrefix(filePath, "https://") {
+		return filePath, false
+	} else {
+		filePath = localPathCleanup(filePath)
+		return filePath, true
+	}
+}
+
+func localPathCleanup(origPath string) string {
+	finalPath := origPath
+	if !filepath.IsAbs(origPath) {
+		// not ideal solution
+		// want to have path relative to the project directory
+		// without test/acceptance-tests
+		finalPath = filepath.Join("..", "..", origPath)
+	}
+	return filepath.Clean(finalPath)
+}
+
+func downloadFileContent(url string, accessToken string) (string, error) {
 	log.Printf("Downloading file %s\n", url)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -78,7 +103,7 @@ func DownloadFileContent(url string, accessToken string) (string, error) {
 	return string(body), nil
 }
 
-func LoadFileContent(filePath string) (string, error) {
+func loadFileContent(filePath string) (string, error) {
 	log.Printf("Loading file %s\n", filePath)
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -90,27 +115,6 @@ func LoadFileContent(filePath string) (string, error) {
 		return "", err
 	}
 	return string(contentBuffer), nil
-}
-
-func GitCloneWithAuth(url string, branch string, auth transport.AuthMethod) (string, *git.Repository, error) {
-	dir, err := os.MkdirTemp("", "securesign-")
-	if err != nil {
-		return "", nil, err
-	}
-	log.Println(fmt.Sprintf("Cloning %s on branch %s to %s", url, branch, dir))
-	cloneOptions := &git.CloneOptions{
-		URL:           url,
-		ReferenceName: plumbing.NewBranchReferenceName(branch),
-		SingleBranch:  true,
-	}
-	if auth != nil {
-		cloneOptions.Auth = auth
-	}
-	repo, err := git.PlainClone(dir, false, cloneOptions)
-	if err == nil {
-		log.Println("Cloned successfully")
-	}
-	return dir, repo, err
 }
 
 func RunImage(imageDefinition string, commands []string) (string, error) {

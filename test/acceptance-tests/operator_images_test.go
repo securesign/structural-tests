@@ -12,20 +12,12 @@ var _ = Describe("Trusted Artifact Signer Operator", func() {
 
 	var (
 		snapshotImages support.SnapshotMap
-		operatorImage  string
-		operatorImages map[string]string
+		operatorImages support.OperatorMap
+		operator       string
 	)
 
 	It("get and parse snapshot.json file", func() {
-		var content string
-		var err error
-		snapshotFile, isLocal := support.GetReleasesSnapshotFilePath()
-		if isLocal {
-			content, err = support.LoadFileContent(snapshotFile)
-		} else {
-			githubToken := support.GetEnvOrDefaultSecret(support.EnvTestGithubToken, "")
-			content, err = support.DownloadFileContent(snapshotFile, githubToken)
-		}
+		content, err := support.GetFileContent(support.GetEnvOrDefault(support.EnvReleasesSnapshotFile, support.DefaultReleasesSnapshotFile))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(content).NotTo(BeEmpty())
 
@@ -34,22 +26,25 @@ var _ = Describe("Trusted Artifact Signer Operator", func() {
 	})
 
 	It("get operator image", func() {
-		operatorImage = snapshotImages[support.OperatorImageKey]
-		Expect(operatorImage).NotTo(BeEmpty())
-		log.Printf("Using %s\n", operatorImage)
+		operator = snapshotImages[support.OperatorImageKey]
+		Expect(operator).NotTo(BeEmpty())
+		log.Printf("Using %s\n", operator)
 	})
 
-	It("get all images used by this operator", func() {
-		helpLogs, err := support.RunImage(operatorImage, []string{"-h"})
+	It("get all TAS images used by this operator", func() {
+		helpLogs, err := support.RunImage(operator, []string{"-h"})
 		Expect(err).NotTo(HaveOccurred())
 		operatorImages = support.ParseOperatorImages(helpLogs)
-		log.Printf("Found %d operator images\n", len(operatorImages))
+		log.Printf("Found %d operator TAS images\n", len(operatorImages))
+	})
+
+	It("operator images are all valid", func() {
 		Expect(operatorImages).NotTo(BeEmpty())
 		Expect(operatorImages).NotTo(ContainElement(BeEmpty()))
 		Expect(operatorImages).To(HaveEach(MatchRegexp(support.ImageDefinitionRegexp)))
 	})
 
-	It("all images are defined in releases snapshot", func() {
+	It("all image hashes are also defined in releases snapshot", func() {
 		operatorHashes := support.ExtractHashes(support.GetMapValues(operatorImages))
 		snapshotHashes := support.ExtractHashes(support.GetMapValues(snapshotImages))
 		Expect(snapshotHashes).To(ContainElements(operatorHashes))

@@ -1,16 +1,10 @@
 package support
 
 const (
-	ReleasesRepo              = "https://github.com/securesign/releases.git"
-	ReleasesSnapshotFile      = "https://raw.githubusercontent.com/securesign/releases/%s/%s/snapshot.json"
-	ReleasesRepoDefBranch     = "main"
-	ReleasesSnapshotDefFolder = "1.0.1"
+	DefaultReleasesSnapshotFile = "https://raw.githubusercontent.com/securesign/releases/main/1.0.1/snapshot.json"
 
-	EnvTestGithubUser           = "TEST_GITHUB_USER"
-	EnvTestGithubToken          = "TEST_GITHUB_TOKEN"
-	EnvReleasesRepoBranch       = "RELEASES_BRANCH"
-	EnvReleasesSnapshotFolder   = "RELEASES_SNAPSHOT_FOLDER"
-	EnvLocalReleasesProjectPath = "LOCAL_RELEASES_PROJECT_PATH"
+	EnvReleasesSnapshotFile = "SNAPSHOT"
+	EnvTestGithubToken      = "TEST_GITHUB_TOKEN"
 
 	ImageDefinitionRegexp = `\S\w+@sha256:\w{64}$`
 	OperatorImageKey      = "rhtas-operator"
