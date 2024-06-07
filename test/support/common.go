@@ -163,3 +163,11 @@ func RunImage(imageDefinition string, commands []string) (string, error) {
 
 	return buf.String(), nil
 }
+
+func GetMapValues(m map[string]string) []string {
+	var result []string
+	for _, v := range m {
+		result = append(result, v)
+	}
+	return result
+}

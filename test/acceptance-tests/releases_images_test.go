@@ -14,10 +14,9 @@ import (
 var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 
 	var (
-		err              error
-		snapshotJsonData support.Snapshot
-		snapshotImages   []string
-		releasesDir      string
+		err            error
+		snapshotImages support.SnapshotMap
+		releasesDir    string
 	)
 
 	It("preparing repository folder", func() {
@@ -32,20 +31,20 @@ var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 		content, err := os.ReadFile(snapshotFilePath)
 		Expect(err).NotTo(HaveOccurred())
 
-		err = json.Unmarshal(content, &snapshotJsonData)
+		err = json.Unmarshal(content, &snapshotImages)
 		Expect(err).NotTo(HaveOccurred())
+		log.Printf("Found %d snapshot images\n", len(snapshotImages))
 	})
 
 	It("snapshot.json file contains valid image definitions", func() {
-		snapshotImages = support.GetImageDefinitionsFromSnapshot(snapshotJsonData)
 		Expect(snapshotImages).NotTo(BeEmpty())
 		Expect(snapshotImages).NotTo(ContainElement(BeEmpty()))
-		Expect(snapshotImages).To(HaveEach(MatchRegexp(`\S\w+@sha256:\w{64}$`)))
+		Expect(snapshotImages).To(HaveEach(MatchRegexp(support.ImageDefinitionRegexp)))
 	})
 
 	It("snapshot.json file image definitions are all unique", func() {
 		existingImages := make(map[string]struct{})
-		for _, image := range snapshotImages {
+		for _, image := range support.GetMapValues(snapshotImages) {
 			if _, ok := existingImages[image]; ok {
 				Fail("Not unique image: " + image)
 			}
