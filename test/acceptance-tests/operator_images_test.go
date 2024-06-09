@@ -8,7 +8,7 @@ import (
 	"log"
 )
 
-var _ = Describe("Trusted Artifact Signer Operator", func() {
+var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 
 	var (
 		snapshotImages support.SnapshotMap
@@ -48,5 +48,19 @@ var _ = Describe("Trusted Artifact Signer Operator", func() {
 		operatorHashes := support.ExtractHashes(support.GetMapValues(operatorImages))
 		snapshotHashes := support.ExtractHashes(support.GetMapValues(snapshotImages))
 		Expect(snapshotHashes).To(ContainElements(operatorHashes))
+	})
+
+	It("image hashes are all unique", func() {
+		operatorHashes := support.ExtractHashes(support.GetMapValues(operatorImages))
+		mapped := make(map[string]int)
+		for _, hash := range operatorHashes {
+			if _, ok := mapped[hash]; ok {
+				mapped[hash]++
+			} else {
+				mapped[hash] = 1
+			}
+		}
+		Expect(mapped).To(HaveEach(1))
+		Expect(len(operatorImages) == len(mapped)).To(BeTrue())
 	})
 })

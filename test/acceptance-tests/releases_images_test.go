@@ -30,13 +30,17 @@ var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 		Expect(snapshotImages).To(HaveEach(MatchRegexp(support.ImageDefinitionRegexp)))
 	})
 
-	It("snapshot.json file images are all unique", func() {
-		existingImages := make(map[string]struct{})
-		for _, image := range support.GetMapValues(snapshotImages) {
-			if _, ok := existingImages[image]; ok {
-				Fail("Not unique image: " + image)
+	It("snapshot.json file image snapshots are all unique", func() {
+		snapshotHashes := support.ExtractHashes(support.GetMapValues(snapshotImages))
+		mapped := make(map[string]int)
+		for _, hash := range snapshotHashes {
+			if _, ok := mapped[hash]; ok {
+				mapped[hash]++
+			} else {
+				mapped[hash] = 1
 			}
-			existingImages[image] = struct{}{}
 		}
+		Expect(mapped).To(HaveEach(1))
+		Expect(len(snapshotImages) == len(mapped)).To(BeTrue())
 	})
 })

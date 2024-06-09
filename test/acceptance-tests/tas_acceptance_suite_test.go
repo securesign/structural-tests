@@ -9,9 +9,9 @@ import (
 )
 
 func TestAcceptance(t *testing.T) {
+	format.MaxLength = 0
+
 	RegisterFailHandler(Fail)
 	log.SetLogger(GinkgoLogr)
 	RunSpecs(t, "Trusted Artifact Signer Acceptance Tests Suite")
-
-	format.MaxLength = 0
 }

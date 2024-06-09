@@ -2,12 +2,10 @@ package support
 
 import (
 	"encoding/json"
-	"regexp"
+	"strings"
 )
 
 type SnapshotMap map[string]string
-
-var imageRegex = regexp.MustCompile(ImageDefinitionRegexp)
 
 func (data *SnapshotMap) UnmarshalJSON(b []byte) error {
 	var raw map[string]interface{}
@@ -33,5 +31,7 @@ func extractImages(data map[string]interface{}, images map[string]string) {
 }
 
 func isImageDefinition(snapshotValue string) bool {
-	return imageRegex.MatchString(snapshotValue)
+	return len(snapshotValue) > 30 &&
+		strings.Count(snapshotValue, ".") >= 1 &&
+		strings.Count(snapshotValue, "/") >= 2
 }
