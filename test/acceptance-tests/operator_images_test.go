@@ -1,7 +1,6 @@
 package acceptance_tests
 
 import (
-	"encoding/json"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/securesign/structural-tests/test/support"
@@ -17,12 +16,10 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 	)
 
 	It("get and parse snapshot.json file", func() {
-		content, err := support.GetFileContent(support.GetEnvOrDefault(support.EnvReleasesSnapshotFile, support.DefaultReleasesSnapshotFile))
+		var err error
+		snapshotImages, err = support.ParseSnapshotImages()
 		Expect(err).NotTo(HaveOccurred())
-		Expect(content).NotTo(BeEmpty())
-
-		err = json.Unmarshal([]byte(content), &snapshotImages)
-		Expect(err).NotTo(HaveOccurred())
+		Expect(snapshotImages).NotTo(BeEmpty())
 	})
 
 	It("get operator image", func() {

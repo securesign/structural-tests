@@ -1,12 +1,23 @@
 package support
 
 import (
+	"encoding/json"
 	"regexp"
 )
 
 type OperatorMap map[string]string
 
-func ParseOperatorImages(helpContent string) map[string]string {
+func ParseSnapshotImages() (SnapshotMap, error) {
+	content, err := GetFileContent(GetEnvOrDefault(EnvReleasesSnapshotFile, DefaultReleasesSnapshotFile))
+	if err != nil {
+		return nil, err
+	}
+	var snapshotImages SnapshotMap
+	err = json.Unmarshal([]byte(content), &snapshotImages)
+	return snapshotImages, err
+}
+
+func ParseOperatorImages(helpContent string) OperatorMap {
 	re := regexp.MustCompile(`-(\S+image)\s+string[^"]+default "([^"]+)"`)
 	matches := re.FindAllStringSubmatch(helpContent, -1)
 	images := make(OperatorMap)
