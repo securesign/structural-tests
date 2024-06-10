@@ -7,6 +7,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
+	"github.com/securesign/structural-tests/test"
 	"io"
 	"log"
 	"net/http"
@@ -68,10 +69,7 @@ func checkFilePath(filePath string) (string, bool) {
 func localPathCleanup(origPath string) string {
 	finalPath := origPath
 	if !filepath.IsAbs(origPath) {
-		// not ideal solution
-		// want to have path relative to the project directory
-		// without test/acceptance-tests
-		finalPath = filepath.Join("..", "..", origPath)
+		finalPath = filepath.Join(test.RootPath, origPath)
 	}
 	return filepath.Clean(finalPath)
 }
