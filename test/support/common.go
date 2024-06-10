@@ -69,7 +69,7 @@ func checkFilePath(filePath string) (string, bool) {
 func localPathCleanup(origPath string) string {
 	finalPath := origPath
 	if !filepath.IsAbs(origPath) {
-		finalPath = filepath.Join(test.RootPath, origPath)
+		finalPath = filepath.Join(test_root.RootPath, origPath)
 	}
 	return filepath.Clean(finalPath)
 }

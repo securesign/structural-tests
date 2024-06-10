@@ -1,4 +1,4 @@
-package test
+package test_root
 
 import (
 	"path/filepath"
