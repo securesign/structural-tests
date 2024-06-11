@@ -56,9 +56,9 @@ func GetMapValues(m map[string]string) []string {
 	return result
 }
 
-func LogArray(message string, array []string) {
+func LogArray(message string, data []string) {
 	result := fmt.Sprintf("%s\n", message)
-	for _, value := range array {
+	for _, value := range data {
 		result = result + fmt.Sprintf("    %s\n", value)
 	}
 	log.Print(result)
