@@ -31,18 +31,17 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 	})
 
 	It("get all TAS images used by this operator", func() {
+		iCount := support.GetEnvOrDefaultInt(support.EnvOperatorImagesCount, support.ExpectedOperatorImagesCount)
+
 		helpLogs, err := support.RunImage(operator, []string{"-h"})
 		Expect(err).NotTo(HaveOccurred())
+
 		operatorImages = support.ParseOperatorImages(helpLogs)
 		support.LogMap(fmt.Sprintf("Operator TAS images (%d):", len(operatorImages)), operatorImages)
-		if len(operatorImages) != support.ExpectedOperatorImagesCountHint {
-			support.LogWarning(fmt.Sprintf("Expected %d TAS images, found %d", support.ExpectedOperatorImagesCountHint, len(operatorImages)))
-		}
+		Expect(len(operatorImages)).To(BeNumerically("==", iCount), "Expected to have %d images", iCount)
 	})
 
 	It("operator images are all valid", func() {
-		Expect(operatorImages).NotTo(BeEmpty())
-		Expect(operatorImages).NotTo(ContainElement(BeEmpty()))
 		Expect(operatorImages).To(HaveEach(MatchRegexp(support.ImageDefinitionRegexp)))
 	})
 

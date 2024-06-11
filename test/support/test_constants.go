@@ -3,16 +3,16 @@ package support
 const (
 	EnvReleasesSnapshotFile = "SNAPSHOT"
 	EnvTestGithubToken      = "TEST_GITHUB_TOKEN"
+	EnvSnapshotImagesCount  = "SN_IMG_COUNT"
+	EnvOperatorImagesCount  = "OP_IMG_COUNT"
 
-	// ExpectedSnapshotImagesCountHint Just a hint - will only cause warning if not fulfilled
-	ExpectedSnapshotImagesCountHint = 26
-	// ExpectedOperatorImagesCountHint Just a hint - will only cause warning if not fulfilled
-	ExpectedOperatorImagesCountHint = 13
+	DefaultReleasesSnapshotFile = "https://raw.githubusercontent.com/securesign/releases/main/1.0.1/snapshot.json"
+	ExpectedSnapshotImagesCount = 26
+	ExpectedOperatorImagesCount = 13
 
 	OperatorImageKey       = "rhtas-operator"
 	OperatorBundleImageKey = "rhtas-operator-bundle"
 
-	DefaultReleasesSnapshotFile             = "https://raw.githubusercontent.com/securesign/releases/main/1.0.1/snapshot.json"
 	OperatorBundleClusterserviceversionFile = "manifests/rhtas-operator.clusterserviceversion.yaml"
 
 	ImageDefinitionRegexp = `\S\w+@sha256:\w{64}$`

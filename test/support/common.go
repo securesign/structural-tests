@@ -2,12 +2,23 @@ package support
 
 import (
 	"fmt"
+	. "github.com/onsi/ginkgo/v2"
 	"log"
 	"os"
+	"strconv"
 )
 
 func GetEnvOrDefault(key, defaultValue string) string {
 	return getEnvOrDefault(key, defaultValue, true)
+}
+
+func GetEnvOrDefaultInt(key string, defaultValue int) int {
+	sValue := GetEnvOrDefault(key, strconv.Itoa(defaultValue))
+	iValue, err := strconv.Atoi(sValue)
+	if err != nil {
+		Fail(fmt.Sprintf("Environment variable %s must be an integer", key))
+	}
+	return iValue
 }
 
 func GetEnvOrDefaultSecret(key, defaultValue string) string {
@@ -59,8 +70,4 @@ func LogMap(message string, data map[string]string) {
 		result = result + fmt.Sprintf("    [%-28s] %s\n", key, value)
 	}
 	log.Print(result)
-}
-
-func LogWarning(message string) {
-	log.Printf("\n\n    WARNING: %s \n\n", message)
 }
