@@ -1,6 +1,7 @@
 package acceptance_tests
 
 import (
+	"fmt"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/securesign/structural-tests/test/support"
@@ -33,7 +34,10 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 		helpLogs, err := support.RunImage(operator, []string{"-h"})
 		Expect(err).NotTo(HaveOccurred())
 		operatorImages = support.ParseOperatorImages(helpLogs)
-		log.Printf("Found %d operator TAS images\n", len(operatorImages))
+		support.LogMap(fmt.Sprintf("Operator TAS images (%d):", len(operatorImages)), operatorImages)
+		if len(operatorImages) != support.ExpectedOperatorImagesCountHint {
+			support.LogWarning(fmt.Sprintf("Expected %d TAS images, found %d", support.ExpectedOperatorImagesCountHint, len(operatorImages)))
+		}
 	})
 
 	It("operator images are all valid", func() {
@@ -71,6 +75,6 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 		re := regexp.MustCompile(`(\w+:\s*[\w./-]+operator[\w-]*@sha256:` + operatorHash + `)`)
 		matches := re.FindAllString(fileContent, -1)
 		Expect(matches).NotTo(BeEmpty())
-		log.Printf("Matches: %v\n", matches)
+		support.LogArray("Operator images found in operator-bundle:", matches)
 	})
 })

@@ -44,3 +44,23 @@ func GetMapValues(m map[string]string) []string {
 	}
 	return result
 }
+
+func LogArray(message string, array []string) {
+	result := fmt.Sprintf("%s\n", message)
+	for _, value := range array {
+		result = result + fmt.Sprintf("    %s\n", value)
+	}
+	log.Print(result)
+}
+
+func LogMap(message string, data map[string]string) {
+	result := fmt.Sprintf("%s\n", message)
+	for key, value := range data {
+		result = result + fmt.Sprintf("    [%-28s] %s\n", key, value)
+	}
+	log.Print(result)
+}
+
+func LogWarning(message string) {
+	log.Printf("\n\n    WARNING: %s \n\n", message)
+}

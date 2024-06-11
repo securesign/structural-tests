@@ -1,10 +1,10 @@
 package acceptance_tests
 
 import (
+	"fmt"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/securesign/structural-tests/test/support"
-	"log"
 )
 
 var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
@@ -17,8 +17,11 @@ var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 		var err error
 		snapshotImages, err = support.ParseSnapshotImages()
 		Expect(err).NotTo(HaveOccurred())
+		support.LogMap(fmt.Sprintf("Snapshot images (%d):", len(snapshotImages)), snapshotImages)
 		Expect(snapshotImages).NotTo(BeEmpty())
-		log.Printf("Found %d snapshot images\n", len(snapshotImages))
+		if len(snapshotImages) != support.ExpectedSnapshotImagesCountHint {
+			support.LogWarning(fmt.Sprintf("Expected %d images, found %d", support.ExpectedSnapshotImagesCountHint, len(snapshotImages)))
+		}
 	})
 
 	It("snapshot.json file contains valid images", func() {

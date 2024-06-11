@@ -31,7 +31,6 @@ func extractImages(data map[string]interface{}, images map[string]string) {
 }
 
 func isImageDefinition(snapshotValue string) bool {
-	return len(snapshotValue) > 30 &&
-		strings.Count(snapshotValue, ".") >= 1 &&
+	return strings.Count(snapshotValue, ".") >= 1 &&
 		strings.Count(snapshotValue, "/") >= 2
 }
