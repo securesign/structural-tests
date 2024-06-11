@@ -37,7 +37,11 @@ func ParseOperatorImages(helpContent string) OperatorMap {
 func ExtractHashes(images []string) []string {
 	var result []string
 	for _, image := range images {
-		result = append(result, image[len(image)-64:])
+		result = append(result, ExtractHash(image))
 	}
 	return result
+}
+
+func ExtractHash(image string) string {
+	return image[len(image)-64:]
 }

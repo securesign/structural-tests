@@ -5,6 +5,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/securesign/structural-tests/test/support"
 	"log"
+	"regexp"
 )
 
 var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
@@ -59,5 +60,17 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 		}
 		Expect(mapped).To(HaveEach(1))
 		Expect(len(operatorImages) == len(mapped)).To(BeTrue())
+	})
+
+	It("operator-bundle use the right operator", func() {
+		fileContent, err := support.RunImage(snapshotImages[support.OperatorBundleImageKey], []string{"cat", support.OperatorBundleClusterserviceversionFile})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(fileContent).NotTo(BeEmpty())
+
+		operatorHash := support.ExtractHash(snapshotImages[support.OperatorImageKey])
+		re := regexp.MustCompile(`(\w+:\s*[\w./-]+operator[\w-]*@sha256:` + operatorHash + `)`)
+		matches := re.FindAllString(fileContent, -1)
+		Expect(matches).NotTo(BeEmpty())
+		log.Printf("Matches: %v\n", matches)
 	})
 })
