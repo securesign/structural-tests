@@ -31,24 +31,32 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 	})
 
 	It("get all TAS images used by this operator", func() {
-		iCount := support.GetEnvOrDefaultInt(support.EnvOperatorImagesCount, support.ExpectedOperatorImagesCount)
-
 		helpLogs, err := support.RunImage(operator, []string{"-h"})
 		Expect(err).NotTo(HaveOccurred())
 
 		operatorImages = support.ParseOperatorImages(helpLogs)
 		support.LogMap(fmt.Sprintf("Operator TAS images (%d):", len(operatorImages)), operatorImages)
-		Expect(len(operatorImages)).To(BeNumerically("==", iCount), "Expected to have %d images", iCount)
+		Expect(operatorImages).NotTo(BeEmpty())
 	})
 
 	It("operator images are all valid", func() {
-		Expect(operatorImages).To(HaveEach(MatchRegexp(support.ImageDefinitionRegexp)))
+		Expect(support.GetMapKeys(operatorImages)).To(ContainElements(support.MandatoryOperatorImageKeys))
+		Expect(len(operatorImages)).To(BeNumerically("==", len(support.MandatoryOperatorImageKeys)))
+		Expect(operatorImages).To(HaveEach(MatchRegexp(support.OperatorImageDefinitionRegexp)))
 	})
 
 	It("all image hashes are also defined in releases snapshot", func() {
-		operatorHashes := support.ExtractHashes(support.GetMapValues(operatorImages))
-		snapshotHashes := support.ExtractHashes(support.GetMapValues(snapshotImages))
-		Expect(snapshotHashes).To(ContainElements(operatorHashes))
+		mapped := make(map[string]string)
+		for _, imageKey := range support.MandatoryOperatorImageKeys {
+			oSha := support.ExtractHash(operatorImages[imageKey])
+			sSha := support.ExtractHash(snapshotImages[imageKey])
+			if oSha == sSha {
+				mapped[imageKey] = "match"
+			} else {
+				mapped[imageKey] = "DIFFERENT HASHES"
+			}
+		}
+		Expect(mapped).To(HaveEach("match"))
 	})
 
 	It("image hashes are all unique", func() {

@@ -2,10 +2,12 @@ package support
 
 import (
 	"encoding/json"
-	"strings"
+	"regexp"
 )
 
 type SnapshotMap map[string]string
+
+var re = regexp.MustCompile(`^[\w-]+-image$`)
 
 func (data *SnapshotMap) UnmarshalJSON(b []byte) error {
 	var raw map[string]interface{}
@@ -21,7 +23,7 @@ func extractImages(data map[string]interface{}, images map[string]string) {
 	for key, value := range data {
 		switch v := value.(type) {
 		case string:
-			if isImageDefinition(v) {
+			if isImageDefinition(key) {
 				images[key] = v
 			}
 		case map[string]interface{}:
@@ -30,7 +32,6 @@ func extractImages(data map[string]interface{}, images map[string]string) {
 	}
 }
 
-func isImageDefinition(snapshotValue string) bool {
-	return strings.Count(snapshotValue, ".") >= 1 &&
-		strings.Count(snapshotValue, "/") >= 2
+func isImageDefinition(snapshotKey string) bool {
+	return re.MatchString(snapshotKey)
 }

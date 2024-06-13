@@ -14,17 +14,15 @@ var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 	)
 
 	It("snapshot.json file exist and is parseable", func() {
-		iCount := support.GetEnvOrDefaultInt(support.EnvSnapshotImagesCount, support.ExpectedSnapshotImagesCount)
 		var err error
 		snapshotImages, err = support.ParseSnapshotImages()
 		Expect(err).NotTo(HaveOccurred())
-
 		support.LogMap(fmt.Sprintf("Snapshot images (%d):", len(snapshotImages)), snapshotImages)
-		Expect(len(snapshotImages)).To(BeNumerically("==", iCount), "Expected to have %d images", iCount)
+		Expect(snapshotImages).NotTo(BeEmpty())
 	})
 
 	It("snapshot.json file contains valid images", func() {
-		Expect(snapshotImages).To(HaveEach(MatchRegexp(support.ImageDefinitionRegexp)))
+		Expect(snapshotImages).To(HaveEach(MatchRegexp(support.SnapshotImageDefinitionRegexp)))
 	})
 
 	It("snapshot.json file image snapshots are all unique", func() {

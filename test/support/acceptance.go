@@ -18,7 +18,7 @@ func ParseSnapshotImages() (SnapshotMap, error) {
 }
 
 func ParseOperatorImages(helpContent string) OperatorMap {
-	re := regexp.MustCompile(`-(\S+image)\s+string[^"]+default "([^"]+)"`)
+	re := regexp.MustCompile(`-([\w-]+image)\s+string[^"]+default "([^"]+)"`)
 	matches := re.FindAllStringSubmatch(helpContent, -1)
 	images := make(OperatorMap)
 	for _, match := range matches {
