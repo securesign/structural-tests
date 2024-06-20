@@ -2,13 +2,16 @@ package support
 
 import (
 	"fmt"
-	test_root "github.com/securesign/structural-tests/test"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/net/context"
+
+	test_root "github.com/securesign/structural-tests/test"
 )
 
 func GetFileContent(filePath string) (string, error) {
@@ -40,7 +43,7 @@ func localPathCleanup(origPath string) string {
 
 func downloadFileContent(url string, accessToken string) (string, error) {
 	log.Printf("Downloading file %s\n", url)
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
 		return "", err
 	}

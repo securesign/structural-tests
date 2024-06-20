@@ -2,11 +2,12 @@ package acceptance_tests
 
 import (
 	"fmt"
+	"log"
+	"regexp"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/securesign/structural-tests/test/support"
-	"log"
-	"regexp"
 )
 
 var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
@@ -63,14 +64,15 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 		operatorHashes := support.ExtractHashes(support.GetMapValues(operatorImages))
 		mapped := make(map[string]int)
 		for _, hash := range operatorHashes {
-			if _, ok := mapped[hash]; ok {
+			_, exist := mapped[hash]
+			if exist {
 				mapped[hash]++
 			} else {
 				mapped[hash] = 1
 			}
 		}
 		Expect(mapped).To(HaveEach(1))
-		Expect(len(operatorImages) == len(mapped)).To(BeTrue())
+		Expect(operatorImages).To(HaveLen(len(mapped)))
 	})
 
 	It("operator-bundle use the right operator", func() {

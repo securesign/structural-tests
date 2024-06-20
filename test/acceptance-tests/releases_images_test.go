@@ -2,6 +2,7 @@ package acceptance_tests
 
 import (
 	"fmt"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/securesign/structural-tests/test/support"
@@ -29,7 +30,8 @@ var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 		snapshotHashes := support.ExtractHashes(support.GetMapValues(snapshotImages))
 		mapped := make(map[string]int)
 		for _, hash := range snapshotHashes {
-			if _, ok := mapped[hash]; ok {
+			_, exist := mapped[hash]
+			if exist {
 				mapped[hash]++
 			} else {
 				mapped[hash] = 1
