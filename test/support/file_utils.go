@@ -1,13 +1,14 @@
 package support
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"golang.org/x/net/context"
 
@@ -18,19 +19,17 @@ func GetFileContent(filePath string) (string, error) {
 	snapshotFile, isLocal := checkFilePath(filePath)
 	if isLocal {
 		return loadFileContent(snapshotFile)
-	} else {
-		githubToken := GetEnvOrDefaultSecret(EnvTestGithubToken, "")
-		return downloadFileContent(snapshotFile, githubToken)
 	}
+	githubToken := GetEnvOrDefaultSecret(EnvTestGithubToken, "")
+	return downloadFileContent(snapshotFile, githubToken)
 }
 
 func checkFilePath(filePath string) (string, bool) {
 	if strings.HasPrefix(filePath, "http://") || strings.HasPrefix(filePath, "https://") {
 		return filePath, false
-	} else {
-		filePath = localPathCleanup(filePath)
-		return filePath, true
 	}
+	filePath = localPathCleanup(filePath)
+	return filePath, true
 }
 
 func localPathCleanup(origPath string) string {
@@ -57,7 +56,8 @@ func downloadFileContent(url string, accessToken string) (string, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("bad status: %s", resp.Status)
+		err := errors.New("bad status: " + resp.Status)
+		return "", err
 	}
 
 	body, err := io.ReadAll(resp.Body)

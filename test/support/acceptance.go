@@ -18,11 +18,12 @@ func ParseSnapshotImages() (SnapshotMap, error) {
 }
 
 func ParseOperatorImages(helpContent string) OperatorMap {
+	const minimumValidMatches = 3
 	re := regexp.MustCompile(`-([\w-]+image)\s+string[^"]+default "([^"]+)"`)
 	matches := re.FindAllStringSubmatch(helpContent, -1)
 	images := make(OperatorMap)
 	for _, match := range matches {
-		if len(match) > 2 {
+		if len(match) >= minimumValidMatches {
 			key := match[1]
 			value := match[2]
 			if key == "client-server-image" || key == "trillian-netcat-image" { // not interested in these

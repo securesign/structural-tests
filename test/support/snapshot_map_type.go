@@ -7,7 +7,7 @@ import (
 
 type SnapshotMap map[string]string
 
-var re = regexp.MustCompile(`^[\w-]+-image$`)
+var imageRegexp = regexp.MustCompile(`^[\w-]+-image$`)
 
 func (data *SnapshotMap) UnmarshalJSON(b []byte) error {
 	var raw map[string]interface{}
@@ -21,17 +21,17 @@ func (data *SnapshotMap) UnmarshalJSON(b []byte) error {
 
 func extractImages(data map[string]interface{}, images map[string]string) {
 	for key, value := range data {
-		switch v := value.(type) {
+		switch valueType := value.(type) {
 		case string:
 			if isImageDefinition(key) {
-				images[key] = v
+				images[key] = valueType
 			}
 		case map[string]interface{}:
-			extractImages(v, images)
+			extractImages(valueType, images)
 		}
 	}
 }
 
 func isImageDefinition(snapshotKey string) bool {
-	return re.MatchString(snapshotKey)
+	return imageRegexp.MatchString(snapshotKey)
 }
