@@ -11,7 +11,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	test_root "github.com/securesign/structural-tests/test"
+	testroot "github.com/securesign/structural-tests/test"
 )
 
 func GetFileContent(filePath string) (string, error) {
@@ -36,7 +36,7 @@ func checkFilePath(filePath string) (string, bool) {
 func localPathCleanup(origPath string) string {
 	finalPath := origPath
 	if !filepath.IsAbs(origPath) {
-		finalPath = filepath.Join(test_root.RootPath, origPath)
+		finalPath = filepath.Join(testroot.RootPath, origPath)
 	}
 	return filepath.Clean(finalPath)
 }
