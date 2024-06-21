@@ -4,16 +4,13 @@ linters-settings:
 linters:
   enable-all: true
   disable:
-    - deadcode
     - depguard
     - exhaustivestruct
     - exhaustruct
     - gci
-    - gochecknoglobals
     - gofumpt
     - nlreturn
     - paralleltest
     - revive
     - testpackage
-    - wrapcheck
     - wsl

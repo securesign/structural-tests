@@ -2,6 +2,7 @@ package support
 
 import (
 	"encoding/json"
+	"fmt"
 	"regexp"
 )
 
@@ -12,7 +13,7 @@ var imageRegexp = regexp.MustCompile(`^[\w-]+-image$`)
 func (data *SnapshotMap) UnmarshalJSON(b []byte) error {
 	var raw map[string]interface{}
 	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
+		return fmt.Errorf("error while parsing json file: %w", err)
 	}
 	*data = make(map[string]string)
 	extractImages(raw, *data)

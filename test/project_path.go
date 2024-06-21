@@ -1,11 +1,15 @@
 package testroot
 
 import (
+	"log"
 	"path/filepath"
 	"runtime"
 )
 
-var (
-	_, file, _, _ = runtime.Caller(0)
-	RootPath      = filepath.Join(filepath.Dir(file), "..")
-)
+func GetRootPath() string {
+	_, file, _, ok := runtime.Caller(0)
+	if !ok {
+		log.Printf("Caller file may not be correctly recovered: %s", file)
+	}
+	return filepath.Join(filepath.Dir(file), "..")
+}

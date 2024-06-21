@@ -41,14 +41,14 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 	})
 
 	It("operator images are all valid", func() {
-		Expect(support.GetMapKeys(operatorImages)).To(ContainElements(support.MandatoryOperatorImageKeys))
-		Expect(len(operatorImages)).To(BeNumerically("==", len(support.MandatoryOperatorImageKeys)))
+		Expect(support.GetMapKeys(operatorImages)).To(ContainElements(support.MandatoryOperatorImageKeys()))
+		Expect(len(operatorImages)).To(BeNumerically("==", len(support.MandatoryOperatorImageKeys())))
 		Expect(operatorImages).To(HaveEach(MatchRegexp(support.OperatorImageDefinitionRegexp)))
 	})
 
 	It("all image hashes are also defined in releases snapshot", func() {
 		mapped := make(map[string]string)
-		for _, imageKey := range support.MandatoryOperatorImageKeys {
+		for _, imageKey := range support.MandatoryOperatorImageKeys() {
 			oSha := support.ExtractHash(operatorImages[imageKey])
 			sSha := support.ExtractHash(snapshotImages[imageKey])
 			if oSha == sSha {

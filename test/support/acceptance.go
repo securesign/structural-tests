@@ -2,6 +2,7 @@ package support
 
 import (
 	"encoding/json"
+	"fmt"
 	"regexp"
 )
 
@@ -14,7 +15,10 @@ func ParseSnapshotImages() (SnapshotMap, error) {
 	}
 	var snapshotImages SnapshotMap
 	err = json.Unmarshal([]byte(content), &snapshotImages)
-	return snapshotImages, err
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse snapshot file: %w", err)
+	}
+	return snapshotImages, nil
 }
 
 func ParseOperatorImages(helpContent string) OperatorMap {

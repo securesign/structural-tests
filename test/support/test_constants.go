@@ -15,8 +15,8 @@ const (
 	SnapshotImageDefinitionRegexp = `^[\.\w/-]+@sha256:\w{64}$`
 )
 
-var (
-	MandatoryOperatorImageKeys = []string{
+func MandatoryOperatorImageKeys() []string {
+	return []string{
 		"tuf-image",
 		"trillian-log-server-image",
 		"trillian-log-signer-image",
@@ -31,4 +31,4 @@ var (
 		"backfill-redis-image",
 		"segment-backup-job-image",
 	}
-)
+}
