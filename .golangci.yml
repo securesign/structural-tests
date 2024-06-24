@@ -14,3 +14,13 @@ linters:
     - revive
     - testpackage
     - wsl
+    # deprecated
+    - golint
+    - maligned
+    - deadcode
+    - interfacer
+    - varcheck
+    - nosnakecase
+    - ifshort
+    - structcheck
+    - scopelint
