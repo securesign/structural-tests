@@ -1,0 +1,26 @@
+linters-settings:
+  lll:
+    line-length: 170
+linters:
+  enable-all: true
+  disable:
+    - depguard
+    - exhaustivestruct
+    - exhaustruct
+    - gci
+    - gofumpt
+    - nlreturn
+    - paralleltest
+    - revive
+    - testpackage
+    - wsl
+    # deprecated
+    - golint
+    - maligned
+    - deadcode
+    - interfacer
+    - varcheck
+    - nosnakecase
+    - ifshort
+    - structcheck
+    - scopelint

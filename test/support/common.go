@@ -38,15 +38,15 @@ func getEnvOrDefault(key, defaultValue string, isLogged bool) string {
 }
 
 func GetMapKeys(m map[string]string) []string {
-	var result []string
-	for k, _ := range m {
+	result := make([]string, 0, len(m))
+	for k := range m {
 		result = append(result, k)
 	}
 	return result
 }
 
 func GetMapValues(m map[string]string) []string {
-	var result []string
+	result := make([]string, 0, len(m))
 	for _, v := range m {
 		result = append(result, v)
 	}
@@ -56,7 +56,7 @@ func GetMapValues(m map[string]string) []string {
 func LogArray(message string, data []string) {
 	result := fmt.Sprintf("%s\n", message)
 	for _, value := range data {
-		result = result + fmt.Sprintf("    %s\n", value)
+		result += fmt.Sprintf("    %s\n", value)
 	}
 	log.Print(result)
 }
@@ -64,7 +64,7 @@ func LogArray(message string, data []string) {
 func LogMap(message string, data map[string]string) {
 	result := fmt.Sprintf("%s\n", message)
 	for key, value := range data {
-		result = result + fmt.Sprintf("    [%-28s] %s\n", key, value)
+		result += fmt.Sprintf("    [%-28s] %s\n", key, value)
 	}
 	log.Print(result)
 }

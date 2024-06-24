@@ -2,6 +2,7 @@ package support
 
 import (
 	"encoding/json"
+	"fmt"
 	"regexp"
 )
 
@@ -14,15 +15,19 @@ func ParseSnapshotImages() (SnapshotMap, error) {
 	}
 	var snapshotImages SnapshotMap
 	err = json.Unmarshal([]byte(content), &snapshotImages)
-	return snapshotImages, err
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse snapshot file: %w", err)
+	}
+	return snapshotImages, nil
 }
 
 func ParseOperatorImages(helpContent string) OperatorMap {
+	const minimumValidMatches = 3
 	re := regexp.MustCompile(`-([\w-]+image)\s+string[^"]+default "([^"]+)"`)
 	matches := re.FindAllStringSubmatch(helpContent, -1)
 	images := make(OperatorMap)
 	for _, match := range matches {
-		if len(match) > 2 {
+		if len(match) >= minimumValidMatches {
 			key := match[1]
 			value := match[2]
 			if key == "client-server-image" || key == "trillian-netcat-image" { // not interested in these
@@ -35,9 +40,9 @@ func ParseOperatorImages(helpContent string) OperatorMap {
 }
 
 func ExtractHashes(images []string) []string {
-	var result []string
-	for _, image := range images {
-		result = append(result, ExtractHash(image))
+	result := make([]string, len(images))
+	for i, image := range images {
+		result[i] = ExtractHash(image)
 	}
 	return result
 }
