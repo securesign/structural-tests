@@ -4,8 +4,6 @@ const (
 	EnvReleasesSnapshotFile = "SNAPSHOT"
 	EnvTestGithubToken      = "TEST_GITHUB_TOKEN" // #nosec G101
 
-	DefaultReleasesSnapshotFile = "https://raw.githubusercontent.com/securesign/releases/main/1.0.1/snapshot.json"
-
 	OperatorImageKey       = "rhtas-operator-image"
 	OperatorBundleImageKey = "rhtas-operator-bundle-image"
 

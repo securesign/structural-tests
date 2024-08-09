@@ -6,35 +6,24 @@ import (
 	"os"
 )
 
-func GetEnvOrDefault(key, defaultValue string) string {
-	return getEnvOrDefault(key, defaultValue, true)
+func GetEnv(key string) string {
+	return getEnv(key, false)
 }
 
-func GetEnvOrDefaultSecret(key, defaultValue string) string {
-	return getEnvOrDefault(key, defaultValue, false)
+func GetEnvAsSecret(key string) string {
+	return getEnv(key, true)
 }
 
-func getEnvOrDefault(key, defaultValue string, isLogged bool) string {
-	var returnValue string
-	isDefaultValue := false
-	value, exists := os.LookupEnv(key)
-	if !exists && defaultValue != "" {
-		returnValue = defaultValue
-		isDefaultValue = true
-	} else {
-		returnValue = value
-	}
+func getEnv(key string, isSecret bool) string {
+	envValue, _ := os.LookupEnv(key)
 	var logMessage string
-	if isLogged || returnValue == "" {
-		logMessage = fmt.Sprintf("%s='%s'", key, returnValue)
-	} else {
+	if isSecret && envValue != "" {
 		logMessage = fmt.Sprintf("%s=%s", key, "*****")
-	}
-	if isDefaultValue {
-		logMessage = fmt.Sprintf("%s (default)", logMessage)
+	} else {
+		logMessage = fmt.Sprintf("%s='%s'", key, envValue)
 	}
 	log.Println(logMessage)
-	return returnValue
+	return envValue
 }
 
 func GetMapKeys(m map[string]string) []string {
@@ -54,7 +43,7 @@ func GetMapValues(m map[string]string) []string {
 }
 
 func LogArray(message string, data []string) {
-	result := fmt.Sprintf("%s\n", message)
+	result := message + "\n"
 	for _, value := range data {
 		result += fmt.Sprintf("    %s\n", value)
 	}
@@ -62,7 +51,7 @@ func LogArray(message string, data []string) {
 }
 
 func LogMap(message string, data map[string]string) {
-	result := fmt.Sprintf("%s\n", message)
+	result := message + "\n"
 	for key, value := range data {
 		result += fmt.Sprintf("    [%-28s] %s\n", key, value)
 	}

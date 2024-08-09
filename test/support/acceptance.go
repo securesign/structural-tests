@@ -4,12 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+
+	"github.com/pkg/errors"
 )
 
 type OperatorMap map[string]string
 
 func ParseSnapshotImages() (SnapshotMap, error) {
-	content, err := GetFileContent(GetEnvOrDefault(EnvReleasesSnapshotFile, DefaultReleasesSnapshotFile))
+	snapshotFileName := GetEnv(EnvReleasesSnapshotFile)
+	if snapshotFileName == "" {
+		return nil, errors.New(fmt.Sprintf("snapshot file name must be set. Use %s env variable for that", EnvReleasesSnapshotFile))
+	}
+	content, err := GetFileContent(snapshotFileName)
 	if err != nil {
 		return nil, err
 	}
