@@ -1,12 +1,13 @@
-package acceptance_tests
+package acceptance
 
 import (
 	"fmt"
+	"log"
+	"regexp"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/securesign/structural-tests/test/support"
-	"log"
-	"regexp"
 )
 
 var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
@@ -40,14 +41,14 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 	})
 
 	It("operator images are all valid", func() {
-		Expect(support.GetMapKeys(operatorImages)).To(ContainElements(support.MandatoryOperatorImageKeys))
-		Expect(len(operatorImages)).To(BeNumerically("==", len(support.MandatoryOperatorImageKeys)))
+		Expect(support.GetMapKeys(operatorImages)).To(ContainElements(support.MandatoryOperatorImageKeys()))
+		Expect(len(operatorImages)).To(BeNumerically("==", len(support.MandatoryOperatorImageKeys())))
 		Expect(operatorImages).To(HaveEach(MatchRegexp(support.OperatorImageDefinitionRegexp)))
 	})
 
 	It("all image hashes are also defined in releases snapshot", func() {
 		mapped := make(map[string]string)
-		for _, imageKey := range support.MandatoryOperatorImageKeys {
+		for _, imageKey := range support.MandatoryOperatorImageKeys() {
 			oSha := support.ExtractHash(operatorImages[imageKey])
 			sSha := support.ExtractHash(snapshotImages[imageKey])
 			if oSha == sSha {
@@ -63,14 +64,15 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 		operatorHashes := support.ExtractHashes(support.GetMapValues(operatorImages))
 		mapped := make(map[string]int)
 		for _, hash := range operatorHashes {
-			if _, ok := mapped[hash]; ok {
+			_, exist := mapped[hash]
+			if exist {
 				mapped[hash]++
 			} else {
 				mapped[hash] = 1
 			}
 		}
 		Expect(mapped).To(HaveEach(1))
-		Expect(len(operatorImages) == len(mapped)).To(BeTrue())
+		Expect(operatorImages).To(HaveLen(len(mapped)))
 	})
 
 	It("operator-bundle use the right operator", func() {
