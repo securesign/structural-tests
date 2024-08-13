@@ -21,7 +21,7 @@ func GetFileContent(filePath string) (string, error) {
 	if isLocal {
 		return loadFileContent(snapshotFile)
 	}
-	githubToken := GetEnvOrDefaultSecret(EnvTestGithubToken, "")
+	githubToken := GetEnvAsSecret(EnvTestGithubToken)
 	return downloadFileContent(snapshotFile, githubToken)
 }
 
