@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"slices"
 
 	"github.com/pkg/errors"
 )
@@ -27,22 +28,24 @@ func ParseSnapshotImages() (SnapshotMap, error) {
 	return snapshotImages, nil
 }
 
-func ParseOperatorImages(helpContent string) OperatorMap {
+func ParseOperatorImages(helpContent string) (OperatorMap, OperatorMap) {
 	const minimumValidMatches = 3
 	re := regexp.MustCompile(`-([\w-]+image)\s+string[^"]+default "([^"]+)"`)
 	matches := re.FindAllStringSubmatch(helpContent, -1)
-	images := make(OperatorMap)
+	operatorSnapshotImages := make(OperatorMap)
+	operatorOtherImages := make(OperatorMap)
 	for _, match := range matches {
 		if len(match) >= minimumValidMatches {
 			key := match[1]
 			value := match[2]
-			if key == "client-server-image" || key == "trillian-netcat-image" { // not interested in these
+			if slices.Contains(OtherOperatorImageKeys(), key) {
+				operatorOtherImages[key] = value
 				continue
 			}
-			images[key] = value
+			operatorSnapshotImages[key] = value
 		}
 	}
-	return images
+	return operatorSnapshotImages, operatorOtherImages
 }
 
 func ExtractHashes(images []string) []string {

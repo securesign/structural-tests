@@ -7,13 +7,14 @@ const (
 	OperatorImageKey       = "rhtas-operator-image"
 	OperatorBundleImageKey = "rhtas-operator-bundle-image"
 
-	OperatorBundleClusterserviceversionFile = "manifests/rhtas-operator.clusterserviceversion.yaml"
+	OperatorBundleClusterServiceVersionFile = "manifests/rhtas-operator.clusterserviceversion.yaml"
 
-	OperatorImageDefinitionRegexp = `^registry.redhat.io/rhtas/[\w/-]+@sha256:\w{64}$`
-	SnapshotImageDefinitionRegexp = `^[\.\w/-]+@sha256:\w{64}$`
+	OperatorTasImageDefinitionRegexp   = `^registry.redhat.io/rhtas/[\w/-]+@sha256:\w{64}$`
+	OtherOperatorImageDefinitionRegexp = `^(registry.redhat.io|registry.access.redhat.com)`
+	SnapshotImageDefinitionRegexp      = `^[\.\w/-]+@sha256:\w{64}$`
 )
 
-func MandatoryOperatorImageKeys() []string {
+func MandatoryTasOperatorImageKeys() []string {
 	return []string{
 		"tuf-image",
 		"trillian-log-server-image",
@@ -28,5 +29,12 @@ func MandatoryOperatorImageKeys() []string {
 		"ctlog-image",
 		"backfill-redis-image",
 		"segment-backup-job-image",
+	}
+}
+
+func OtherOperatorImageKeys() []string {
+	return []string{
+		"client-server-image",
+		"trillian-netcat-image",
 	}
 }
