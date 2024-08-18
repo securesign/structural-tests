@@ -32,7 +32,7 @@ func ParseOperatorImages(helpContent string) (OperatorMap, OperatorMap) {
 	const minimumValidMatches = 3
 	re := regexp.MustCompile(`-([\w-]+image)\s+string[^"]+default "([^"]+)"`)
 	matches := re.FindAllStringSubmatch(helpContent, -1)
-	operatorSnapshotImages := make(OperatorMap)
+	operatorTasImages := make(OperatorMap)
 	operatorOtherImages := make(OperatorMap)
 	for _, match := range matches {
 		if len(match) >= minimumValidMatches {
@@ -42,10 +42,10 @@ func ParseOperatorImages(helpContent string) (OperatorMap, OperatorMap) {
 				operatorOtherImages[key] = value
 				continue
 			}
-			operatorSnapshotImages[key] = value
+			operatorTasImages[key] = value
 		}
 	}
-	return operatorSnapshotImages, operatorOtherImages
+	return operatorTasImages, operatorOtherImages
 }
 
 func ExtractHashes(images []string) []string {
