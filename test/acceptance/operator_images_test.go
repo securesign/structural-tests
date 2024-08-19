@@ -13,9 +13,10 @@ import (
 var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 
 	var (
-		snapshotImages support.SnapshotMap
-		operatorImages support.OperatorMap
-		operator       string
+		snapshotImages      support.SnapshotMap
+		operatorTasImages   support.OperatorMap
+		operatorOtherImages support.OperatorMap
+		operator            string
 	)
 
 	It("get and parse snapshot.json file", func() {
@@ -35,21 +36,29 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 		helpLogs, err := support.RunImage(operator, []string{"-h"})
 		Expect(err).NotTo(HaveOccurred())
 
-		operatorImages = support.ParseOperatorImages(helpLogs)
-		support.LogMap(fmt.Sprintf("Operator TAS images (%d):", len(operatorImages)), operatorImages)
-		Expect(operatorImages).NotTo(BeEmpty())
+		operatorTasImages, operatorOtherImages = support.ParseOperatorImages(helpLogs)
+		support.LogMap(fmt.Sprintf("Operator TAS images (%d):", len(operatorTasImages)), operatorTasImages)
+		support.LogMap(fmt.Sprintf("Operator other images (%d):", len(operatorOtherImages)), operatorOtherImages)
+		Expect(operatorTasImages).NotTo(BeEmpty())
+		Expect(operatorOtherImages).NotTo(BeEmpty())
 	})
 
-	It("operator images are all valid", func() {
-		Expect(support.GetMapKeys(operatorImages)).To(ContainElements(support.MandatoryOperatorImageKeys()))
-		Expect(len(operatorImages)).To(BeNumerically("==", len(support.MandatoryOperatorImageKeys())))
-		Expect(operatorImages).To(HaveEach(MatchRegexp(support.OperatorImageDefinitionRegexp)))
+	It("operator TAS images are all valid", func() {
+		Expect(support.GetMapKeys(operatorTasImages)).To(ContainElements(support.MandatoryTasOperatorImageKeys()))
+		Expect(len(operatorTasImages)).To(BeNumerically("==", len(support.MandatoryTasOperatorImageKeys())))
+		Expect(operatorTasImages).To(HaveEach(MatchRegexp(support.OperatorTasImageDefinitionRegexp)))
+	})
+
+	It("operator other images are all valid", func() {
+		Expect(support.GetMapKeys(operatorOtherImages)).To(ContainElements(support.OtherOperatorImageKeys()))
+		Expect(len(operatorOtherImages)).To(BeNumerically("==", len(support.OtherOperatorImageKeys())))
+		Expect(operatorOtherImages).To(HaveEach(MatchRegexp(support.OtherOperatorImageDefinitionRegexp)))
 	})
 
 	It("all image hashes are also defined in releases snapshot", func() {
 		mapped := make(map[string]string)
-		for _, imageKey := range support.MandatoryOperatorImageKeys() {
-			oSha := support.ExtractHash(operatorImages[imageKey])
+		for _, imageKey := range support.MandatoryTasOperatorImageKeys() {
+			oSha := support.ExtractHash(operatorTasImages[imageKey])
 			sSha := support.ExtractHash(snapshotImages[imageKey])
 			if oSha == sSha {
 				mapped[imageKey] = "match"
@@ -61,7 +70,7 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 	})
 
 	It("image hashes are all unique", func() {
-		operatorHashes := support.ExtractHashes(support.GetMapValues(operatorImages))
+		operatorHashes := support.ExtractHashes(support.GetMapValues(operatorTasImages))
 		mapped := make(map[string]int)
 		for _, hash := range operatorHashes {
 			_, exist := mapped[hash]
@@ -72,11 +81,11 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 			}
 		}
 		Expect(mapped).To(HaveEach(1))
-		Expect(operatorImages).To(HaveLen(len(mapped)))
+		Expect(operatorTasImages).To(HaveLen(len(mapped)))
 	})
 
 	It("operator-bundle use the right operator", func() {
-		fileContent, err := support.RunImage(snapshotImages[support.OperatorBundleImageKey], []string{"cat", support.OperatorBundleClusterserviceversionFile})
+		fileContent, err := support.RunImage(snapshotImages[support.OperatorBundleImageKey], []string{"cat", support.OperatorBundleClusterServiceVersionFile})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(fileContent).NotTo(BeEmpty())
 
