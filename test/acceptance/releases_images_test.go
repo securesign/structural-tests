@@ -19,7 +19,7 @@ var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 		snapshotImages, err = support.ParseSnapshotImages()
 		Expect(err).NotTo(HaveOccurred())
 		support.LogMap(fmt.Sprintf("Snapshot images (%d):", len(snapshotImages)), snapshotImages)
-		Expect(snapshotImages).NotTo(BeEmpty())
+		Expect(snapshotImages).NotTo(BeEmpty(), "No images were detected in snapshot file")
 	})
 
 	It("snapshot.json file contains valid images", func() {

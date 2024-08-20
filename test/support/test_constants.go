@@ -29,6 +29,8 @@ func MandatoryTasOperatorImageKeys() []string {
 		"ctlog-image",
 		"backfill-redis-image",
 		"segment-backup-job-image",
+		"client-server-f-image",
+		"timestamp-authority-image",
 	}
 }
 
