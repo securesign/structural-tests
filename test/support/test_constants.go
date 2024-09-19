@@ -2,6 +2,7 @@ package support
 
 const (
 	EnvReleasesSnapshotFile = "SNAPSHOT"
+	EnvRepositoriesFile     = "REPOSITORIES"
 	EnvTestGithubToken      = "TEST_GITHUB_TOKEN" // #nosec G101
 
 	OperatorImageKey       = "rhtas-operator-image"
@@ -12,6 +13,8 @@ const (
 	OperatorTasImageDefinitionRegexp   = `^registry.redhat.io/rhtas/[\w/-]+@sha256:\w{64}$`
 	OtherOperatorImageDefinitionRegexp = `^(registry.redhat.io|registry.access.redhat.com)`
 	SnapshotImageDefinitionRegexp      = `^[\.\w/-]+@sha256:\w{64}$`
+
+	DefaultRepositoriesFile = "testdata/repositories.json"
 )
 
 func MandatoryTasOperatorImageKeys() []string {

@@ -1,6 +1,7 @@
 package acceptance
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"regexp"
@@ -10,10 +11,13 @@ import (
 	"github.com/securesign/structural-tests/test/support"
 )
 
+var ErrNotFoundInRegistry = errors.New("not found in registry")
+
 var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 
 	var (
 		snapshotImages      support.SnapshotMap
+		repositories        *support.RepositoryList
 		operatorTasImages   support.OperatorMap
 		operatorOtherImages support.OperatorMap
 		operator            string
@@ -22,6 +26,10 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 	It("get and parse snapshot.json file", func() {
 		var err error
 		snapshotImages, err = support.ParseSnapshotImages()
+		Expect(err).NotTo(HaveOccurred())
+		Expect(snapshotImages).NotTo(BeEmpty())
+
+		repositories, err = support.LoadRepositoryList()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(snapshotImages).NotTo(BeEmpty())
 	})
@@ -41,6 +49,16 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 		support.LogMap(fmt.Sprintf("Operator other images (%d):", len(operatorOtherImages)), operatorOtherImages)
 		Expect(operatorTasImages).NotTo(BeEmpty())
 		Expect(operatorOtherImages).NotTo(BeEmpty())
+	})
+
+	It("operator images are listed in registry.redhat.io", func() {
+		var errs []error
+		for _, i2 := range operatorTasImages {
+			if repositories.FindByImage(i2) == nil {
+				errs = append(errs, fmt.Errorf("%w: %s", ErrNotFoundInRegistry, i2))
+			}
+		}
+		Expect(errs).To(BeEmpty())
 	})
 
 	It("operator TAS images are all valid", func() {
