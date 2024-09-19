@@ -19,19 +19,28 @@ const (
 
 func MandatoryTasOperatorImageKeys() []string {
 	return []string{
-		"tuf-image",
 		"trillian-log-server-image",
 		"trillian-log-signer-image",
 		"trillian-db-image",
+
+		"fulcio-server-image",
+
 		"rekor-redis-image",
 		"rekor-search-ui-image",
 		"rekor-server-image",
-		"fulcio-server-image",
+		"backfill-redis-image",
+
+		"tuf-image",
+
+		"ctlog-image",
+
 		"client-server-cg-image",
 		"client-server-re-image",
-		"ctlog-image",
-		"backfill-redis-image",
+		"client-server-f-image",
+
 		"segment-backup-job-image",
+
+		"timestamp-authority-image",
 	}
 }
 
