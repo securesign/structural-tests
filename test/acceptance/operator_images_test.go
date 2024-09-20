@@ -53,9 +53,9 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 
 	It("operator images are listed in registry.redhat.io", func() {
 		var errs []error
-		for _, i2 := range operatorTasImages {
-			if repositories.FindByImage(i2) == nil {
-				errs = append(errs, fmt.Errorf("%w: %s", ErrNotFoundInRegistry, i2))
+		for _, image := range operatorTasImages {
+			if repositories.FindByImage(image) == nil {
+				errs = append(errs, fmt.Errorf("%w: %s", ErrNotFoundInRegistry, image))
 			}
 		}
 		Expect(errs).To(BeEmpty())
