@@ -42,6 +42,29 @@ func GetMapValues(m map[string]string) []string {
 	return result
 }
 
+func SplitMap(original map[string]string, keysToKeep []string) (map[string]string, map[string]string) {
+	remaining := make(map[string]string)
+	moved := make(map[string]string)
+
+	for key, value := range original {
+		if contains(keysToKeep, key) {
+			remaining[key] = value
+		} else {
+			moved[key] = value
+		}
+	}
+	return remaining, moved
+}
+
+func contains(source []string, value string) bool {
+	for _, v := range source {
+		if v == value {
+			return true
+		}
+	}
+	return false
+}
+
 func LogArray(message string, data []string) {
 	result := message + "\n"
 	for _, value := range data {
@@ -53,7 +76,7 @@ func LogArray(message string, data []string) {
 func LogMap(message string, data map[string]string) {
 	result := message + "\n"
 	for key, value := range data {
-		result += fmt.Sprintf("    [%-28s] %s\n", key, value)
+		result += fmt.Sprintf("    [%-41s] %s\n", key, value)
 	}
 	log.Print(result)
 }
