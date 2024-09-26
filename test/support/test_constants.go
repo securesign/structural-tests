@@ -34,9 +34,6 @@ func MandatoryTasOperatorImageKeys() []string {
 
 		"ctlog-image",
 
-		"client-server-cg-image",
-		"client-server-re-image",
-		"client-server-f-image",
 		"client-server-image",
 
 		"segment-backup-job-image",
