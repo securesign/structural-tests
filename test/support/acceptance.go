@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
-
-	"github.com/pkg/errors"
 )
 
 type OperatorMap map[string]string
@@ -14,7 +12,7 @@ type OperatorMap map[string]string
 func ParseSnapshotImages() (SnapshotMap, error) {
 	snapshotFileName := GetEnv(EnvReleasesSnapshotFile)
 	if snapshotFileName == "" {
-		return nil, errors.New(fmt.Sprintf("snapshot file name must be set. Use %s env variable for that", EnvReleasesSnapshotFile))
+		return nil, fmt.Errorf("snapshot file name must be set. Use %s env variable for that", EnvReleasesSnapshotFile)
 	}
 	content, err := GetFileContent(snapshotFileName)
 	if err != nil {

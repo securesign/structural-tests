@@ -8,7 +8,7 @@ import (
 
 type SnapshotMap map[string]string
 
-var imageRegexp = regexp.MustCompile(`^[\w-]+-image$`)
+var imageRegexp = regexp.MustCompile(`^(fbc-[\w-]+|[\w-]+-image)$`)
 
 func (data *SnapshotMap) UnmarshalJSON(b []byte) error {
 	var raw map[string]interface{}
