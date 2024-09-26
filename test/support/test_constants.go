@@ -37,6 +37,7 @@ func MandatoryTasOperatorImageKeys() []string {
 		"client-server-cg-image",
 		"client-server-re-image",
 		"client-server-f-image",
+		"client-server-image",
 
 		"segment-backup-job-image",
 
@@ -46,7 +47,7 @@ func MandatoryTasOperatorImageKeys() []string {
 
 func OtherOperatorImageKeys() []string {
 	return []string{
-		"client-server-image",
 		"trillian-netcat-image",
+		"http-server-image",
 	}
 }
