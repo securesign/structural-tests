@@ -1,6 +1,8 @@
 package support
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -8,10 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/pkg/errors"
-
-	"golang.org/x/net/context"
 
 	testroot "github.com/securesign/structural-tests/test"
 )

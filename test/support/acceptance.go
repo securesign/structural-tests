@@ -7,9 +7,8 @@ import (
 	"slices"
 	"strings"
 
-	"gopkg.in/yaml.v3"
-
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 )
 
 type OperatorMap map[string]string
