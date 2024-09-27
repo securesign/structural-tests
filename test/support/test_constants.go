@@ -63,6 +63,7 @@ func AnsibleImageKeys() []string {
 		"tas_single_node_timestamp_authority_image",
 		"tas_single_node_rekor_search_ui_image",
 		"tas_single_node_createtree_image",
+		"tas_single_node_client_server_image",
 	}
 }
 
