@@ -1,6 +1,7 @@
 package support
 
 import (
+	"compress/gzip"
 	"context"
 	"errors"
 	"fmt"
@@ -79,4 +80,35 @@ func loadFileContent(filePath string) (string, error) {
 		return "", fmt.Errorf("failed to read content of the file: %w", err)
 	}
 	return string(contentBuffer), nil
+}
+
+// DecompressGzipFile decompresses a Gzip file and writes the decompressed content to a specified output file.
+func DecompressGzipFile(gzipPath string, outputPath string) error {
+	// Open the Gzip file
+	gzipFile, err := os.Open(gzipPath)
+	if err != nil {
+		return fmt.Errorf("failed to open Gzip file: %w", err)
+	}
+	defer gzipFile.Close()
+
+	// Create a Gzip reader
+	gzipReader, err := gzip.NewReader(gzipFile)
+	if err != nil {
+		return fmt.Errorf("failed to create Gzip reader: %w", err)
+	}
+	defer gzipReader.Close()
+
+	// Create the output file to write the decompressed data
+	outputFile, err := os.Create(outputPath)
+	if err != nil {
+		return fmt.Errorf("failed to create output file: %w", err)
+	}
+	defer outputFile.Close()
+
+	// Copy the decompressed data from the Gzip reader to the output file
+	_, err = io.Copy(outputFile, gzipReader) //nolint:gosec
+	if err != nil {
+		return fmt.Errorf("failed to write decompressed data: %w", err)
+	}
+	return nil
 }

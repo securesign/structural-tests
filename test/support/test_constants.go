@@ -48,3 +48,13 @@ func OtherOperatorImageKeys() []string {
 		"http-server-image",
 	}
 }
+
+type OSArchMatrix map[string][]string
+
+func GetOSArchMatrix() OSArchMatrix {
+	return map[string][]string{
+		"linux":   {"amd64", "arm64", "ppc64le", "s390x"},
+		"darwin":  {"amd64", "arm64"},
+		"windows": {"amd64"},
+	}
+}
