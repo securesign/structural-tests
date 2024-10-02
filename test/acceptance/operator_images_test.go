@@ -23,20 +23,20 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 		operator            string
 	)
 
-	It("get and parse snapshot.json file", func() {
+	It("get and parse snapshot file", func() {
 		var err error
 		snapshotImages, err = support.ParseSnapshotImages()
 		Expect(err).NotTo(HaveOccurred())
-		Expect(snapshotImages).NotTo(BeEmpty())
+		Expect(snapshotImages).NotTo(BeEmpty(), "No images were detected in snapshot file")
 
 		repositories, err = support.LoadRepositoryList()
 		Expect(err).NotTo(HaveOccurred())
-		Expect(snapshotImages).NotTo(BeEmpty())
+		Expect(repositories.Data).NotTo(BeEmpty(), "No images were detected in repositories file")
 	})
 
 	It("get operator image", func() {
 		operator = snapshotImages[support.OperatorImageKey]
-		Expect(operator).NotTo(BeEmpty())
+		Expect(operator).NotTo(BeEmpty(), "Operator image not detected in snapshot file")
 		log.Printf("Using %s\n", operator)
 	})
 
@@ -77,6 +77,10 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 		mapped := make(map[string]string)
 		for _, imageKey := range support.MandatoryTasOperatorImageKeys() {
 			oSha := support.ExtractHash(operatorTasImages[imageKey])
+			if _, keyExist := snapshotImages[imageKey]; !keyExist {
+				mapped[imageKey] = "MISSING"
+				continue
+			}
 			sSha := support.ExtractHash(snapshotImages[imageKey])
 			if oSha == sSha {
 				mapped[imageKey] = "match"
@@ -84,7 +88,7 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 				mapped[imageKey] = "DIFFERENT HASHES"
 			}
 		}
-		Expect(mapped).To(HaveEach("match"))
+		Expect(mapped).To(HaveEach("match"), "Operator images are missing or have different hashes in snapshot file")
 	})
 
 	It("image hashes are all unique", func() {

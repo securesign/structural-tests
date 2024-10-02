@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"strings"
+
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 )
 
 type OperatorMap map[string]string
@@ -12,7 +16,7 @@ type OperatorMap map[string]string
 func ParseSnapshotImages() (SnapshotMap, error) {
 	snapshotFileName := GetEnv(EnvReleasesSnapshotFile)
 	if snapshotFileName == "" {
-		return nil, fmt.Errorf("snapshot file name must be set. Use %s env variable for that", EnvReleasesSnapshotFile)
+		return nil, errors.New(fmt.Sprintf("snapshot file name must be set. Use %s env variable for that", EnvReleasesSnapshotFile))
 	}
 	content, err := GetFileContent(snapshotFileName)
 	if err != nil {
@@ -44,6 +48,31 @@ func ParseOperatorImages(helpContent string) (OperatorMap, OperatorMap) {
 		}
 	}
 	return operatorTasImages, operatorOtherImages
+}
+
+func ParseAnsibleImages() (AnsibleMap, error) {
+	ansibleFileName := GetEnv(EnvAnsibleImagesFile)
+	if ansibleFileName == "" {
+		return nil, errors.New(fmt.Sprintf("ansible images file name must be set. Use %s env variable for that", EnvAnsibleImagesFile))
+	}
+	content, err := GetFileContent(ansibleFileName)
+	if err != nil {
+		return nil, err
+	}
+	var ansibleImages AnsibleMap
+	err = yaml.Unmarshal([]byte(content), &ansibleImages)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse ansible images file: %w", err)
+	}
+	return ansibleImages, nil
+}
+
+func ConvertAnsibleImageKey(ansibleImageKey string) string {
+	if !strings.HasPrefix(ansibleImageKey, "tas_single_node_") {
+		return ansibleImageKey
+	}
+	result := strings.ReplaceAll(strings.TrimPrefix(ansibleImageKey, "tas_single_node_"), "_", "-")
+	return result
 }
 
 func ExtractHashes(images []string) []string {
