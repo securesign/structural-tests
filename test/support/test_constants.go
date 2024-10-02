@@ -2,7 +2,6 @@ package support
 
 const (
 	EnvReleasesSnapshotFile = "SNAPSHOT"
-	EnvAnsibleImagesFile    = "ANSIBLE"
 	EnvRepositoriesFile     = "REPOSITORIES"
 	EnvTestGithubToken      = "TEST_GITHUB_TOKEN" // #nosec G101
 
@@ -47,29 +46,5 @@ func OtherOperatorImageKeys() []string {
 	return []string{
 		"trillian-netcat-image",
 		"http-server-image",
-	}
-}
-
-func AnsibleImageKeys() []string {
-	return []string{
-		"tas_single_node_fulcio_server_image",
-		"tas_single_node_trillian_log_server_image",
-		"tas_single_node_trillian_log_signer_image",
-		"tas_single_node_rekor_server_image",
-		"tas_single_node_ctlog_image",
-		"tas_single_node_rekor_redis_image",
-		"tas_single_node_trillian_db_image",
-		"tas_single_node_tuf_image",
-		"tas_single_node_timestamp_authority_image",
-		"tas_single_node_rekor_search_ui_image",
-		"tas_single_node_createtree_image",
-		"tas_single_node_client_server_image",
-	}
-}
-
-func OtherAnsibleImageKeys() []string {
-	return []string{
-		"tas_single_node_trillian_netcat_image",
-		"tas_single_node_nginx_image",
 	}
 }
