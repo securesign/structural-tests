@@ -88,14 +88,13 @@ var _ = Describe("File-based catalog images", Ordered, func() {
 			})
 
 			It("verify channels", func() {
-				expectedChannels := []string{"stable", "stable-v1.1", "stable-v1.0"}
+				expectedChannels := []string{"stable", "candidate-v1.1.0", "stable-v1.0"}
 				Expect(channels).To(HaveLen(len(expectedChannels)))
 
 				for _, channel := range channels {
 					Expect(channel.Package).To(Equal(olmPackage))
 					Expect(expectedChannels).To(ContainElement(channel.Name))
 				}
-
 			})
 
 			It("contains operator-bundle", func() {
