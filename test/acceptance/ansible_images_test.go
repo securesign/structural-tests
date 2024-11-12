@@ -33,40 +33,40 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(allAnsibleTasImages).NotTo(BeEmpty())
 
-		ansibleTasImages, ansibleOtherImages = support.SplitMap(allAnsibleTasImages, support.AnsibleImageKeys())
+		ansibleTasImages, ansibleOtherImages = support.SplitMap(allAnsibleTasImages, support.AnsibleTasImageKeys())
 		Expect(ansibleTasImages).NotTo(BeEmpty())
 		Expect(ansibleOtherImages).NotTo(BeEmpty())
 		support.LogMap(fmt.Sprintf("Ansible TAS images (%d):", len(ansibleTasImages)), ansibleTasImages)
-		support.LogMap(fmt.Sprintf("Ansible TAS images (%d):", len(ansibleOtherImages)), ansibleOtherImages)
+		support.LogMap(fmt.Sprintf("Ansible other images (%d):", len(ansibleOtherImages)), ansibleOtherImages)
 	})
 
 	It("ansible TAS images are listed in registry.redhat.io", func() {
 		var errs []error
-		for _, image := range ansibleTasImages {
-			if repositories.FindByImage(image) == nil {
-				errs = append(errs, fmt.Errorf("%w: %s", ErrNotFoundInRegistry, image))
+		for _, ansibleImage := range ansibleTasImages {
+			if repositories.FindByImage(ansibleImage) == nil {
+				errs = append(errs, fmt.Errorf("%w: %s", ErrNotFoundInRegistry, ansibleImage))
 			}
 		}
 		Expect(errs).To(BeEmpty())
 	})
 
-	It("ansible images are all valid", func() {
-		Expect(support.GetMapKeys(ansibleTasImages)).To(ContainElements(support.AnsibleImageKeys()))
-		Expect(len(ansibleTasImages)).To(BeNumerically("==", len(support.AnsibleImageKeys())))
-		Expect(ansibleTasImages).To(HaveEach(MatchRegexp(support.OperatorTasImageDefinitionRegexp)))
+	It("ansible TAS images are all valid", func() {
+		Expect(support.GetMapKeys(ansibleTasImages)).To(ContainElements(support.AnsibleTasImageKeys()))
+		Expect(len(ansibleTasImages)).To(BeNumerically("==", len(support.AnsibleTasImageKeys())))
+		Expect(ansibleTasImages).To(HaveEach(MatchRegexp(support.TasImageDefinitionRegexp)))
 	})
 
 	It("ansible other images are all valid", func() {
-		Expect(support.GetMapKeys(ansibleOtherImages)).To(ContainElements(support.OtherAnsibleImageKeys()))
-		Expect(len(ansibleOtherImages)).To(BeNumerically("==", len(support.OtherAnsibleImageKeys())))
-		Expect(ansibleOtherImages).To(HaveEach(MatchRegexp(support.OtherOperatorImageDefinitionRegexp)))
+		Expect(support.GetMapKeys(ansibleOtherImages)).To(ContainElements(support.AnsibleOtherImageKeys()))
+		Expect(len(ansibleOtherImages)).To(BeNumerically("==", len(support.AnsibleOtherImageKeys())))
+		Expect(ansibleOtherImages).To(HaveEach(MatchRegexp(support.OtherImageDefinitionRegexp)))
 	})
 
-	It("all image hashes are also defined in releases snapshot", func() {
+	It("all ansible TAS image hashes are also defined in releases snapshot", func() {
 		mapped := make(map[string]string)
-		for _, imageKey := range support.AnsibleImageKeys() {
+		for _, imageKey := range support.AnsibleTasImageKeys() {
 
-			// TODO remove that, temporary
+			// skip, while ansible uses older tuf image
 			if imageKey == "tas_single_node_tuf_image" {
 				continue
 			}
@@ -87,18 +87,18 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 	})
 
 	It("image hashes are all unique", func() {
-		ansibleHashes := support.ExtractHashes(support.GetMapValues(ansibleTasImages))
-		mapped := make(map[string]int)
-		for _, hash := range ansibleHashes {
-			_, exist := mapped[hash]
+		aImageHashes := support.ExtractHashes(support.GetMapValues(ansibleTasImages))
+		hashesCounts := make(map[string]int)
+		for _, hash := range aImageHashes {
+			_, exist := hashesCounts[hash]
 			if exist {
-				mapped[hash]++
+				hashesCounts[hash]++
 			} else {
-				mapped[hash] = 1
+				hashesCounts[hash] = 1
 			}
 		}
-		Expect(mapped).To(HaveEach(1))
-		Expect(ansibleTasImages).To(HaveLen(len(mapped)))
+		Expect(hashesCounts).To(HaveEach(1))
+		Expect(ansibleTasImages).To(HaveLen(len(hashesCounts)))
 	})
 
 })

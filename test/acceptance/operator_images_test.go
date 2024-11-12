@@ -64,13 +64,13 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 	It("operator TAS images are all valid", func() {
 		Expect(support.GetMapKeys(operatorTasImages)).To(ContainElements(support.MandatoryTasOperatorImageKeys()))
 		Expect(len(operatorTasImages)).To(BeNumerically("==", len(support.MandatoryTasOperatorImageKeys())))
-		Expect(operatorTasImages).To(HaveEach(MatchRegexp(support.OperatorTasImageDefinitionRegexp)))
+		Expect(operatorTasImages).To(HaveEach(MatchRegexp(support.TasImageDefinitionRegexp)))
 	})
 
 	It("operator other images are all valid", func() {
 		Expect(support.GetMapKeys(operatorOtherImages)).To(ContainElements(support.OtherOperatorImageKeys()))
 		Expect(len(operatorOtherImages)).To(BeNumerically("==", len(support.OtherOperatorImageKeys())))
-		Expect(operatorOtherImages).To(HaveEach(MatchRegexp(support.OtherOperatorImageDefinitionRegexp)))
+		Expect(operatorOtherImages).To(HaveEach(MatchRegexp(support.OtherImageDefinitionRegexp)))
 	})
 
 	It("all image hashes are also defined in releases snapshot", func() {

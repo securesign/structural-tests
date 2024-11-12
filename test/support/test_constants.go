@@ -11,9 +11,9 @@ const (
 
 	OperatorBundleClusterServiceVersionFile = "manifests/rhtas-operator.clusterserviceversion.yaml"
 
-	OperatorTasImageDefinitionRegexp   = `^registry.redhat.io/rhtas/[\w/-]+@sha256:\w{64}$`
-	OtherOperatorImageDefinitionRegexp = `^(registry.redhat.io|registry.access.redhat.com)`
-	SnapshotImageDefinitionRegexp      = `^[\.\w/-]+@sha256:\w{64}$`
+	TasImageDefinitionRegexp      = `^registry.redhat.io/rhtas/[\w/-]+@sha256:\w{64}$`
+	OtherImageDefinitionRegexp    = `^(registry.redhat.io|registry.access.redhat.com)`
+	SnapshotImageDefinitionRegexp = `^[\.\w/-]+@sha256:\w{64}$`
 
 	DefaultRepositoriesFile = "testdata/repositories.json"
 )
@@ -50,7 +50,7 @@ func OtherOperatorImageKeys() []string {
 	}
 }
 
-func AnsibleImageKeys() []string {
+func AnsibleTasImageKeys() []string {
 	return []string{
 		"tas_single_node_fulcio_server_image",
 		"tas_single_node_trillian_log_server_image",
@@ -67,7 +67,7 @@ func AnsibleImageKeys() []string {
 	}
 }
 
-func OtherAnsibleImageKeys() []string {
+func AnsibleOtherImageKeys() []string {
 	return []string{
 		"tas_single_node_trillian_netcat_image",
 		"tas_single_node_nginx_image",
