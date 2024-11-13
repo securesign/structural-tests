@@ -2,6 +2,7 @@ package acceptance
 
 import (
 	"fmt"
+	"log"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -68,6 +69,9 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 
 			// skip, while ansible uses older tuf image
 			if imageKey == "tas_single_node_tuf_image" {
+				log.Printf("Ansible uses differet TUF image - skipping")
+				log.Printf("  Ansible:  %s", ansibleTasImages[imageKey])
+				log.Printf("  Snapshot: %s", snapshotImages[support.ConvertAnsibleImageKey(imageKey)])
 				continue
 			}
 
