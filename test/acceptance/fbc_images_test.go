@@ -88,7 +88,7 @@ var _ = Describe("File-based catalog images", Ordered, func() {
 			})
 
 			It("verify channels", func() {
-				expectedChannels := []string{"stable", "candidate-v1.1.0", "stable-v1.0"}
+				expectedChannels := []string{"stable", "stable-v1.0", "stable-v1.1"}
 				Expect(channels).To(HaveLen(len(expectedChannels)))
 
 				for _, channel := range channels {
