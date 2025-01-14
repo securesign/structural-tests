@@ -8,7 +8,9 @@ const (
 
 	OperatorImageKey       = "rhtas-operator-image"
 	OperatorBundleImageKey = "rhtas-operator-bundle-image"
+	AnsibleCollectionKey   = "artifact-signer-ansible.collection.url"
 
+	AnsibleCollectionSnapshotFile           = "roles/tas_single_node/defaults/main.yml"
 	OperatorBundleClusterServiceVersionFile = "manifests/rhtas-operator.clusterserviceversion.yaml"
 
 	TasImageDefinitionRegexp      = `^registry.redhat.io/rhtas/[\w/-]+@sha256:\w{64}$`

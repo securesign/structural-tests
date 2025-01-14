@@ -28,7 +28,15 @@ func extractImages(data map[string]interface{}, images map[string]string) {
 				images[key] = valueType
 			}
 		case map[string]interface{}:
-			extractImages(valueType, images)
+			if key == "artifact-signer-ansible" {
+				if collection, ok := value.(map[string]interface{})["collection"].(map[string]interface{}); ok {
+					if url, ok := collection["url"].(string); ok {
+						images[AnsibleCollectionKey] = url
+					}
+				}
+			} else {
+				extractImages(valueType, images)
+			}
 		}
 	}
 }

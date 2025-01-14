@@ -14,6 +14,7 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 	var (
 		snapshotImages     support.SnapshotMap
 		repositories       *support.RepositoryList
+		ansibleAllImages   support.AnsibleMap
 		ansibleTasImages   support.AnsibleMap
 		ansibleOtherImages support.AnsibleMap
 	)
@@ -21,6 +22,7 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 	It("get and parse snapshot file", func() {
 		var err error
 		snapshotImages, err = support.ParseSnapshotImages()
+		support.LogMap(fmt.Sprintf("Snapshot images (%d):", len(snapshotImages)), snapshotImages)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(snapshotImages).NotTo(BeEmpty(), "No images were detected in snapshot file")
 
@@ -29,12 +31,29 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 		Expect(repositories.Data).NotTo(BeEmpty(), "No images were detected in repositories file")
 	})
 
-	It("get and parse ansible image definition file", func() {
-		allAnsibleTasImages, err := support.ParseAnsibleImages()
-		Expect(err).NotTo(HaveOccurred())
-		Expect(allAnsibleTasImages).NotTo(BeEmpty())
+	It("load and parse ansible definition file", func() {
+		var err error
+		forcedAnsibleFileName := support.GetEnv(support.EnvAnsibleImagesFile)
+		if forcedAnsibleFileName == "" {
+			// standard way - use ansible definition file name from releases snapshot.json
+			ansibleCollectionUrl := snapshotImages[support.AnsibleCollectionKey]
+			Expect(ansibleCollectionUrl).NotTo(BeEmpty())
+			log.Printf("Using %s URL from snapshot.json file\n", ansibleCollectionUrl)
 
-		ansibleTasImages, ansibleOtherImages = support.SplitMap(allAnsibleTasImages, support.AnsibleTasImageKeys())
+			fileContent, err := support.LoadFileFromZip(ansibleCollectionUrl, support.AnsibleCollectionSnapshotFile)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(fileContent).NotTo(BeEmpty(), "Ansible definition file seems to be empty")
+			ansibleAllImages, err = support.MapAnsibleImages(fileContent)
+		} else {
+			// use ansible definition file defined via env variable
+			ansibleAllImages, err = support.ParseAnsibleImages(forcedAnsibleFileName)
+		}
+		Expect(err).NotTo(HaveOccurred())
+		Expect(ansibleAllImages).NotTo(BeEmpty())
+	})
+
+	It("get and parse ansible image definition file", func() {
+		ansibleTasImages, ansibleOtherImages = support.SplitMap(ansibleAllImages, support.AnsibleTasImageKeys())
 		Expect(ansibleTasImages).NotTo(BeEmpty())
 		Expect(ansibleOtherImages).NotTo(BeEmpty())
 		support.LogMap(fmt.Sprintf("Ansible TAS images (%d):", len(ansibleTasImages)), ansibleTasImages)

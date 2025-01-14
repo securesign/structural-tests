@@ -23,7 +23,7 @@ func ParseSnapshotImages() (SnapshotMap, error) {
 		return nil, err
 	}
 	var snapshotImages SnapshotMap
-	err = json.Unmarshal([]byte(content), &snapshotImages)
+	err = json.Unmarshal(content, &snapshotImages)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse snapshot file: %w", err)
 	}
@@ -50,17 +50,17 @@ func ParseOperatorImages(helpContent string) (OperatorMap, OperatorMap) {
 	return operatorTasImages, operatorOtherImages
 }
 
-func ParseAnsibleImages() (AnsibleMap, error) {
-	ansibleFileName := GetEnv(EnvAnsibleImagesFile)
-	if ansibleFileName == "" {
-		return nil, errors.New(fmt.Sprintf("ansible images file name must be set. Use %s env variable for that", EnvAnsibleImagesFile))
-	}
+func ParseAnsibleImages(ansibleFileName string) (AnsibleMap, error) {
 	content, err := GetFileContent(ansibleFileName)
 	if err != nil {
 		return nil, err
 	}
+	return MapAnsibleImages(content)
+}
+
+func MapAnsibleImages(ansibleDefinitionFileContent []byte) (AnsibleMap, error) {
 	var ansibleImages AnsibleMap
-	err = yaml.Unmarshal([]byte(content), &ansibleImages)
+	err := yaml.Unmarshal(ansibleDefinitionFileContent, &ansibleImages)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse ansible images file: %w", err)
 	}
