@@ -12,9 +12,11 @@ import (
 var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 
 	var (
-		snapshotImages     support.SnapshotMap
-		repositories       *support.RepositoryList
-		ansibleAllImages   support.AnsibleMap
+		snapshotImages support.SnapshotMap
+		repositories   *support.RepositoryList
+
+		ansibleFileContent []byte
+
 		ansibleTasImages   support.AnsibleMap
 		ansibleOtherImages support.AnsibleMap
 	)
@@ -31,28 +33,24 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 		Expect(repositories.Data).NotTo(BeEmpty(), "No images were detected in repositories file")
 	})
 
-	It("load and parse ansible definition file", func() {
+	It("load ansible definition file", func() {
 		var err error
-		forcedAnsibleFileName := support.GetEnv(support.EnvAnsibleImagesFile)
-		if forcedAnsibleFileName == "" {
+		ansibleCollectionURL := support.GetEnv(support.EnvAnsibleImagesFile)
+		if ansibleCollectionURL == "" {
 			// standard way - use ansible definition file name from releases snapshot.json
-			ansibleCollectionUrl := snapshotImages[support.AnsibleCollectionKey]
-			Expect(ansibleCollectionUrl).NotTo(BeEmpty())
-			log.Printf("Using %s URL from snapshot.json file\n", ansibleCollectionUrl)
-
-			fileContent, err := support.LoadFileFromZip(ansibleCollectionUrl, support.AnsibleCollectionSnapshotFile)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(fileContent).NotTo(BeEmpty(), "Ansible definition file seems to be empty")
-			ansibleAllImages, err = support.MapAnsibleImages(fileContent)
-		} else {
-			// use ansible definition file defined via env variable
-			ansibleAllImages, err = support.ParseAnsibleImages(forcedAnsibleFileName)
+			ansibleCollectionURL = snapshotImages[support.AnsibleCollectionKey]
+			Expect(ansibleCollectionURL).NotTo(BeEmpty())
+			log.Printf("Using %s URL from snapshot.json file\n", ansibleCollectionURL)
 		}
+		ansibleFileContent, err = support.LoadAnsibleCollectionSnapshotFile(ansibleCollectionURL, support.AnsibleCollectionSnapshotFile)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(ansibleAllImages).NotTo(BeEmpty())
+		Expect(ansibleFileContent).NotTo(BeEmpty(), "Ansible definition file seems to be empty")
 	})
 
-	It("get and parse ansible image definition file", func() {
+	It("get and parse ansible images definition file", func() {
+		ansibleAllImages, err := support.MapAnsibleImages(ansibleFileContent)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(ansibleAllImages).NotTo(BeEmpty())
 		ansibleTasImages, ansibleOtherImages = support.SplitMap(ansibleAllImages, support.AnsibleTasImageKeys())
 		Expect(ansibleTasImages).NotTo(BeEmpty())
 		Expect(ansibleOtherImages).NotTo(BeEmpty())

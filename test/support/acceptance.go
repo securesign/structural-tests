@@ -50,14 +50,6 @@ func ParseOperatorImages(helpContent string) (OperatorMap, OperatorMap) {
 	return operatorTasImages, operatorOtherImages
 }
 
-func ParseAnsibleImages(ansibleFileName string) (AnsibleMap, error) {
-	content, err := GetFileContent(ansibleFileName)
-	if err != nil {
-		return nil, err
-	}
-	return MapAnsibleImages(content)
-}
-
 func MapAnsibleImages(ansibleDefinitionFileContent []byte) (AnsibleMap, error) {
 	var ansibleImages AnsibleMap
 	err := yaml.Unmarshal(ansibleDefinitionFileContent, &ansibleImages)

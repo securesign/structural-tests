@@ -49,11 +49,6 @@ func downloadFileContent(url string, accessToken string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new request: %w", err)
 	}
-	//req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
-	//req.Header.Add("Accept", "*/*")
-	//req.Header.Add("Accept-Encoding", "gzip, deflate, br, zstd")
-	//req.Header.Add("Sec-Fetch-Dest", "document")
-	//req.Header.Add("Sec-Fetch-Mode", "navigate")
 	if accessToken != "" {
 		req.Header.Add("Authorization", "token "+accessToken)
 	}
@@ -63,8 +58,8 @@ func downloadFileContent(url string, accessToken string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to get response: %w", err)
 	}
 	defer resp.Body.Close()
-	log.Println(resp)
 	if resp.StatusCode != http.StatusOK {
+		log.Printf("Failed to download file: %v", resp)
 		err := errors.New("bad status: " + resp.Status)
 		return nil, err
 	}
@@ -122,49 +117,66 @@ func DecompressGzipFile(gzipPath string, outputPath string) error {
 	return nil
 }
 
-func LoadFileFromZip(url, filePath string) ([]byte, error) {
-	zipData, err := GetFileContent(url)
+func LoadAnsibleCollectionSnapshotFile(zipFileURL, ansibleImagesFile string) ([]byte, error) {
+	zipData, err := GetFileContent(zipFileURL)
 	if err != nil {
 		return nil, err
 	}
 
 	zipReader, err := zip.NewReader(bytes.NewReader(zipData), int64(len(zipData)))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read a zip file: %w", err)
 	}
 
 	for _, zipFile := range zipReader.File {
 		log.Printf("Extracted from zip: %s\n", zipFile.Name)
 		zipFileContent, err := zipFile.Open()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to open zip file: %w", err)
 		}
 		defer zipFileContent.Close()
 
 		gzipReader, err := gzip.NewReader(zipFileContent)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to gunzip file: %w", err)
 		}
 		defer gzipReader.Close()
 
 		log.Printf("Extracted from gzip %s\n", gzipReader.Name)
-		tarReader := tar.NewReader(gzipReader)
-		for {
-			tarHeader, err := tarReader.Next()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				return nil, err
-			}
-
-			if tarHeader.Name == filePath {
-				log.Printf("Found %s\n", tarHeader.Name)
-				return io.ReadAll(tarReader)
-			}
+		tarFileContent, err := lookThroughTarFile(gzipReader, ansibleImagesFile)
+		if err != nil {
+			return nil, err
 		}
-		log.Printf("%s not found in %s\n", filePath, gzipReader.Name)
+		if tarFileContent != nil {
+			return tarFileContent, nil
+		}
 	}
 
+	return nil, nil
+}
+
+func lookThroughTarFile(reader io.Reader, filePath string) ([]byte, error) {
+	tarReader := tar.NewReader(reader)
+	for {
+		tarHeader, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to read files from tar file: %w", err)
+		}
+
+		if tarHeader.Name == filePath {
+			log.Printf("Found %s\n", tarHeader.Name)
+			tarFileContent, err := io.ReadAll(tarReader)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read from tar file: %w", err)
+			}
+			if tarFileContent == nil {
+				log.Printf("%s not found\n", filePath)
+			}
+			return tarFileContent, nil
+		}
+	}
 	return nil, nil
 }
