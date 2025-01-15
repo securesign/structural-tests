@@ -16,16 +16,16 @@ type OperatorMap map[string]string
 func ParseSnapshotImages() (SnapshotMap, error) {
 	snapshotFileName := GetEnv(EnvReleasesSnapshotFile)
 	if snapshotFileName == "" {
-		return nil, errors.New(fmt.Sprintf("snapshot file name must be set. Use %s env variable for that", EnvReleasesSnapshotFile))
+		return SnapshotMap{}, errors.New(fmt.Sprintf("snapshot file name must be set. Use %s env variable for that", EnvReleasesSnapshotFile))
 	}
 	content, err := GetFileContent(snapshotFileName)
 	if err != nil {
-		return nil, err
+		return SnapshotMap{}, err
 	}
 	var snapshotImages SnapshotMap
 	err = json.Unmarshal(content, &snapshotImages)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse snapshot file: %w", err)
+		return SnapshotMap{}, fmt.Errorf("failed to parse snapshot file: %w", err)
 	}
 	return snapshotImages, nil
 }

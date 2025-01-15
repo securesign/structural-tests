@@ -39,7 +39,7 @@ var _ = Describe("Client server", Ordered, func() {
 			snapshotImages, err = support.ParseSnapshotImages()
 			Expect(err).NotTo(HaveOccurred())
 
-			clientServerImage = snapshotImages["client-server-image"]
+			clientServerImage = snapshotImages.Images["client-server-image"]
 			Expect(clientServerImage).NotTo(BeEmpty())
 		})
 
@@ -68,13 +68,13 @@ var _ = Describe("Client server", Ordered, func() {
 					It("init", func() {
 						switch cli {
 						case "createtree", "updatetree":
-							image = snapshotImages[cli+"-image"]
+							image = snapshotImages.Images[cli+"-image"]
 						case "tuftool":
-							image = snapshotImages["tuf-tool-image"]
+							image = snapshotImages.Images["tuf-tool-image"]
 						case "rekor-cli":
-							image = snapshotImages["rekor-cli-image"]
+							image = snapshotImages.Images["rekor-cli-image"]
 						default:
-							image = snapshotImages[cli+"-cli-image"]
+							image = snapshotImages.Images[cli+"-cli-image"]
 						}
 					})
 

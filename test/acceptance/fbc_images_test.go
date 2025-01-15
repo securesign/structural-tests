@@ -27,14 +27,14 @@ var _ = Describe("File-based catalog images", Ordered, func() {
 
 	snapshotImages, err := support.ParseSnapshotImages()
 	Expect(err).NotTo(HaveOccurred())
-	for key, snapshotImage := range snapshotImages {
+	for key, snapshotImage := range snapshotImages.Images {
 		if strings.Index(key, "fbc-") == 0 {
 			ocps = append(ocps, Entry(key, key, snapshotImage))
 		}
 	}
 	Expect(ocps).NotTo(BeEmpty())
 
-	bundleImage = snapshotImages[support.OperatorBundleImageKey]
+	bundleImage = snapshotImages.Images[support.OperatorBundleImageKey]
 
 	DescribeTableSubtree("ocp",
 		func(key, fbcImage string) {
@@ -76,7 +76,7 @@ var _ = Describe("File-based catalog images", Ordered, func() {
 			It("extract bundle-image from snapshot.json", func() {
 				snapshotImages, err := support.ParseSnapshotImages()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(snapshotImages).NotTo(BeEmpty())
+				Expect(snapshotImages.Images).NotTo(BeEmpty())
 
 			})
 

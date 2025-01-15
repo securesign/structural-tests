@@ -27,7 +27,7 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 		var err error
 		snapshotImages, err = support.ParseSnapshotImages()
 		Expect(err).NotTo(HaveOccurred())
-		Expect(snapshotImages).NotTo(BeEmpty(), "No images were detected in snapshot file")
+		Expect(snapshotImages.Images).NotTo(BeEmpty(), "No images were detected in snapshot file")
 
 		repositories, err = support.LoadRepositoryList()
 		Expect(err).NotTo(HaveOccurred())
@@ -35,7 +35,7 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 	})
 
 	It("get operator image", func() {
-		operator = snapshotImages[support.OperatorImageKey]
+		operator = snapshotImages.Images[support.OperatorImageKey]
 		Expect(operator).NotTo(BeEmpty(), "Operator image not detected in snapshot file")
 		log.Printf("Using %s\n", operator)
 	})
@@ -77,11 +77,11 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 		mapped := make(map[string]string)
 		for _, imageKey := range support.MandatoryTasOperatorImageKeys() {
 			oSha := support.ExtractHash(operatorTasImages[imageKey])
-			if _, keyExist := snapshotImages[imageKey]; !keyExist {
+			if _, keyExist := snapshotImages.Images[imageKey]; !keyExist {
 				mapped[imageKey] = "MISSING"
 				continue
 			}
-			sSha := support.ExtractHash(snapshotImages[imageKey])
+			sSha := support.ExtractHash(snapshotImages.Images[imageKey])
 			if oSha == sSha {
 				mapped[imageKey] = "match"
 			} else {
@@ -107,11 +107,11 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 	})
 
 	It("operator-bundle use the right operator", func() {
-		fileContent, err := support.RunImage(snapshotImages[support.OperatorBundleImageKey], []string{"cat", support.OperatorBundleClusterServiceVersionFile})
+		fileContent, err := support.RunImage(snapshotImages.Images[support.OperatorBundleImageKey], []string{"cat", support.OperatorBundleClusterServiceVersionFile})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(fileContent).NotTo(BeEmpty())
 
-		operatorHash := support.ExtractHash(snapshotImages[support.OperatorImageKey])
+		operatorHash := support.ExtractHash(snapshotImages.Images[support.OperatorImageKey])
 		re := regexp.MustCompile(`(\w+:\s*[\w./-]+operator[\w-]*@sha256:` + operatorHash + `)`)
 		matches := re.FindAllString(fileContent, -1)
 		Expect(matches).NotTo(BeEmpty())
