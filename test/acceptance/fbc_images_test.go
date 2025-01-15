@@ -25,16 +25,16 @@ var _ = Describe("File-based catalog images", Ordered, func() {
 	var ocps []TableEntry
 	var bundleImage string
 
-	snapshotImages, err := support.ParseSnapshotImages()
+	snapshotData, err := support.ParseSnapshotData()
 	Expect(err).NotTo(HaveOccurred())
-	for key, snapshotImage := range snapshotImages {
+	for key, snapshotImage := range snapshotData.Images {
 		if strings.Index(key, "fbc-") == 0 {
 			ocps = append(ocps, Entry(key, key, snapshotImage))
 		}
 	}
 	Expect(ocps).NotTo(BeEmpty())
 
-	bundleImage = snapshotImages[support.OperatorBundleImageKey]
+	bundleImage = snapshotData.Images[support.OperatorBundleImageKey]
 
 	DescribeTableSubtree("ocp",
 		func(key, fbcImage string) {
@@ -74,9 +74,9 @@ var _ = Describe("File-based catalog images", Ordered, func() {
 			})
 
 			It("extract bundle-image from snapshot.json", func() {
-				snapshotImages, err := support.ParseSnapshotImages()
+				snapshotData, err := support.ParseSnapshotData()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(snapshotImages).NotTo(BeEmpty())
+				Expect(snapshotData.Images).NotTo(BeEmpty())
 
 			})
 
@@ -88,7 +88,7 @@ var _ = Describe("File-based catalog images", Ordered, func() {
 			})
 
 			It("verify channels", func() {
-				expectedChannels := []string{"stable", "candidate-v1.1.0", "stable-v1.0"}
+				expectedChannels := []string{"stable", "stable-v1.0", "stable-v1.1"}
 				Expect(channels).To(HaveLen(len(expectedChannels)))
 
 				for _, channel := range channels {
