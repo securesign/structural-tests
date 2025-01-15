@@ -11,23 +11,23 @@ import (
 var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 
 	var (
-		snapshotImages support.SnapshotMap
+		snapshotData support.SnapshotData
 	)
 
 	It("snapshot.json file exist and is parseable", func() {
 		var err error
-		snapshotImages, err = support.ParseSnapshotImages()
+		snapshotData, err = support.ParseSnapshotData()
 		Expect(err).NotTo(HaveOccurred())
-		support.LogMap(fmt.Sprintf("Snapshot images (%d):", len(snapshotImages.Images)), snapshotImages.Images)
-		Expect(snapshotImages.Images).NotTo(BeEmpty(), "No images were detected in snapshot file")
+		support.LogMap(fmt.Sprintf("Snapshot images (%d):", len(snapshotData.Images)), snapshotData.Images)
+		Expect(snapshotData.Images).NotTo(BeEmpty(), "No images were detected in snapshot file")
 	})
 
 	It("snapshot.json file contains valid images", func() {
-		Expect(snapshotImages.Images).To(HaveEach(MatchRegexp(support.SnapshotImageDefinitionRegexp)))
+		Expect(snapshotData.Images).To(HaveEach(MatchRegexp(support.SnapshotImageDefinitionRegexp)))
 	})
 
 	It("snapshot.json file image snapshots are all unique", func() {
-		snapshotHashes := support.ExtractHashes(support.GetMapValues(snapshotImages.Images))
+		snapshotHashes := support.ExtractHashes(support.GetMapValues(snapshotData.Images))
 		mapped := make(map[string]int)
 		for _, hash := range snapshotHashes {
 			_, exist := mapped[hash]
@@ -38,6 +38,6 @@ var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 			}
 		}
 		Expect(mapped).To(HaveEach(1))
-		Expect(len(snapshotImages.Images)).To(BeNumerically("==", len(mapped)))
+		Expect(len(snapshotData.Images)).To(BeNumerically("==", len(mapped)))
 	})
 })

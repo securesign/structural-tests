@@ -13,21 +13,21 @@ import (
 
 type OperatorMap map[string]string
 
-func ParseSnapshotImages() (SnapshotMap, error) {
+func ParseSnapshotData() (SnapshotData, error) {
 	snapshotFileName := GetEnv(EnvReleasesSnapshotFile)
 	if snapshotFileName == "" {
-		return SnapshotMap{}, errors.New(fmt.Sprintf("snapshot file name must be set. Use %s env variable for that", EnvReleasesSnapshotFile))
+		return SnapshotData{}, errors.New(fmt.Sprintf("snapshot file name must be set. Use %s env variable for that", EnvReleasesSnapshotFile))
 	}
 	content, err := GetFileContent(snapshotFileName)
 	if err != nil {
-		return SnapshotMap{}, err
+		return SnapshotData{}, err
 	}
-	var snapshotImages SnapshotMap
-	err = json.Unmarshal(content, &snapshotImages)
+	var snapshotData SnapshotData
+	err = json.Unmarshal(content, &snapshotData)
 	if err != nil {
-		return SnapshotMap{}, fmt.Errorf("failed to parse snapshot file: %w", err)
+		return SnapshotData{}, fmt.Errorf("failed to parse snapshot file: %w", err)
 	}
-	return snapshotImages, nil
+	return snapshotData, nil
 }
 
 func ParseOperatorImages(helpContent string) (OperatorMap, OperatorMap) {

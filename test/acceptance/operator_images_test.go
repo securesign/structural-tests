@@ -16,7 +16,7 @@ var ErrNotFoundInRegistry = errors.New("not found in registry")
 var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 
 	var (
-		snapshotImages      support.SnapshotMap
+		snapshotData        support.SnapshotData
 		repositories        *support.RepositoryList
 		operatorTasImages   support.OperatorMap
 		operatorOtherImages support.OperatorMap
@@ -25,9 +25,9 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 
 	It("get and parse snapshot file", func() {
 		var err error
-		snapshotImages, err = support.ParseSnapshotImages()
+		snapshotData, err = support.ParseSnapshotData()
 		Expect(err).NotTo(HaveOccurred())
-		Expect(snapshotImages.Images).NotTo(BeEmpty(), "No images were detected in snapshot file")
+		Expect(snapshotData.Images).NotTo(BeEmpty(), "No images were detected in snapshot file")
 
 		repositories, err = support.LoadRepositoryList()
 		Expect(err).NotTo(HaveOccurred())
@@ -35,7 +35,7 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 	})
 
 	It("get operator image", func() {
-		operator = snapshotImages.Images[support.OperatorImageKey]
+		operator = snapshotData.Images[support.OperatorImageKey]
 		Expect(operator).NotTo(BeEmpty(), "Operator image not detected in snapshot file")
 		log.Printf("Using %s\n", operator)
 	})
@@ -77,11 +77,11 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 		mapped := make(map[string]string)
 		for _, imageKey := range support.MandatoryTasOperatorImageKeys() {
 			oSha := support.ExtractHash(operatorTasImages[imageKey])
-			if _, keyExist := snapshotImages.Images[imageKey]; !keyExist {
+			if _, keyExist := snapshotData.Images[imageKey]; !keyExist {
 				mapped[imageKey] = "MISSING"
 				continue
 			}
-			sSha := support.ExtractHash(snapshotImages.Images[imageKey])
+			sSha := support.ExtractHash(snapshotData.Images[imageKey])
 			if oSha == sSha {
 				mapped[imageKey] = "match"
 			} else {
@@ -107,11 +107,11 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 	})
 
 	It("operator-bundle use the right operator", func() {
-		fileContent, err := support.RunImage(snapshotImages.Images[support.OperatorBundleImageKey], []string{"cat", support.OperatorBundleClusterServiceVersionFile})
+		fileContent, err := support.RunImage(snapshotData.Images[support.OperatorBundleImageKey], []string{"cat", support.OperatorBundleClusterServiceVersionFile})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(fileContent).NotTo(BeEmpty())
 
-		operatorHash := support.ExtractHash(snapshotImages.Images[support.OperatorImageKey])
+		operatorHash := support.ExtractHash(snapshotData.Images[support.OperatorImageKey])
 		re := regexp.MustCompile(`(\w+:\s*[\w./-]+operator[\w-]*@sha256:` + operatorHash + `)`)
 		matches := re.FindAllString(fileContent, -1)
 		Expect(matches).NotTo(BeEmpty())

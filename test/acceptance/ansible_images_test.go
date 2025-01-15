@@ -12,8 +12,8 @@ import (
 var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 
 	var (
-		snapshotImages support.SnapshotMap
-		repositories   *support.RepositoryList
+		snapshotData support.SnapshotData
+		repositories *support.RepositoryList
 
 		ansibleFileContent []byte
 
@@ -23,10 +23,10 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 
 	It("get and parse snapshot file", func() {
 		var err error
-		snapshotImages, err = support.ParseSnapshotImages()
-		support.LogMap(fmt.Sprintf("Snapshot images (%d):", len(snapshotImages.Images)), snapshotImages.Images)
+		snapshotData, err = support.ParseSnapshotData()
+		support.LogMap(fmt.Sprintf("Snapshot images (%d):", len(snapshotData.Images)), snapshotData.Images)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(snapshotImages.Images).NotTo(BeEmpty(), "No images were detected in snapshot file")
+		Expect(snapshotData.Images).NotTo(BeEmpty(), "No images were detected in snapshot file")
 
 		repositories, err = support.LoadRepositoryList()
 		Expect(err).NotTo(HaveOccurred())
@@ -38,7 +38,7 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 		ansibleCollectionURL := support.GetEnv(support.EnvAnsibleImagesFile)
 		if ansibleCollectionURL == "" {
 			// standard way - use ansible definition file name from releases snapshot.json
-			ansibleCollectionURL = snapshotImages.Others[support.AnsibleCollectionKey]
+			ansibleCollectionURL = snapshotData.Others[support.AnsibleCollectionKey]
 			Expect(ansibleCollectionURL).NotTo(BeEmpty())
 			log.Printf("Using %s URL from snapshot.json file\n", ansibleCollectionURL)
 		}
@@ -88,16 +88,16 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 			if imageKey == "tas_single_node_tuf_image" {
 				log.Printf("Ansible uses differet TUF image - skipping")
 				log.Printf("  Ansible:  %s", ansibleTasImages[imageKey])
-				log.Printf("  Snapshot: %s", snapshotImages.Images[support.ConvertAnsibleImageKey(imageKey)])
+				log.Printf("  Snapshot: %s", snapshotData.Images[support.ConvertAnsibleImageKey(imageKey)])
 				continue
 			}
 
 			aSha := support.ExtractHash(ansibleTasImages[imageKey])
-			if _, keyExist := snapshotImages.Images[support.ConvertAnsibleImageKey(imageKey)]; !keyExist {
+			if _, keyExist := snapshotData.Images[support.ConvertAnsibleImageKey(imageKey)]; !keyExist {
 				mapped[imageKey] = "MISSING"
 				continue
 			}
-			sSha := support.ExtractHash(snapshotImages.Images[support.ConvertAnsibleImageKey(imageKey)])
+			sSha := support.ExtractHash(snapshotData.Images[support.ConvertAnsibleImageKey(imageKey)])
 			if aSha == sSha {
 				mapped[imageKey] = "match"
 			} else {

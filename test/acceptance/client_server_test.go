@@ -30,16 +30,16 @@ const (
 var _ = Describe("Client server", Ordered, func() {
 
 	var clientServerImage string
-	var snapshotImages support.SnapshotMap
+	var snapshotData support.SnapshotData
 	var tmpDir string
 
 	Describe("client-server image", func() {
 		It("snapshot.json", func() {
 			var err error
-			snapshotImages, err = support.ParseSnapshotImages()
+			snapshotData, err = support.ParseSnapshotData()
 			Expect(err).NotTo(HaveOccurred())
 
-			clientServerImage = snapshotImages.Images["client-server-image"]
+			clientServerImage = snapshotData.Images["client-server-image"]
 			Expect(clientServerImage).NotTo(BeEmpty())
 		})
 
@@ -68,13 +68,13 @@ var _ = Describe("Client server", Ordered, func() {
 					It("init", func() {
 						switch cli {
 						case "createtree", "updatetree":
-							image = snapshotImages.Images[cli+"-image"]
+							image = snapshotData.Images[cli+"-image"]
 						case "tuftool":
-							image = snapshotImages.Images["tuf-tool-image"]
+							image = snapshotData.Images["tuf-tool-image"]
 						case "rekor-cli":
-							image = snapshotImages.Images["rekor-cli-image"]
+							image = snapshotData.Images["rekor-cli-image"]
 						default:
-							image = snapshotImages.Images[cli+"-cli-image"]
+							image = snapshotData.Images[cli+"-cli-image"]
 						}
 					})
 
