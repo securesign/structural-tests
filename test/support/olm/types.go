@@ -35,7 +35,7 @@ type Property struct {
 	Value interface{} `json:"value"`
 }
 
-// Deprecation Schema
+// Deprecation Schema.
 type Deprecation struct {
 	Schema  string             `json:"schema"`
 	Package string             `json:"package"`

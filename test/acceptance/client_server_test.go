@@ -167,7 +167,7 @@ var _ = Describe("Client server", Ordered, func() {
 })
 
 // verifyExecutable verifies that the executable file matches the target OS and architecture.
-func verifyExecutable(filePath, osName, arch string) error { //nolint:cyclop
+func verifyExecutable(filePath, osName, arch string) error {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return fmt.Errorf("failed to open file %s: %w", filePath, err)

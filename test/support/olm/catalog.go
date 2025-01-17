@@ -45,7 +45,7 @@ func ParseCatalogJSON(reader io.Reader) ([]interface{}, error) {
 				return nil, fmt.Errorf("failed to parse OLM bundle: %w", err)
 			}
 			result = append(result, bundle)
-		
+
 		case "olm.deprecations":
 			var deprecation Deprecation
 			err = json.Unmarshal(rawJSON(raw), &deprecation)
