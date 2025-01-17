@@ -1,6 +1,8 @@
 linters-settings:
   lll:
     line-length: 170
+  cyclop:
+    max-complexity: 15
 linters:
   enable-all: true
   disable:

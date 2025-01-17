@@ -34,3 +34,20 @@ type Property struct {
 	Type  string      `json:"type"`
 	Value interface{} `json:"value"`
 }
+
+// Deprecation Schema.
+type Deprecation struct {
+	Schema  string             `json:"schema"`
+	Package string             `json:"package"`
+	Entries []DeprecationEntry `json:"entries"`
+}
+
+type DeprecationEntry struct {
+	Message   string    `json:"message"`
+	Reference Reference `json:"reference"`
+}
+
+type Reference struct {
+	Name   string `json:"name"`
+	Schema string `json:"schema"`
+}
