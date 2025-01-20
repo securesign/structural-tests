@@ -66,11 +66,13 @@ func AnsibleTasImageKeys() []string {
 		"tas_single_node_rekor_search_ui_image",
 		"tas_single_node_createtree_image",
 		"tas_single_node_client_server_image",
+		"tas_single_node_backfill_redis_image",
 	}
 }
 
 func AnsibleOtherImageKeys() []string {
 	return []string{
+		"tas_single_node_http_server_image",
 		"tas_single_node_trillian_netcat_image",
 		"tas_single_node_nginx_image",
 	}
