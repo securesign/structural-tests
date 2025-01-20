@@ -42,6 +42,7 @@ var _ = Describe("File-based catalog images", Ordered, func() {
 			var bundles []olm.Bundle
 			var channels []olm.Channel
 			var packages []olm.Package
+			var deprecation olm.Deprecation
 
 			It("extract catalog.json", func() {
 				dir, err := os.MkdirTemp("", key)
@@ -65,6 +66,8 @@ var _ = Describe("File-based catalog images", Ordered, func() {
 						channels = append(channels, typedObj)
 					case olm.Package:
 						packages = append(packages, typedObj)
+					case olm.Deprecation:
+						deprecation = typedObj
 					}
 				}
 
@@ -88,7 +91,7 @@ var _ = Describe("File-based catalog images", Ordered, func() {
 			})
 
 			It("verify channels", func() {
-				expectedChannels := []string{"stable", "stable-v1.0", "stable-v1.1"}
+				expectedChannels := []string{"stable", "stable-v1.1", "stable-v1.0"}
 				Expect(channels).To(HaveLen(len(expectedChannels)))
 
 				for _, channel := range channels {
@@ -110,6 +113,14 @@ var _ = Describe("File-based catalog images", Ordered, func() {
 				Expect(exists).To(BeTrue(), fmt.Sprintf("olm bundle with %s hash not found", bundleImageHash))
 			})
 
+			It("verify deprecations", func() {
+				expectedDeprecations := []string{"stable-v1.0", "rhtas-operator.v1.0.0", "rhtas-operator.v1.0.1", "rhtas-operator.v1.0.2"}
+				Expect(deprecation.Entries).To(HaveLen(len(expectedDeprecations)))
+
+				for _, entry := range deprecation.Entries {
+					Expect(expectedDeprecations).To(ContainElement(entry.Reference.Name))
+				}
+			})
 		},
 		ocps)
 })
