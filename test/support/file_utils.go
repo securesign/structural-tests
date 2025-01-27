@@ -195,7 +195,7 @@ func MapAnsibleZipFileURL(originalPath string) (string, error) {
 	re := regexp.MustCompile(`\d+$`)
 	match := re.FindString(originalPath)
 	if match == "" {
-		return "", fmt.Errorf("artifact ID not found at the end of the URL")
+		return "", fmt.Errorf("artifact ID not found at the end of the URL: %s", originalPath)
 	}
 	newPath := AnsibleArtifactsURL + "/" + match + "/zip"
 	log.Printf("URL mapped to %s\n", newPath)
