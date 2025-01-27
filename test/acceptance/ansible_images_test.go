@@ -37,10 +37,14 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 		var err error
 		ansibleCollectionURL := support.GetEnv(support.EnvAnsibleImagesFile)
 		if ansibleCollectionURL == "" {
-			// standard way - use ansible definition file name from releases snapshot.json
-			ansibleCollectionURL = snapshotData.Others[support.AnsibleCollectionKey]
+			support.LogAvailableAnsibleArtifacts()
+			// standard way - use ansible definition file path from releases snapshot.json file
+			snapshotAnsibleURL := snapshotData.Others[support.AnsibleCollectionKey]
+			log.Printf("Using %s URL from snapshot.json file\n", snapshotAnsibleURL)
+			Expect(snapshotAnsibleURL).NotTo(BeEmpty())
+			ansibleCollectionURL, err = support.MapAnsibleZipFileURL(snapshotAnsibleURL)
+			Expect(err).NotTo(HaveOccurred())
 			Expect(ansibleCollectionURL).NotTo(BeEmpty())
-			log.Printf("Using %s URL from snapshot.json file\n", ansibleCollectionURL)
 		}
 		ansibleFileContent, err = support.LoadAnsibleCollectionSnapshotFile(ansibleCollectionURL, support.AnsibleCollectionSnapshotFile)
 		Expect(err).NotTo(HaveOccurred())

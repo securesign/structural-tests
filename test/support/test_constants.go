@@ -11,6 +11,7 @@ const (
 	AnsibleCollectionKey   = "artifact-signer-ansible.collection.url"
 
 	AnsibleCollectionSnapshotFile           = "roles/tas_single_node/defaults/main.yml"
+	AnsibleArtifactsURL                     = "https://api.github.com/repos/securesign/artifact-signer-ansible/actions/artifacts"
 	OperatorBundleClusterServiceVersionFile = "manifests/rhtas-operator.clusterserviceversion.yaml"
 
 	TasImageDefinitionRegexp      = `^registry.redhat.io/rhtas/[\w/-]+@sha256:\w{64}$`

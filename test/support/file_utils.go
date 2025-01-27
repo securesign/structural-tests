@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	testroot "github.com/securesign/structural-tests/test"
@@ -59,8 +60,7 @@ func downloadFileContent(url string, accessToken string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		log.Printf("Failed to download file: %v", resp)
-		err := errors.New("bad status: " + resp.Status)
+		err := errors.New("error status: " + resp.Status)
 		return nil, err
 	}
 
@@ -179,4 +179,25 @@ func lookThroughTarFile(reader io.Reader, filePath string) ([]byte, error) {
 		}
 	}
 	return nil, nil
+}
+
+func LogAvailableAnsibleArtifacts() {
+	log.Println("Getting list of available ansible artifacts ...")
+	artifacts, err := GetFileContent(AnsibleArtifactsURL)
+	if err != nil {
+		log.Printf("Failed to load list of ansible artifacts: %v", err)
+	} else {
+		log.Printf("\n%s\n", string(artifacts))
+	}
+}
+
+func MapAnsibleZipFileURL(originalPath string) (string, error) {
+	re := regexp.MustCompile(`\d+$`)
+	match := re.FindString(originalPath)
+	if match == "" {
+		return "", fmt.Errorf("artifact ID not found at the end of the URL")
+	}
+	newPath := AnsibleArtifactsURL + "/" + match + "/zip"
+	log.Printf("URL mapped to %s\n", newPath)
+	return newPath, nil
 }
