@@ -1,5 +1,5 @@
 # Structural tests
-Securesign project structural and acceptance tests. Base on
+Securesign project structural and acceptance tests. Based on
 * Securesign releases: https://github.com/securesign/releases
 * Securesign operator: https://github.com/securesign/secure-sign-operator
 * Securesign Ansible collection: https://github.com/securesign/artifact-signer-ansible
