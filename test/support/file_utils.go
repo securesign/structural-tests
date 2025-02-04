@@ -1,21 +1,24 @@
 package support
 
 import (
+	"archive/tar"
+	"archive/zip"
+	"bytes"
 	"compress/gzip"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	testroot "github.com/securesign/structural-tests/test"
 )
 
-func GetFileContent(filePath string) (string, error) {
+func GetFileContent(filePath string) ([]byte, error) {
 	snapshotFile, isLocal := checkFilePath(filePath)
 	if isLocal {
 		return loadFileContent(snapshotFile)
@@ -40,11 +43,11 @@ func localPathCleanup(origPath string) string {
 	return filepath.Clean(finalPath)
 }
 
-func downloadFileContent(url string, accessToken string) (string, error) {
+func downloadFileContent(url string, accessToken string) ([]byte, error) {
 	log.Printf("Downloading file %s\n", url)
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
-		return "", fmt.Errorf("failed to create new request: %w", err)
+		return nil, fmt.Errorf("failed to create new request: %w", err)
 	}
 	if accessToken != "" {
 		req.Header.Add("Authorization", "token "+accessToken)
@@ -52,34 +55,34 @@ func downloadFileContent(url string, accessToken string) (string, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("failed to get response: %w", err)
+		return nil, fmt.Errorf("failed to get response: %w", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		err := errors.New("bad status: " + resp.Status)
-		return "", err
+		err := fmt.Errorf("error status: %s", resp.Status)
+		return nil, err
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("failed to read file: %w", err)
+		return nil, fmt.Errorf("failed to read file: %w", err)
 	}
 
-	return string(body), nil
+	return body, nil
 }
 
-func loadFileContent(filePath string) (string, error) {
+func loadFileContent(filePath string) ([]byte, error) {
 	log.Printf("Loading file %s\n", filePath)
 	file, err := os.Open(filePath)
 	if err != nil {
-		return "", fmt.Errorf("failed to open file: %w", err)
+		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
 	defer file.Close()
 	contentBuffer, err := io.ReadAll(file)
 	if err != nil {
-		return "", fmt.Errorf("failed to read content of the file: %w", err)
+		return nil, fmt.Errorf("failed to read content of the file: %w", err)
 	}
-	return string(contentBuffer), nil
+	return contentBuffer, nil
 }
 
 // DecompressGzipFile decompresses a Gzip file and writes the decompressed content to a specified output file.
@@ -111,4 +114,89 @@ func DecompressGzipFile(gzipPath string, outputPath string) error {
 		return fmt.Errorf("failed to write decompressed data: %w", err)
 	}
 	return nil
+}
+
+func LoadAnsibleCollectionSnapshotFile(zipFileURL, ansibleImagesFile string) ([]byte, error) {
+	zipData, err := GetFileContent(zipFileURL)
+	if err != nil {
+		return nil, err
+	}
+
+	zipReader, err := zip.NewReader(bytes.NewReader(zipData), int64(len(zipData)))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read a zip file: %w", err)
+	}
+
+	for _, zipFile := range zipReader.File {
+		log.Printf("Extracted from zip: %s\n", zipFile.Name)
+		zipFileContent, err := zipFile.Open()
+		if err != nil {
+			return nil, fmt.Errorf("failed to open zip file: %w", err)
+		}
+		defer zipFileContent.Close()
+
+		gzipReader, err := gzip.NewReader(zipFileContent)
+		if err != nil {
+			return nil, fmt.Errorf("failed to gunzip file: %w", err)
+		}
+		defer gzipReader.Close()
+
+		log.Printf("Extracted from gzip %s\n", gzipReader.Name)
+		tarFileContent, err := lookThroughTarFile(gzipReader, ansibleImagesFile)
+		if err != nil {
+			return nil, err
+		}
+		if tarFileContent != nil {
+			return tarFileContent, nil
+		}
+	}
+
+	return nil, nil
+}
+
+func lookThroughTarFile(reader io.Reader, filePath string) ([]byte, error) {
+	tarReader := tar.NewReader(reader)
+	for {
+		tarHeader, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to read files from tar file: %w", err)
+		}
+
+		if tarHeader.Name == filePath {
+			log.Printf("Found %s\n", tarHeader.Name)
+			tarFileContent, err := io.ReadAll(tarReader)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read from tar file: %w", err)
+			}
+			if tarFileContent == nil {
+				log.Printf("%s not found\n", filePath)
+			}
+			return tarFileContent, nil
+		}
+	}
+	return nil, nil
+}
+
+func LogAvailableAnsibleArtifacts() {
+	log.Println("Getting list of available ansible artifacts ...")
+	artifacts, err := GetFileContent(AnsibleArtifactsURL)
+	if err != nil {
+		log.Printf("Failed to load list of ansible artifacts: %v", err)
+	} else {
+		log.Printf("\n%s\n", string(artifacts))
+	}
+}
+
+func MapAnsibleZipFileURL(originalPath string) (string, error) {
+	re := regexp.MustCompile(`\d+$`)
+	match := re.FindString(originalPath)
+	if match == "" {
+		return "", fmt.Errorf("artifact ID not found at the end of the URL: %s", originalPath)
+	}
+	newPath := AnsibleArtifactsURL + "/" + match + "/zip"
+	log.Printf("URL mapped to %s\n", newPath)
+	return newPath, nil
 }

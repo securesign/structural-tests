@@ -50,7 +50,7 @@ func LoadRepositoryList() (*RepositoryList, error) {
 		return nil, err
 	}
 	var list RepositoryList
-	err = json.Unmarshal([]byte(content), &list)
+	err = json.Unmarshal(content, &list)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse repositories file: %w", err)
 	}

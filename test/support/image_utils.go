@@ -23,7 +23,9 @@ func RunImage(imageDefinition string, commands []string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("error while initializing docker client: %w", err)
 	}
-	reader, err := cli.ImagePull(ctx, imageDefinition, image.PullOptions{})
+	reader, err := cli.ImagePull(ctx, imageDefinition, image.PullOptions{
+		Platform: "linux/amd64",
+	})
 	if err != nil {
 		return "", fmt.Errorf("cannot pull image %s: %w", imageDefinition, err)
 	}
