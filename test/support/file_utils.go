@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -60,7 +59,7 @@ func downloadFileContent(url string, accessToken string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		err := errors.New("error status: " + resp.Status)
+		err := fmt.Errorf("error status: %s", resp.Status)
 		return nil, err
 	}
 

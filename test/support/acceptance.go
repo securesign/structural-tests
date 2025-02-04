@@ -7,7 +7,6 @@ import (
 	"slices"
 	"strings"
 
-	"errors"
 	"gopkg.in/yaml.v3"
 )
 
@@ -16,7 +15,7 @@ type OperatorMap map[string]string
 func ParseSnapshotData() (SnapshotData, error) {
 	snapshotFileName := GetEnv(EnvReleasesSnapshotFile)
 	if snapshotFileName == "" {
-		return SnapshotData{}, errors.New(fmt.Sprintf("snapshot file name must be set. Use %s env variable for that", EnvReleasesSnapshotFile))
+		return SnapshotData{}, fmt.Errorf("snapshot file name must be set. Use %s env variable for that", EnvReleasesSnapshotFile)
 	}
 	content, err := GetFileContent(snapshotFileName)
 	if err != nil {
