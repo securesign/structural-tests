@@ -1,9 +1,12 @@
 package acceptance
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 	"regexp"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -107,13 +110,22 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 	})
 
 	It("operator-bundle use the right operator", func() {
-		fileContent, err := support.RunImage(snapshotData.Images[support.OperatorBundleImageKey], []string{"cat", support.OperatorBundleClusterServiceVersionFile})
+		dir, err := os.MkdirTemp("", "bundle")
+		Expect(err).NotTo(HaveOccurred())
+		defer os.RemoveAll(dir)
+
+		Expect(support.FileFromImage(
+			context.Background(),
+			snapshotData.Images[support.OperatorBundleImageKey],
+			support.OperatorBundleClusterServiceVersionPath, dir),
+		).To(Succeed())
+		fileContent, err := os.ReadFile(filepath.Join(dir, support.OperatorBundleClusterServiceVersionFile))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(fileContent).NotTo(BeEmpty())
 
 		operatorHash := support.ExtractHash(snapshotData.Images[support.OperatorImageKey])
 		re := regexp.MustCompile(`(\w+:\s*[\w./-]+operator[\w-]*@sha256:` + operatorHash + `)`)
-		matches := re.FindAllString(fileContent, -1)
+		matches := re.FindAllString(string(fileContent), -1)
 		Expect(matches).NotTo(BeEmpty())
 		support.LogArray("Operator images found in operator-bundle:", matches)
 	})
