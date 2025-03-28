@@ -86,6 +86,7 @@ func FileFromImage(ctx context.Context, imageName, filePath, outputPath string) 
 	// Create a container from the image
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 		Image: imageName,
+		Cmd:   []string{"echo", "dummy"},
 	}, nil, nil, nil, "")
 	if err != nil {
 		return fmt.Errorf("failed to create container: %w", err)
