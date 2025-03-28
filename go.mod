@@ -2,6 +2,8 @@ module github.com/securesign/structural-tests
 
 go 1.23.0
 
+toolchain go1.24.1
+
 require (
 	github.com/docker/docker v27.4.1+incompatible
 	github.com/onsi/ginkgo/v2 v2.22.2
@@ -36,9 +38,9 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.27.0 // indirect
 	go.opentelemetry.io/otel/metric v1.33.0 // indirect
 	go.opentelemetry.io/otel/trace v1.33.0 // indirect
-	golang.org/x/net v0.34.0 // indirect
-	golang.org/x/sys v0.29.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/net v0.36.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.29.0 // indirect
 	google.golang.org/grpc v1.66.0 // indirect
