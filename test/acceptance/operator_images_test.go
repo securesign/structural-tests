@@ -107,7 +107,7 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 	})
 
 	It("operator-bundle use the right operator", func() {
-		fileContent, err := support.RunImage(snapshotData.Images[support.OperatorBundleImageKey], []string{"cat", support.OperatorBundleClusterServiceVersionFile})
+		fileContent, err := support.RunImage(snapshotData.Images[support.OperatorBundleImageKey], []string{"/bin/cat", support.OperatorBundleClusterServiceVersionFile})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(fileContent).NotTo(BeEmpty())
 
