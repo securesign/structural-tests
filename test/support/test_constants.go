@@ -5,6 +5,7 @@ const (
 	EnvAnsibleImagesFile    = "ANSIBLE"
 	EnvRepositoriesFile     = "REPOSITORIES"
 	EnvTestGithubToken      = "TEST_GITHUB_TOKEN" // #nosec G101
+	EnvVersion              = "VERSION"
 
 	OperatorImageKey       = "rhtas-operator-image"
 	OperatorBundleImageKey = "rhtas-operator-bundle-image"

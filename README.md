@@ -26,6 +26,7 @@ for the tests are taken from that file, as shown below:
 
 ### Parameters
 * ``SNAPSHOT`` - points to the ``snapshot.json`` file, can be local or on a server (github).
+* ``VERSION`` - version of realease in semver format. Example ``1.2.0``
 * ``TEST_GITHUB_TOKEN`` - token used to access  ``releases`` project on github.
 * ``ANSIBLE`` - ansible collection zip file used instead of the one defined in ``snapshot.json`` file. Can also be local.
 * ``REPOSITORIES`` - file with images published in ``registry.redhat.io``, default ``testdata/repositories.json``. For how to get or update this file, 
