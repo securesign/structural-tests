@@ -6,6 +6,7 @@ require (
 	github.com/docker/docker v27.4.1+incompatible
 	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2
+	golang.org/x/mod v0.22.0
 	gopkg.in/yaml.v3 v3.0.1
 	sigs.k8s.io/controller-runtime v0.19.4
 )

@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/securesign/structural-tests/test/support"
+	"golang.org/x/mod/semver"
 )
 
 var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
@@ -15,13 +16,15 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 		snapshotData support.SnapshotData
 		repositories *support.RepositoryList
 
-		ansibleFileContent []byte
+		ansibleFileContent   []byte
+		ansibleCollectionURL string
 
 		ansibleTasImages   support.AnsibleMap
 		ansibleOtherImages support.AnsibleMap
 	)
 
-	It("get and parse snapshot file", func() {
+	BeforeAll(func() {
+		By("get and parse snapshot file")
 		var err error
 		snapshotData, err = support.ParseSnapshotData()
 		support.LogMap(fmt.Sprintf("Snapshot images (%d):", len(snapshotData.Images)), snapshotData.Images)
@@ -31,21 +34,30 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 		repositories, err = support.LoadRepositoryList()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(repositories.Data).NotTo(BeEmpty(), "No images were detected in repositories file")
-	})
 
-	It("load ansible definition file", func() {
-		var err error
+		By("resolve ansible collection URL")
 		ansibleCollectionURL := support.GetEnv(support.EnvAnsibleImagesFile)
 		if ansibleCollectionURL == "" {
 			support.LogAvailableAnsibleArtifacts()
 			// standard way - use ansible definition file path from releases snapshot.json file
 			snapshotAnsibleURL := snapshotData.Others[support.AnsibleCollectionKey]
-			log.Printf("Using %s URL from snapshot.json file\n", snapshotAnsibleURL)
-			Expect(snapshotAnsibleURL).NotTo(BeEmpty())
-			ansibleCollectionURL, err = support.MapAnsibleZipFileURL(snapshotAnsibleURL)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(ansibleCollectionURL).NotTo(BeEmpty())
+			if snapshotAnsibleURL != "" {
+				log.Printf("Using %s URL from snapshot.json file\n", snapshotAnsibleURL)
+				ansibleCollectionURL, err = support.MapAnsibleZipFileURL(snapshotAnsibleURL)
+				Expect(err).NotTo(HaveOccurred())
+			}
 		}
+
+		By("check supported version")
+		version := support.GetEnv(support.EnvVersion)
+		if semver.Compare("v"+version, "v1.2.0") < 0 && ansibleCollectionURL == "" {
+			Skip("Ansible is optional for " + version)
+		}
+	})
+
+	It("load ansible definition file", func() {
+		var err error
+		Expect(ansibleCollectionURL).NotTo(BeEmpty())
 		ansibleFileContent, err = support.LoadAnsibleCollectionSnapshotFile(ansibleCollectionURL, support.AnsibleCollectionSnapshotFile)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(ansibleFileContent).NotTo(BeEmpty(), "Ansible definition file seems to be empty")
