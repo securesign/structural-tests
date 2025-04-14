@@ -36,7 +36,7 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 		Expect(repositories.Data).NotTo(BeEmpty(), "No images were detected in repositories file")
 
 		By("resolve ansible collection URL")
-		ansibleCollectionURL := support.GetEnv(support.EnvAnsibleImagesFile)
+		ansibleCollectionURL = support.GetEnv(support.EnvAnsibleImagesFile)
 		if ansibleCollectionURL == "" {
 			support.LogAvailableAnsibleArtifacts()
 			// standard way - use ansible definition file path from releases snapshot.json file
