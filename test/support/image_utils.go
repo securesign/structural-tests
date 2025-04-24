@@ -76,7 +76,9 @@ func FileFromImage(ctx context.Context, imageName, filePath, outputPath string) 
 		panic(err)
 	}
 
-	reader, err := cli.ImagePull(ctx, imageName, image.PullOptions{})
+	reader, err := cli.ImagePull(ctx, imageName, image.PullOptions{
+		Platform: "linux/amd64",
+	})
 	if err != nil {
 		return fmt.Errorf("cannot pull image %s: %w", imageName, err)
 	}
