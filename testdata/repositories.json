@@ -6,31 +6,6 @@
       "published": false
     },
     {
-      "repository": "rhtas/createctconfig-rhel9",
-      "_id": "65f19e7ba6f85f5d75c9a6fd",
-      "published": false
-    },
-    {
-      "repository": "rhtas/ctlog-managectroots-rhel9",
-      "_id": "65f19fbde53800d135388bca",
-      "published": false
-    },
-    {
-      "repository": "rhtas/trillian-createtree-rhel9",
-      "_id": "65f1b18ebe2720152f9176c5",
-      "published": false
-    },
-    {
-      "repository": "rhtas/trillian-createdb-rhel9",
-      "_id": "65f1b1bd433719a95f74944f",
-      "published": false
-    },
-    {
-      "repository": "rhtas/fulcio-createcerts-rhel9",
-      "_id": "65f1b1f5522490f137fd6222",
-      "published": false
-    },
-    {
       "repository": "rhtas/trillian-database-rhel9",
       "_id": "65f1b863148101ac4c724f94",
       "published": false
@@ -38,16 +13,6 @@
     {
       "repository": "rhtas/trillian-redis-rhel9",
       "_id": "65f1b8d8be2720152f919c4d",
-      "published": false
-    },
-    {
-      "repository": "rhtas/client-server-re-rhel9",
-      "_id": "65f1f894be2720152f9309bc",
-      "published": false
-    },
-    {
-      "repository": "rhtas/client-server-cg-rhel9",
-      "_id": "65f1f8cc66a2ee048c9c1674",
       "published": false
     },
     {
@@ -61,48 +26,13 @@
       "published": false
     },
     {
-      "repository": "rhtas/createtree-rhel9",
-      "_id": "669581809a7be23eeeba2c75",
-      "published": false
-    },
-    {
-      "repository": "rhtas/updatetree-rhel9",
-      "_id": "669581e818ed731e8c6b6178",
-      "published": false
-    },
-    {
       "repository": "rhtas/fetch-tsa-certs-rhel9",
       "_id": "66bd0627b45b9ab255bbaa91",
       "published": false
     },
     {
-      "repository": "rhtas/timestamp-authority-rhel9",
-      "_id": "66bd082b3baec585c5866d02",
-      "published": false
-    },
-    {
-      "repository": "rhtas/tuftool-rhel9",
-      "_id": "66d8ae5f09b16829b1cddb96",
-      "published": false
-    },
-    {
-      "repository": "rhtas/tuffer-rhel9",
-      "_id": "66db47fab25ca6b3620b98e9",
-      "published": false
-    },
-    {
-      "repository": "rhtas/client-server-rhel9",
-      "_id": "66ed754e54a9155cfb958033",
-      "published": false
-    },
-    {
       "repository": "rhtas/rhtas-rhel9-operator",
       "_id": "65e79775f4abd6689b4f056c",
-      "published": true
-    },
-    {
-      "repository": "rhtas/tuf-server-rhel9",
-      "_id": "65f1a3d0f7f746ce45bc3d67",
       "published": true
     },
     {
@@ -153,6 +83,36 @@
     {
       "repository": "rhtas/ec-rhel9",
       "_id": "65f1f9dcfc649a18c6075de5",
+      "published": true
+    },
+    {
+      "repository": "rhtas/createtree-rhel9",
+      "_id": "669581809a7be23eeeba2c75",
+      "published": true
+    },
+    {
+      "repository": "rhtas/updatetree-rhel9",
+      "_id": "669581e818ed731e8c6b6178",
+      "published": true
+    },
+    {
+      "repository": "rhtas/timestamp-authority-rhel9",
+      "_id": "66bd082b3baec585c5866d02",
+      "published": true
+    },
+    {
+      "repository": "rhtas/tuftool-rhel9",
+      "_id": "66d8ae5f09b16829b1cddb96",
+      "published": true
+    },
+    {
+      "repository": "rhtas/tuffer-rhel9",
+      "_id": "66db47fab25ca6b3620b98e9",
+      "published": true
+    },
+    {
+      "repository": "rhtas/client-server-rhel9",
+      "_id": "66ed754e54a9155cfb958033",
       "published": true
     }
   ]
