@@ -28,6 +28,7 @@ func MandatoryTasOperatorImageKeys() []string {
 		"trillian-log-server-image",
 		"trillian-log-signer-image",
 		"trillian-db-image",
+		"trillian-create-tree-image",
 
 		"fulcio-server-image",
 
