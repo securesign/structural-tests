@@ -31,6 +31,21 @@
       "published": false
     },
     {
+      "repository": "rhtas/policy-controller-rhel9-operator",
+      "_id": "684c3637e9bee0b505a2c854",
+      "published": false
+    },
+    {
+      "repository": "rhtas/policy-controller-operator-bundle",
+      "_id": "684c3703b6603f6203b958f6",
+      "published": false
+    },
+    {
+      "repository": "rhtas/policy-controller-rhel9",
+      "_id": "684c47e98de4bcf89749e168",
+      "published": false
+    },
+    {
       "repository": "rhtas/rhtas-rhel9-operator",
       "_id": "65e79775f4abd6689b4f056c",
       "published": true
