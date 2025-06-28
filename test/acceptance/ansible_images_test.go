@@ -99,15 +99,6 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 	It("all ansible TAS image hashes are also defined in releases snapshot", func() {
 		mapped := make(map[string]string)
 		for _, imageKey := range support.AnsibleTasImageKeys() {
-
-			// skip, while ansible uses older tuf image
-			if imageKey == "tas_single_node_tuf_image" {
-				log.Printf("Ansible uses differet TUF image - skipping")
-				log.Printf("  Ansible:  %s", ansibleTasImages[imageKey])
-				log.Printf("  Snapshot: %s", snapshotData.Images[support.ConvertAnsibleImageKey(imageKey)])
-				continue
-			}
-
 			aSha := support.ExtractHash(ansibleTasImages[imageKey])
 			if _, keyExist := snapshotData.Images[support.ConvertAnsibleImageKey(imageKey)]; !keyExist {
 				mapped[imageKey] = "MISSING"
