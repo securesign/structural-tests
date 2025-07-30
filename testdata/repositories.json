@@ -46,6 +46,11 @@
       "published": false
     },
     {
+      "repository": "rhtas/rekor-monitor-rhel9",
+      "_id": "688a24d736269c658560f934",
+      "published": false
+    },
+    {
       "repository": "rhtas/rhtas-rhel9-operator",
       "_id": "65e79775f4abd6689b4f056c",
       "published": true

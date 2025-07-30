@@ -35,6 +35,7 @@ func MandatoryTasOperatorImageKeys() []string {
 		"rekor-redis-image",
 		"rekor-search-ui-image",
 		"rekor-server-image",
+		"rekor-monitor-image",
 		"backfill-redis-image",
 
 		"tuf-image",
@@ -62,6 +63,7 @@ func AnsibleTasImageKeys() []string {
 		"tas_single_node_trillian_log_server_image",
 		"tas_single_node_trillian_log_signer_image",
 		"tas_single_node_rekor_server_image",
+		"tas_single_node_rekor_monitor_image",
 		"tas_single_node_ctlog_image",
 		"tas_single_node_rekor_redis_image",
 		"tas_single_node_trillian_db_image",
