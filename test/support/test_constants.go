@@ -28,14 +28,12 @@ func MandatoryTasOperatorImageKeys() []string {
 		"trillian-log-server-image",
 		"trillian-log-signer-image",
 		"trillian-db-image",
-		"createtree-image",
 
 		"fulcio-server-image",
 
 		"rekor-redis-image",
 		"rekor-search-ui-image",
 		"rekor-server-image",
-		"rekor-monitor-image",
 		"backfill-redis-image",
 
 		"tuf-image",
