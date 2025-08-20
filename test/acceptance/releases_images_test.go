@@ -2,7 +2,6 @@ package acceptance
 
 import (
 	"fmt"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/securesign/structural-tests/test/support"
@@ -39,5 +38,49 @@ var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 		}
 		Expect(mapped).To(HaveEach(1))
 		Expect(len(snapshotData.Images)).To(BeNumerically("==", len(mapped)))
+	})
+
+	It("operator and operator bundle have both the same git reference", func() {
+		operatorReference, err := support.GetImageLabel(snapshotData.Images[support.OperatorImageKey], "vcs-ref")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(operatorReference).NotTo(BeEmpty())
+		operatorBundleReference, err := support.GetImageLabel(snapshotData.Images[support.OperatorBundleImageKey], "vcs-ref")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(operatorBundleReference).NotTo(BeEmpty())
+		Expect(operatorReference).To(Equal(operatorBundleReference))
+	})
+
+	It("snapshot.json images have correct labels", func() {
+		var imagesData []support.ImageData
+		allLabelKeys := make(map[string]int)
+		for _, image := range snapshotData.Images {
+			labels, err := support.InspectImageForLabels(image)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(labels).NotTo(BeEmpty())
+			var iData support.ImageData
+			iData.Image = image
+			iData.Labels = labels
+
+			// calculate counts of labels
+			imagesData = append(imagesData, iData)
+			for key := range labels {
+				_, exist := allLabelKeys[key]
+				if exist {
+					allLabelKeys[key]++
+				} else {
+					allLabelKeys[key] = 1
+				}
+			}
+		}
+
+		sortedKeys := support.GetMapKeysSorted(allLabelKeys)
+		support.LogMapByProvidedKeys(fmt.Sprintf("Labels counts out of max %d", len(imagesData)), allLabelKeys, sortedKeys)
+
+		for _, key := range sortedKeys {
+			fmt.Printf("%s:\n", key)
+			for _, img := range imagesData {
+				fmt.Printf("    [%-120s] %s\n", img.Image, img.Labels[key])
+			}
+		}
 	})
 })
