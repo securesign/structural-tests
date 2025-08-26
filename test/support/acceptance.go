@@ -50,12 +50,13 @@ func ParseOperatorImages(helpContent string) (OperatorMap, OperatorMap) {
 }
 
 func ParsePCOperatorImages(valuesFile string) (OperatorMap, OperatorMap) {
+	const minMatchLength = 3
 	imageRegex := regexp.MustCompile(`repository:\s*([^\s]+)[\s\S]+?version:\s*([^\s]+)[\s\S]+?`)
 	matches := imageRegex.FindAllStringSubmatch(valuesFile, -1)
 	operatorPcoImages := make(OperatorMap)
 	operatorOtherImages := make(OperatorMap)
 	for _, match := range matches {
-		if len(match) < 3 {
+		if len(match) < minMatchLength {
 			continue
 		}
 		repo, version := match[1], match[2]

@@ -67,11 +67,15 @@ func RunImage(imageDefinition string, entrypoint, commands []string) (string, er
 		return "", fmt.Errorf("error while initializing docker client: %w", err)
 	}
 
-	resp, err := cli.ContainerCreate(ctx, &container.Config{
-		Image:      imageDefinition,
-		Entrypoint: entrypoint,
-		Cmd:        commands,
-	}, nil, nil, nil, "")
+	config := &container.Config{
+		Image: imageDefinition,
+		Cmd:   commands,
+	}
+	if len(entrypoint) > 0 {
+		config.Entrypoint = entrypoint
+	}
+
+	resp, err := cli.ContainerCreate(ctx, config, nil, nil, nil, "")
 	if err != nil {
 		return "", fmt.Errorf("failed while creating container: %w", err)
 	}

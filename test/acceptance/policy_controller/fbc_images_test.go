@@ -20,8 +20,6 @@ const (
 	defaultChannel      = "tech-preview"
 )
 
-var expectedChannels = []string{"tech-preview"}
-
 var _ = Describe("File-based catalog images", Ordered, func() {
 
 	defer GinkgoRecover()
@@ -91,6 +89,7 @@ var _ = Describe("File-based catalog images", Ordered, func() {
 			})
 
 			It("verify channels", func() {
+				expectedChannels := []string{"tech-preview"}
 				Expect(channels).To(HaveLen(len(expectedChannels)))
 
 				for _, channel := range channels {
