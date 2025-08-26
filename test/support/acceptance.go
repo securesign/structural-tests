@@ -49,6 +49,26 @@ func ParseOperatorImages(helpContent string) (OperatorMap, OperatorMap) {
 	return operatorTasImages, operatorOtherImages
 }
 
+func ParsePCOperatorImages(valuesFile string) (OperatorMap, OperatorMap) {
+	imageRegex := regexp.MustCompile(`repository:\s*([^\s]+)[\s\S]+?version:\s*([^\s]+)[\s\S]+?`)
+	matches := imageRegex.FindAllStringSubmatch(valuesFile, -1)
+	operatorPcoImages := make(OperatorMap)
+	operatorOtherImages := make(OperatorMap)
+	for _, match := range matches {
+		if len(match) < 3 {
+			continue
+		}
+		repo, version := match[1], match[2]
+		switch {
+		case strings.Contains(repo, "registry.redhat.io/rhtas/policy-controller-rhel9"):
+			operatorPcoImages["policy-controller-image"] = fmt.Sprintf("%s@%s", repo, version)
+		case strings.Contains(repo, "registry.redhat.io/openshift4/ose-cli"):
+			operatorOtherImages["ose-cli-image"] = fmt.Sprintf("%s@sha256:%s", repo, version)
+		}
+	}
+	return operatorPcoImages, operatorOtherImages
+}
+
 func MapAnsibleImages(ansibleDefinitionFileContent []byte) (AnsibleMap, error) {
 	var ansibleImages AnsibleMap
 	err := yaml.Unmarshal(ansibleDefinitionFileContent, &ansibleImages)

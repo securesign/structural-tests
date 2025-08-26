@@ -11,7 +11,7 @@ type SnapshotData struct {
 	Others map[string]string
 }
 
-var imageRegexp = regexp.MustCompile(`^(fbc-[\w-]+|[\w-]+-image)$`)
+var imageRegexp = regexp.MustCompile(`^(fbc-[\w-]+|pco-fbc-[\w-]+|[\w-]+-image)$`)
 
 func (data *SnapshotData) UnmarshalJSON(b []byte) error {
 	var raw map[string]interface{}

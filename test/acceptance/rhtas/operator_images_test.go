@@ -44,7 +44,7 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 	})
 
 	It("get all TAS images used by this operator", func() {
-		helpLogs, err := support.RunImage(operator, []string{"-h"})
+		helpLogs, err := support.RunImage(operator, []string{"/manager"}, []string{"-h"})
 		Expect(err).NotTo(HaveOccurred())
 
 		operatorTasImages, operatorOtherImages = support.ParseOperatorImages(helpLogs)
