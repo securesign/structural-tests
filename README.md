@@ -3,6 +3,7 @@ Securesign project structural and acceptance tests. Based on
 * Securesign releases: https://github.com/securesign/releases
 * Securesign operator: https://github.com/securesign/secure-sign-operator
 * Securesign Ansible collection: https://github.com/securesign/artifact-signer-ansible
+* Policy Controller operator: https://github.com/securesign/policy-controller-operator
 
 ## Automation
 Current automation is done via Github actions here: https://github.com/securesign/releases/actions/workflows/structural.yml
@@ -37,23 +38,28 @@ Run tests based on a github file:
 
     SNAPSHOT=https://raw.githubusercontent.com/securesign/releases/refs/heads/feat/release-1.1.1/1.1.1/stable/snapshot.json \
     TEST_GITHUB_TOKEN=ghp_Ae \
-    go test -v ./test/... --ginkgo.v
+    go test -v ./test/acceptance/rhtas/... --ginkgo.v
 
 Run the same tests on a local (cloned) file:
 
     SNAPSHOT=../releases/1.1.1/stable/snapshot.json \
-    go test -v ./test/... --ginkgo.v
+    go test -v ./test/acceptance/rhtas/... --ginkgo.v
 
 Force different ansible collection instead of the one defined in ``snapshot.json`` file. This may be useful, when checking ansible collection not yet published:
 
     SNAPSHOT=../releases/1.1.1/stable/snapshot.json \
     ANSIBLE=https://api.github.com/repos/securesign/artifact-signer-ansible/actions/artifacts/2442056100/zip \
-    go test -v ./test/... --ginkgo.v
+    go test -v ./test/acceptance/rhtas/... --ginkgo.v
 
 To run just individual test use ``--ginkgo.fokus-file`` parameter:
 
     SNAPSHOT=../releases/1.1.1/stable/snapshot.json \
-    go test -v ./test/... --ginkgo.v --ginkgo.focus-file "ansible"
+    go test -v ./test/acceptance/rhtas/... --ginkgo.v --ginkgo.focus-file "ansible"
+
+To run policy controller operator tests use:
+```
+go test -v ./test/acceptance/policy_controller/... --ginkgo.v
+```
 
 ## Repository List
 The [repositories.json](testdata/repositories.json) file is used to check of all images are published correctly. To pull the list of repositories from Pyxis API:
