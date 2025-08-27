@@ -107,7 +107,7 @@ var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 					errorReport += error + "\n"
 				}
 			}
-			Fail(fmt.Sprintf("Label validation errors found:\n%s", errorReport))
+			Fail("Label validation errors found:\n" + errorReport)
 		}
 	})
 })
