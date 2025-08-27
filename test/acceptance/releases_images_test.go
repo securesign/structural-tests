@@ -66,29 +66,24 @@ var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 			imageDataList = append(imageDataList, imageData)
 		}
 
-		// Check that all images have 'architecture' label with value 'x86_64'
+		// Check that all images have required labels with correct values
+		requiredLabels := support.RequiredImageLabels()
 		for _, imageData := range imageDataList {
-			Expect(imageData.Labels).To(HaveKey("architecture"),
-				fmt.Sprintf("Image %s is missing 'architecture' label", imageData.Image))
-			Expect(imageData.Labels["architecture"]).To(Equal("x86_64"),
-				fmt.Sprintf("Image %s has incorrect architecture label: expected 'x86_64', got '%s'",
-					imageData.Image, imageData.Labels["architecture"]))
-		}
+			for labelName, expectedValue := range requiredLabels {
+				Expect(imageData.Labels).To(HaveKey(labelName),
+					fmt.Sprintf("Image %s is missing '%s' label", imageData.Image, labelName))
 
-		// Check that all images have 'build-date' label which is not empty
-		for _, imageData := range imageDataList {
-			Expect(imageData.Labels).To(HaveKey("build-date"),
-				fmt.Sprintf("Image %s is missing 'build-date' label", imageData.Image))
-			Expect(imageData.Labels["build-date"]).NotTo(BeEmpty(),
-				fmt.Sprintf("Image %s has empty 'build-date' label", imageData.Image))
-		}
-
-		// Check that all images have 'short-commit' label which is not empty
-		for _, imageData := range imageDataList {
-			Expect(imageData.Labels).To(HaveKey("short-commit"),
-				fmt.Sprintf("Image %s is missing 'short-commit' label", imageData.Image))
-			Expect(imageData.Labels["short-commit"]).NotTo(BeEmpty(),
-				fmt.Sprintf("Image %s has empty 'short-commit' label", imageData.Image))
+				if expectedValue != "" {
+					// Specific value expected
+					Expect(imageData.Labels[labelName]).To(Equal(expectedValue),
+						fmt.Sprintf("Image %s has incorrect '%s' label: expected '%s', got '%s'",
+							imageData.Image, labelName, expectedValue, imageData.Labels[labelName]))
+				} else {
+					// Label must not be empty
+					Expect(imageData.Labels[labelName]).NotTo(BeEmpty(),
+						fmt.Sprintf("Image %s has empty '%s' label", imageData.Image, labelName))
+				}
+			}
 		}
 	})
 })
