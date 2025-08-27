@@ -2,6 +2,7 @@ package acceptance
 
 import (
 	"fmt"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/securesign/structural-tests/test/support"
@@ -51,36 +52,43 @@ var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 	})
 
 	It("snapshot.json images have correct labels", func() {
-		var imagesData []support.ImageData
-		allLabelKeys := make(map[string]int)
-		for _, image := range snapshotData.Images {
-			labels, err := support.InspectImageForLabels(image)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(labels).NotTo(BeEmpty())
-			var iData support.ImageData
-			iData.Image = image
-			iData.Labels = labels
+		var imageDataList []support.ImageData
 
-			// calculate counts of labels
-			imagesData = append(imagesData, iData)
-			for key := range labels {
-				_, exist := allLabelKeys[key]
-				if exist {
-					allLabelKeys[key]++
-				} else {
-					allLabelKeys[key] = 1
-				}
+		// Collect all images and their labels
+		for imageName, imageDefinition := range snapshotData.Images {
+			labels, err := support.InspectImageForLabels(imageDefinition)
+			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed to inspect labels for image %s (%s)", imageName, imageDefinition))
+
+			imageData := support.ImageData{
+				Image:  imageDefinition,
+				Labels: labels,
 			}
+			imageDataList = append(imageDataList, imageData)
 		}
 
-		sortedKeys := support.GetMapKeysSorted(allLabelKeys)
-		support.LogMapByProvidedKeys(fmt.Sprintf("Labels counts out of max %d", len(imagesData)), allLabelKeys, sortedKeys)
+		// Check that all images have 'architecture' label with value 'x86_64'
+		for _, imageData := range imageDataList {
+			Expect(imageData.Labels).To(HaveKey("architecture"),
+				fmt.Sprintf("Image %s is missing 'architecture' label", imageData.Image))
+			Expect(imageData.Labels["architecture"]).To(Equal("x86_64"),
+				fmt.Sprintf("Image %s has incorrect architecture label: expected 'x86_64', got '%s'",
+					imageData.Image, imageData.Labels["architecture"]))
+		}
 
-		for _, key := range sortedKeys {
-			fmt.Printf("%s:\n", key)
-			for _, img := range imagesData {
-				fmt.Printf("    [%-120s] %s\n", img.Image, img.Labels[key])
-			}
+		// Check that all images have 'build-date' label which is not empty
+		for _, imageData := range imageDataList {
+			Expect(imageData.Labels).To(HaveKey("build-date"),
+				fmt.Sprintf("Image %s is missing 'build-date' label", imageData.Image))
+			Expect(imageData.Labels["build-date"]).NotTo(BeEmpty(),
+				fmt.Sprintf("Image %s has empty 'build-date' label", imageData.Image))
+		}
+
+		// Check that all images have 'short-commit' label which is not empty
+		for _, imageData := range imageDataList {
+			Expect(imageData.Labels).To(HaveKey("short-commit"),
+				fmt.Sprintf("Image %s is missing 'short-commit' label", imageData.Image))
+			Expect(imageData.Labels["short-commit"]).NotTo(BeEmpty(),
+				fmt.Sprintf("Image %s has empty 'short-commit' label", imageData.Image))
 		}
 	})
 })
