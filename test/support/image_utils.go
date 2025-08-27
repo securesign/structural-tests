@@ -44,7 +44,9 @@ func PullImageIfNotPresentLocally(ctx context.Context, imageDefinition string) e
 		}
 		defer pullResp.Close()
 		// ensure the pull operation completes.
-		io.Copy(io.Discard, pullResp)
+		if _, err := io.Copy(io.Discard, pullResp); err != nil {
+			return fmt.Errorf("failed to read pull response: %w", err)
+		}
 		return nil
 	}
 

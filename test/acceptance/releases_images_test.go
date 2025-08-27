@@ -102,9 +102,9 @@ var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 		if len(imageLablelsErrors) > 0 {
 			var errorReport string
 			for image, errors := range imageLablelsErrors {
-				errorReport += fmt.Sprintf("%s:\n", image)
+				errorReport += image + ":\n"
 				for _, error := range errors {
-					errorReport += fmt.Sprintf("%s\n", error)
+					errorReport += error + "\n"
 				}
 			}
 			Fail(fmt.Sprintf("Label validation errors found:\n%s", errorReport))

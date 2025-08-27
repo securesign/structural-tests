@@ -94,5 +94,4 @@ func LogMapByProvidedKeys[V any](message string, data map[string]V, keysToLog []
 		result += fmt.Sprintf("    [%-53v] %v\n", key, data[key])
 	}
 	log.Print(result)
-
 }
