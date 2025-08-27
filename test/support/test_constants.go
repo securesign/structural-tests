@@ -94,17 +94,13 @@ func GetOSArchMatrix() OSArchMatrix {
 	}
 }
 
-// RequiredImageLabels returns a map of required image labels.
-// If the value is not empty, it's the expected value for the label.
-// If the value is empty, the label must exist but can have any non-empty value.
+// If no value is provided, the label must exist, but can have any non-empty value.
 func RequiredImageLabels() map[string]string {
 	return map[string]string{
 		"architecture": "x86_64",
 		"build-date":   "",
-		"short-commit": "",
 		"vcs-ref":      "",
 		"vcs-type":     "git",
 		"vendor":       "Red Hat, Inc.",
-		"version":      "1.3.0",
 	}
 }

@@ -53,6 +53,7 @@ var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 
 	It("snapshot.json images have correct labels", func() {
 		var imageDataList []support.ImageData
+		imageLablelsErrors := make(map[string][]string)
 
 		// Collect all images and their labels
 		for imageName, imageDefinition := range snapshotData.Images {
@@ -69,21 +70,44 @@ var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 		// Check that all images have required labels with correct values
 		requiredLabels := support.RequiredImageLabels()
 		for _, imageData := range imageDataList {
-			for labelName, expectedValue := range requiredLabels {
-				Expect(imageData.Labels).To(HaveKey(labelName),
-					fmt.Sprintf("Image %s is missing '%s' label", imageData.Image, labelName))
+			var currentImageErrors []string
 
-				if expectedValue != "" {
-					// Specific value expected
-					Expect(imageData.Labels[labelName]).To(Equal(expectedValue),
-						fmt.Sprintf("Image %s has incorrect '%s' label: expected '%s', got '%s'",
-							imageData.Image, labelName, expectedValue, imageData.Labels[labelName]))
-				} else {
-					// Label must not be empty
-					Expect(imageData.Labels[labelName]).NotTo(BeEmpty(),
-						fmt.Sprintf("Image %s has empty '%s' label", imageData.Image, labelName))
+			for labelName, expectedValue := range requiredLabels {
+				if _, exists := imageData.Labels[labelName]; !exists {
+					currentImageErrors = append(currentImageErrors,
+						fmt.Sprintf("  %s: missing", labelName))
+					continue
+				}
+
+				if expectedValue != "" { // Specific value expected
+					if imageData.Labels[labelName] != expectedValue {
+						currentImageErrors = append(currentImageErrors,
+							fmt.Sprintf("  %s: %s, expected: %s",
+								labelName, imageData.Labels[labelName], expectedValue))
+					}
+				} else { // Label must not be empty
+					if imageData.Labels[labelName] == "" {
+						currentImageErrors = append(currentImageErrors,
+							fmt.Sprintf("  %s: missing", labelName))
+					}
 				}
 			}
+
+			if len(currentImageErrors) > 0 {
+				imageLablelsErrors[imageData.Image] = currentImageErrors
+			}
+		}
+
+		// Format errors in a human-readable way
+		if len(imageLablelsErrors) > 0 {
+			var errorReport string
+			for image, errors := range imageLablelsErrors {
+				errorReport += fmt.Sprintf("%s:\n", image)
+				for _, error := range errors {
+					errorReport += fmt.Sprintf("%s\n", error)
+				}
+			}
+			Fail(fmt.Sprintf("Label validation errors found:\n%s", errorReport))
 		}
 	})
 })
