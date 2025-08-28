@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 )
 
 func GetEnv(key string) string {
@@ -26,7 +27,7 @@ func getEnv(key string, isSecret bool) string {
 	return envValue
 }
 
-func GetMapKeys(m map[string]string) []string {
+func GetMapKeys[V any](m map[string]V) []string {
 	result := make([]string, 0, len(m))
 	for k := range m {
 		result = append(result, k)
@@ -40,6 +41,12 @@ func GetMapValues(m map[string]string) []string {
 		result = append(result, v)
 	}
 	return result
+}
+
+func GetMapKeysSorted[V any](m map[string]V) []string {
+	keys := GetMapKeys(m)
+	slices.Sort(keys)
+	return keys
 }
 
 func SplitMap(original map[string]string, keysToKeep []string) (map[string]string, map[string]string) {
@@ -73,10 +80,18 @@ func LogArray(message string, data []string) {
 	log.Print(result)
 }
 
-func LogMap(message string, data map[string]string) {
+func LogMap[V any](message string, data map[string]V) {
 	result := message + "\n"
 	for key, value := range data {
-		result += fmt.Sprintf("    [%-41s] %s\n", key, value)
+		result += fmt.Sprintf("    [%-41v] %v\n", key, value)
+	}
+	log.Print(result)
+}
+
+func LogMapByProvidedKeys[V any](message string, data map[string]V, keysToLog []string) {
+	result := message + "\n"
+	for _, key := range keysToLog {
+		result += fmt.Sprintf("    [%-53v] %v\n", key, data[key])
 	}
 	log.Print(result)
 }

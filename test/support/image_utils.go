@@ -16,21 +16,56 @@ import (
 	"github.com/docker/docker/client"
 )
 
+type ImageData struct {
+	Image  string
+	Labels map[string]string
+}
+
+func PullImageIfNotPresentLocally(ctx context.Context, imageDefinition string) error {
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return fmt.Errorf("could not create docker client: %w", err)
+	}
+	defer cli.Close()
+
+	// Inspect the image to check if it exists locally.
+	_, _, err = cli.ImageInspectWithRaw(ctx, imageDefinition)
+	if err == nil {
+		return nil // image is present already
+	}
+
+	if client.IsErrNotFound(err) {
+		log.Printf("Image '%s' not found locally, pulling...\n", imageDefinition)
+		pullResp, pullErr := cli.ImagePull(ctx, imageDefinition, image.PullOptions{
+			Platform: "linux/amd64",
+		})
+		if pullErr != nil {
+			return fmt.Errorf("failed to pull image: %w", pullErr)
+		}
+		defer pullResp.Close()
+		// ensure the pull operation completes.
+		if _, err := io.Copy(io.Discard, pullResp); err != nil {
+			return fmt.Errorf("failed to read pull response: %w", err)
+		}
+		return nil
+	}
+
+	// another type of error, return it.
+	return fmt.Errorf("failed to inspect image: %w", err)
+}
+
 func RunImage(imageDefinition string, commands []string) (string, error) {
 	ctx := context.TODO()
+	err := PullImageIfNotPresentLocally(ctx, imageDefinition)
+	if err != nil {
+		return "", err
+	}
+
 	log.Printf("Running image %s with commands %v\n", imageDefinition, commands)
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return "", fmt.Errorf("error while initializing docker client: %w", err)
 	}
-	reader, err := cli.ImagePull(ctx, imageDefinition, image.PullOptions{
-		Platform: "linux/amd64",
-	})
-	if err != nil {
-		return "", fmt.Errorf("cannot pull image %s: %w", imageDefinition, err)
-	}
-	_, _ = io.Copy(os.Stdout, reader)
-	_ = reader.Close()
 
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 		Image: imageDefinition,
@@ -69,21 +104,53 @@ func RunImage(imageDefinition string, commands []string) (string, error) {
 	return buf.String(), nil
 }
 
+func InspectImageForLabels(imageDefinition string) (map[string]string, error) {
+	ctx := context.TODO()
+	err := PullImageIfNotPresentLocally(ctx, imageDefinition)
+	if err != nil {
+		return nil, err
+	}
+
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return nil, fmt.Errorf("error while initializing docker client: %w", err)
+	}
+	defer cli.Close()
+
+	inspectData, _, err := cli.ImageInspectWithRaw(ctx, imageDefinition)
+	if err != nil {
+		return nil, fmt.Errorf("cannot inspect image %s: %w", imageDefinition, err)
+	}
+	if inspectData.Config == nil || len(inspectData.Config.Labels) == 0 {
+		log.Printf("Image [%s] does not have any labels\n", imageDefinition)
+		return make(map[string]string), nil
+	}
+
+	return inspectData.Config.Labels, nil
+}
+
+func GetImageLabel(imageDefinition, labelName string) (string, error) {
+	labels, err := InspectImageForLabels(imageDefinition)
+	if err != nil {
+		return "", err
+	}
+	if labelValue, ok := labels[labelName]; ok {
+		return labelValue, nil
+	}
+	return "", fmt.Errorf("label [%s] not found in image %s", labelName, imageDefinition)
+}
+
 func FileFromImage(ctx context.Context, imageName, filePath, outputPath string) error {
+	err := PullImageIfNotPresentLocally(ctx, imageName)
+	if err != nil {
+		return err
+	}
+
 	// Initialize the Docker client
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		panic(err)
 	}
-
-	reader, err := cli.ImagePull(ctx, imageName, image.PullOptions{
-		Platform: "linux/amd64",
-	})
-	if err != nil {
-		return fmt.Errorf("cannot pull image %s: %w", imageName, err)
-	}
-	_, _ = io.Copy(io.Discard, reader)
-	_ = reader.Close()
 
 	// Create a container from the image
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
@@ -102,7 +169,7 @@ func FileFromImage(ctx context.Context, imageName, filePath, outputPath string) 
 	}()
 
 	// Use Docker's API to copy the file from the container's filesystem
-	reader, _, err = cli.CopyFromContainer(ctx, resp.ID, filePath)
+	reader, _, err := cli.CopyFromContainer(ctx, resp.ID, filePath)
 	if err != nil {
 		return fmt.Errorf("failed to copy file from container: %w", err)
 	}

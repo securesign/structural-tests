@@ -93,3 +93,14 @@ func GetOSArchMatrix() OSArchMatrix {
 		"windows": {"amd64"},
 	}
 }
+
+// If no value is provided, the label must exist, but can have any non-empty value.
+func RequiredImageLabels() map[string]string {
+	return map[string]string{
+		"architecture": "x86_64",
+		"build-date":   "",
+		"vcs-ref":      "",
+		"vcs-type":     "git",
+		"vendor":       "Red Hat, Inc.",
+	}
+}
