@@ -2,6 +2,7 @@ package acceptance
 
 import (
 	"fmt"
+	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -53,7 +54,7 @@ var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 
 	It("snapshot.json images have correct labels", func() {
 		var imageDataList []support.ImageData
-		imageLablelsErrors := make(map[string][]string)
+		imageLabelsErrors := make(map[string][]string)
 
 		// Collect all images and their labels
 		for imageName, imageDefinition := range snapshotData.Images {
@@ -94,20 +95,22 @@ var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 			}
 
 			if len(currentImageErrors) > 0 {
-				imageLablelsErrors[imageData.Image] = currentImageErrors
+				imageLabelsErrors[imageData.Image] = currentImageErrors
 			}
 		}
 
 		// Format errors in a human-readable way
-		if len(imageLablelsErrors) > 0 {
-			var errorReport string
-			for image, errors := range imageLablelsErrors {
-				errorReport += image + ":\n"
+		if len(imageLabelsErrors) > 0 {
+			var errorReport strings.Builder
+			for image, errors := range imageLabelsErrors {
+				errorReport.WriteString(image)
+				errorReport.WriteString(":\n")
 				for _, error := range errors {
-					errorReport += error + "\n"
+					errorReport.WriteString(error)
+					errorReport.WriteString("\n")
 				}
 			}
-			Fail("Label validation errors found:\n" + errorReport)
+			Fail("Label validation errors found:\n" + errorReport.String())
 		}
 	})
 })
