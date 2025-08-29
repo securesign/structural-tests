@@ -7,14 +7,18 @@ const (
 	EnvTestGithubToken      = "TEST_GITHUB_TOKEN" // #nosec G101
 	EnvVersion              = "VERSION"
 
-	OperatorImageKey       = "rhtas-operator-image"
-	OperatorBundleImageKey = "rhtas-operator-bundle-image"
-	AnsibleCollectionKey   = "artifact-signer-ansible.collection.url"
+	PolicyControllerOperatorImageKey       = "policy-controller-operator-image"
+	PolicyControllerOperatorBundleImageKey = "policy-controller-operator-bundle-image"
+	OperatorImageKey                       = "rhtas-operator-image"
+	OperatorBundleImageKey                 = "rhtas-operator-bundle-image"
+	AnsibleCollectionKey                   = "artifact-signer-ansible.collection.url"
 
-	AnsibleCollectionSnapshotFile           = "roles/tas_single_node/defaults/main.yml"
-	AnsibleArtifactsURL                     = "https://api.github.com/repos/securesign/artifact-signer-ansible/actions/artifacts"
-	OperatorBundleClusterServiceVersionFile = "rhtas-operator.clusterserviceversion.yaml"
-	OperatorBundleClusterServiceVersionPath = "manifests/" + OperatorBundleClusterServiceVersionFile
+	AnsibleCollectionSnapshotFile                           = "roles/tas_single_node/defaults/main.yml"
+	AnsibleArtifactsURL                                     = "https://api.github.com/repos/securesign/artifact-signer-ansible/actions/artifacts"
+	OperatorBundleClusterServiceVersionFile                 = "rhtas-operator.clusterserviceversion.yaml"
+	PolicyControllerOperatorBundleClusterServiceVersionFile = "policy-controller-operator.clusterserviceversion.yaml"
+	OperatorBundleClusterServiceVersionPath                 = "manifests/" + OperatorBundleClusterServiceVersionFile
+	PolicyControllerOperatorBundleClusterServiceVersionPath = "manifests/" + PolicyControllerOperatorBundleClusterServiceVersionFile
 
 	TasImageDefinitionRegexp      = `^registry.redhat.io/rhtas/[\w/-]+@sha256:\w{64}$`
 	OtherImageDefinitionRegexp    = `^(registry.redhat.io|registry.access.redhat.com)`
@@ -47,6 +51,18 @@ func MandatoryTasOperatorImageKeys() []string {
 		"segment-backup-job-image",
 
 		"timestamp-authority-image",
+	}
+}
+
+func MandatoryPcoOperatorImageKeys() []string {
+	return []string{
+		"policy-controller-image",
+	}
+}
+
+func OtherPCOOperatorImageKeys() []string {
+	return []string{
+		"ose-cli-image",
 	}
 }
 

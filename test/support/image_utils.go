@@ -54,7 +54,7 @@ func PullImageIfNotPresentLocally(ctx context.Context, imageDefinition string) e
 	return fmt.Errorf("failed to inspect image: %w", err)
 }
 
-func RunImage(imageDefinition string, commands []string) (string, error) {
+func RunImage(imageDefinition string, entrypoint, commands []string) (string, error) {
 	ctx := context.TODO()
 	err := PullImageIfNotPresentLocally(ctx, imageDefinition)
 	if err != nil {
@@ -67,10 +67,15 @@ func RunImage(imageDefinition string, commands []string) (string, error) {
 		return "", fmt.Errorf("error while initializing docker client: %w", err)
 	}
 
-	resp, err := cli.ContainerCreate(ctx, &container.Config{
+	config := &container.Config{
 		Image: imageDefinition,
 		Cmd:   commands,
-	}, nil, nil, nil, "")
+	}
+	if len(entrypoint) > 0 {
+		config.Entrypoint = entrypoint
+	}
+
+	resp, err := cli.ContainerCreate(ctx, config, nil, nil, nil, "")
 	if err != nil {
 		return "", fmt.Errorf("failed while creating container: %w", err)
 	}
