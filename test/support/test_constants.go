@@ -9,6 +9,8 @@ const (
 
 	PolicyControllerOperatorImageKey       = "policy-controller-operator-image"
 	PolicyControllerOperatorBundleImageKey = "policy-controller-operator-bundle-image"
+	ModelValidationOperatorImageKey        = "model-validation-operator-image"
+	ModelValidationOperatorBundleImageKey  = "model-validation-operator-bundle-image"
 	OperatorImageKey                       = "rhtas-operator-image"
 	OperatorBundleImageKey                 = "rhtas-operator-bundle-image"
 	AnsibleCollectionKey                   = "artifact-signer-ansible.collection.url"
@@ -17,8 +19,10 @@ const (
 	AnsibleArtifactsURL                                     = "https://api.github.com/repos/securesign/artifact-signer-ansible/actions/artifacts"
 	OperatorBundleClusterServiceVersionFile                 = "rhtas-operator.clusterserviceversion.yaml"
 	PolicyControllerOperatorBundleClusterServiceVersionFile = "policy-controller-operator.clusterserviceversion.yaml"
+	ModelValidationOperatorBundleClusterServiceVersionFile  = "model-validation-operator.clusterserviceversion.yaml"
 	OperatorBundleClusterServiceVersionPath                 = "manifests/" + OperatorBundleClusterServiceVersionFile
 	PolicyControllerOperatorBundleClusterServiceVersionPath = "manifests/" + PolicyControllerOperatorBundleClusterServiceVersionFile
+	ModelValidationOperatorBundleClusterServiceVersionPath  = "manifests/" + ModelValidationOperatorBundleClusterServiceVersionFile
 
 	TasImageDefinitionRegexp      = `^registry.redhat.io/rhtas/[\w/-]+@sha256:\w{64}$`
 	OtherImageDefinitionRegexp    = `^(registry.redhat.io|registry.access.redhat.com)`
@@ -63,6 +67,12 @@ func MandatoryPcoOperatorImageKeys() []string {
 func OtherPCOOperatorImageKeys() []string {
 	return []string{
 		"ose-cli-image",
+	}
+}
+
+func MandatoryMvoOperatorImageKeys() []string {
+	return []string{
+		"model-transparency-image",
 	}
 }
 
