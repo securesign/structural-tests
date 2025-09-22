@@ -70,6 +70,24 @@ func ParsePCOperatorImages(valuesFile string) (OperatorMap, OperatorMap) {
 	return operatorPcoImages, operatorOtherImages
 }
 
+func ParseMVOperatorImages(valuesFile string) OperatorMap {
+	operatorMvoImages := make(OperatorMap)
+
+	const reFirstCapture = 1
+
+	helpRe := regexp.MustCompile(`(?s)-{1,2}model-transparency-cli-image\b.*?\(default\s+"([^"]+)"\)`)
+	m := helpRe.FindStringSubmatch(valuesFile)
+	if len(m) > reFirstCapture {
+		img := strings.TrimSpace(m[reFirstCapture])
+		if img != "" {
+			operatorMvoImages["model-transparency-image"] = img
+			return operatorMvoImages
+		}
+	}
+
+	return operatorMvoImages
+}
+
 func MapAnsibleImages(ansibleDefinitionFileContent []byte) (AnsibleMap, error) {
 	var ansibleImages AnsibleMap
 	err := yaml.Unmarshal(ansibleDefinitionFileContent, &ansibleImages)

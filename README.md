@@ -4,6 +4,7 @@ Securesign project structural and acceptance tests. Based on
 * Securesign operator: https://github.com/securesign/secure-sign-operator
 * Securesign Ansible collection: https://github.com/securesign/artifact-signer-ansible
 * Policy Controller operator: https://github.com/securesign/policy-controller-operator
+* Model Validation operator: https://github.com/securesign/model-validation-operator
 
 ## Automation
 Current automation is done via Github actions here: https://github.com/securesign/releases/actions/workflows/structural.yml
@@ -59,6 +60,11 @@ To run just individual test use ``--ginkgo.fokus-file`` parameter:
 To run policy controller operator tests use:
 ```
 go test -v ./test/acceptance/policy_controller/... --ginkgo.v
+```
+
+To run model validation operator tests use:
+```
+go test -v ./test/acceptance/model_transparency/... --ginkgo.v
 ```
 
 ## Repository List

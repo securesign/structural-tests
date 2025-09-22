@@ -51,6 +51,31 @@
       "published": false
     },
     {
+      "repository": "rhtas/rhtas-console-rhel9",
+      "_id": "68a380bc0b357c7050adfe6a",
+      "published": false
+    },
+    {
+      "repository": "rhtas/rhtas-console-ui-rhel9",
+      "_id": "68a38124312ed425e3215226",
+      "published": false
+    },
+    {
+      "repository": "rhtas/model-validation-rhel9-operator",
+      "_id": "68c0295377ceb0bccde13cb6",
+      "published": false
+    },
+    {
+      "repository": "rhtas/model-transparency-rhel9",
+      "_id": "68c02bb7097737a4a148b6c6",
+      "published": false
+    },
+    {
+      "repository": "rhtas/model-validation-operator-bundle",
+      "_id": "68c02cbc097737a4a148bbaa",
+      "published": false
+    },
+    {
       "repository": "rhtas/rhtas-rhel9-operator",
       "_id": "65e79775f4abd6689b4f056c",
       "published": true
