@@ -114,7 +114,7 @@ var _ = Describe("File-based catalog images", Ordered, func() {
 			})
 
 			It("verify deprecations", func() {
-				expectedDeprecations := []string{"stable-v1.0", "rhtas-operator.v1.0.0", "rhtas-operator.v1.0.1", "rhtas-operator.v1.0.2"}
+				expectedDeprecations := []string{ "rhtas-operator.v1.0.0", "rhtas-operator.v1.0.1", "rhtas-operator.v1.0.2"}
 				Expect(deprecation.Entries).To(HaveLen(len(expectedDeprecations)))
 
 				for _, entry := range deprecation.Entries {
