@@ -49,6 +49,7 @@ func MandatoryTasOperatorImageKeys() []string {
 		"tuf-image",
 
 		"ctlog-image",
+		"ctlog-monitor-image",
 
 		"client-server-image",
 
@@ -91,6 +92,7 @@ func AnsibleTasImageKeys() []string {
 		"tas_single_node_rekor_server_image",
 		"tas_single_node_rekor_monitor_image",
 		"tas_single_node_ctlog_image",
+		"tas_single_node_ctlog_monitor_image",
 		"tas_single_node_rekor_redis_image",
 		"tas_single_node_trillian_db_image",
 		"tas_single_node_tuf_image",
