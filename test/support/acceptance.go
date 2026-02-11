@@ -74,6 +74,17 @@ func ExtractHashes(images []string) []string {
 	return result
 }
 
+const sha256DigestLen = 64
+
 func ExtractHash(image string) string {
-	return image[len(image)-64:]
+	const sha256Prefix = "@sha256:"
+	i := strings.LastIndex(image, sha256Prefix)
+	if i < 0 {
+		return ""
+	}
+	start := i + len(sha256Prefix)
+	if start+sha256DigestLen > len(image) {
+		return ""
+	}
+	return image[start : start+sha256DigestLen]
 }

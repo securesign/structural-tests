@@ -91,7 +91,7 @@ var _ = Describe("File-based catalog images", Ordered, func() {
 			})
 
 			It("verify channels", func() {
-				expectedChannels := []string{"stable", "stable-v1.1", "stable-v1.0", "stable-v1.2"}
+				expectedChannels := []string{"stable", "stable-v1.1", "stable-v1.2", "stable-v1.3"}
 				Expect(channels).To(HaveLen(len(expectedChannels)))
 
 				for _, channel := range channels {
@@ -102,6 +102,7 @@ var _ = Describe("File-based catalog images", Ordered, func() {
 
 			It("contains operator-bundle", func() {
 				bundleImageHash := support.ExtractHash(bundleImage)
+				Expect(bundleImageHash).NotTo(BeEmpty(), "rhtas-operator-bundle-image in snapshot missing or does not have a hash")
 				exists := false
 
 				for _, bundle := range bundles {
@@ -114,7 +115,7 @@ var _ = Describe("File-based catalog images", Ordered, func() {
 			})
 
 			It("verify deprecations", func() {
-				expectedDeprecations := []string{"stable-v1.0", "rhtas-operator.v1.0.0", "rhtas-operator.v1.0.1", "rhtas-operator.v1.0.2"}
+				expectedDeprecations := []string{"stable-v1.1", "rhtas-operator.v1.1.0", "rhtas-operator.v1.1.1", "rhtas-operator.v1.1.2"}
 				Expect(deprecation.Entries).To(HaveLen(len(expectedDeprecations)))
 
 				for _, entry := range deprecation.Entries {
