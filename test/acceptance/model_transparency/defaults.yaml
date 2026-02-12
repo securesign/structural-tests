@@ -1,0 +1,8 @@
+fbc:
+  olmPackage: "model-validation-operator"
+  operatorBundleImage: "registry.redhat.io/rhtas/model-validation-operator-bundle"
+  catalogPath: "/configs/model-validation-operator/catalog.json"
+  imageKeyPrefix: "mvo-fbc-"
+  defaultChannel: "tech-preview"
+  expectedChannels:
+    - tech-preview

@@ -6,6 +6,9 @@ const (
 	EnvRepositoriesFile     = "REPOSITORIES"
 	EnvTestGithubToken      = "TEST_GITHUB_TOKEN" // #nosec G101
 	EnvVersion              = "VERSION"
+	EnvTestConfig           = "TEST_CONFIG"
+
+	DefaultTestConfigPath = "testdata/test-config.yaml"
 
 	PolicyControllerOperatorImageKey       = "policy-controller-operator-image"
 	PolicyControllerOperatorBundleImageKey = "policy-controller-operator-bundle-image"
