@@ -1,0 +1,16 @@
+fbc:
+  olmPackage: "rhtas-operator"
+  operatorBundleImage: "registry.redhat.io/rhtas/rhtas-operator-bundle"
+  catalogPath: "/configs/rhtas-operator/catalog.json"
+  imageKeyPrefix: "fbc-"
+  defaultChannel: "stable"
+  expectedChannels:
+    - stable
+    - stable-v1.1
+    - stable-v1.2
+    - stable-v1.3
+  expectedDeprecations:
+    - stable-v1.1
+    - rhtas-operator.v1.1.0
+    - rhtas-operator.v1.1.1
+    - rhtas-operator.v1.1.2

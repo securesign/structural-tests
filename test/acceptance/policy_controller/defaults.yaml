@@ -1,0 +1,8 @@
+fbc:
+  olmPackage: "policy-controller-operator"
+  operatorBundleImage: "registry.redhat.io/rhtas/policy-controller-operator-bundle"
+  catalogPath: "/configs/policy-controller-operator/catalog.json"
+  imageKeyPrefix: "pco-fbc-"
+  defaultChannel: "tech-preview"
+  expectedChannels:
+    - tech-preview
