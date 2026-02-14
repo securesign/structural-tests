@@ -96,6 +96,11 @@
       "published": true
     },
     {
+      "repository": "rhtas/ctlog-monitor-rhel9",
+      "_id": "696ff34dec75adad72d28ac1",
+      "published": false
+    },
+    {
       "repository": "rhtas/rekor-server-rhel9",
       "_id": "65f1bd0390398b14445b4cd5",
       "published": true
