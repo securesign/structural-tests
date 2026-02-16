@@ -92,6 +92,9 @@ var _ = Describe("File-based catalog images", func() {
 
 				It("verify channels", func() {
 					expectedChannels := []string{"stable", "stable-v1.1", "stable-v1.2", "stable-v1.3"}
+					if strings.Contains(key, "v4-15") {
+						expectedChannels = []string{"stable", "stable-v1.1", "stable-v1.2"} // 4.15 does not have stable-v1.3 channel
+					}
 					Expect(channels).To(HaveLen(len(expectedChannels)))
 
 					for _, channel := range channels {
