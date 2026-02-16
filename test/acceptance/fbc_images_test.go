@@ -19,7 +19,7 @@ const (
 	fbcCatalogPath      = "/configs/rhtas-operator/" + fbcCatalogFileName
 )
 
-var _ = Describe("File-based catalog images", Ordered, func() {
+var _ = Describe("File-based catalog images", func() {
 
 	defer GinkgoRecover()
 	var ocps []TableEntry
@@ -39,88 +39,92 @@ var _ = Describe("File-based catalog images", Ordered, func() {
 	DescribeTableSubtree("ocp",
 		func(key, fbcImage string) {
 
-			var bundles []olm.Bundle
-			var channels []olm.Channel
-			var packages []olm.Package
-			var deprecation olm.Deprecation
+			Describe(key, Ordered, func() {
+				var bundles []olm.Bundle
+				var channels []olm.Channel
+				var packages []olm.Package
+				var deprecation olm.Deprecation
 
-			It("extract catalog.json", func() {
-				dir, err := os.MkdirTemp("", key)
-				Expect(err).NotTo(HaveOccurred())
-				defer os.RemoveAll(dir)
+				It("extract catalog.json", func() {
+					dir, err := os.MkdirTemp("", key)
+					Expect(err).NotTo(HaveOccurred())
+					defer os.RemoveAll(dir)
 
-				Expect(support.FileFromImage(context.Background(), fbcImage, fbcCatalogPath, dir)).To(Succeed())
-				file, err := os.Open(dir + "/" + fbcCatalogFileName)
-				Expect(err).NotTo(HaveOccurred())
-				defer file.Close()
+					Expect(support.FileFromImage(context.Background(), fbcImage, fbcCatalogPath, dir)).To(Succeed())
+					file, err := os.Open(dir + "/" + fbcCatalogFileName)
+					Expect(err).NotTo(HaveOccurred())
+					defer file.Close()
 
-				catalog, err := olm.ParseCatalogJSON(file)
-				Expect(err).NotTo(HaveOccurred())
-				Expect(catalog).NotTo(BeNil())
+					catalog, err := olm.ParseCatalogJSON(file)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(catalog).NotTo(BeNil())
 
-				for _, obj := range catalog {
-					switch typedObj := obj.(type) {
-					case olm.Bundle:
-						bundles = append(bundles, typedObj)
-					case olm.Channel:
-						channels = append(channels, typedObj)
-					case olm.Package:
-						packages = append(packages, typedObj)
-					case olm.Deprecation:
-						deprecation = typedObj
+					for _, obj := range catalog {
+						switch typedObj := obj.(type) {
+						case olm.Bundle:
+							bundles = append(bundles, typedObj)
+						case olm.Channel:
+							channels = append(channels, typedObj)
+						case olm.Package:
+							packages = append(packages, typedObj)
+						case olm.Deprecation:
+							deprecation = typedObj
+						}
 					}
-				}
 
-				Expect(bundles).ToNot(BeEmpty())
-				Expect(channels).ToNot(BeEmpty())
-				Expect(packages).ToNot(BeEmpty())
-			})
+					Expect(bundles).ToNot(BeEmpty())
+					Expect(channels).ToNot(BeEmpty())
+					Expect(packages).ToNot(BeEmpty())
+				})
 
-			It("extract bundle-image from snapshot.json", func() {
-				snapshotData, err := support.ParseSnapshotData()
-				Expect(err).NotTo(HaveOccurred())
-				Expect(snapshotData.Images).NotTo(BeEmpty())
+				It("extract bundle-image from snapshot.json", func() {
+					snapshotData, err := support.ParseSnapshotData()
+					Expect(err).NotTo(HaveOccurred())
+					Expect(snapshotData.Images).NotTo(BeEmpty())
+				})
 
-			})
-
-			It("verify package", func() {
-				for _, p := range packages {
-					Expect(p.Name).To(Equal(olmPackage))
-					Expect(p.DefaultChannel).To(Equal("stable"))
-				}
-			})
-
-			It("verify channels", func() {
-				expectedChannels := []string{"stable", "stable-v1.1", "stable-v1.2", "stable-v1.3"}
-				Expect(channels).To(HaveLen(len(expectedChannels)))
-
-				for _, channel := range channels {
-					Expect(channel.Package).To(Equal(olmPackage))
-					Expect(expectedChannels).To(ContainElement(channel.Name))
-				}
-			})
-
-			It("contains operator-bundle", func() {
-				bundleImageHash := support.ExtractHash(bundleImage)
-				Expect(bundleImageHash).NotTo(BeEmpty(), "rhtas-operator-bundle-image in snapshot missing or does not have a hash")
-				exists := false
-
-				for _, bundle := range bundles {
-					Expect(bundle.Package).To(Equal(olmPackage))
-					if bundle.Image == fmt.Sprintf("%s@sha256:%s", operatorBundleImage, bundleImageHash) {
-						exists = true
+				It("verify package", func() {
+					for _, p := range packages {
+						Expect(p.Name).To(Equal(olmPackage))
+						Expect(p.DefaultChannel).To(Equal("stable"))
 					}
-				}
-				Expect(exists).To(BeTrue(), fmt.Sprintf("olm bundle with %s hash not found", bundleImageHash))
-			})
+				})
 
-			It("verify deprecations", func() {
-				expectedDeprecations := []string{"stable-v1.1", "rhtas-operator.v1.1.0", "rhtas-operator.v1.1.1", "rhtas-operator.v1.1.2"}
-				Expect(deprecation.Entries).To(HaveLen(len(expectedDeprecations)))
+				It("verify channels", func() {
+					expectedChannels := []string{"stable", "stable-v1.1", "stable-v1.2", "stable-v1.3"}
+					if strings.Contains(key, "v4-15") {
+						expectedChannels = []string{"stable", "stable-v1.1", "stable-v1.2"} // 4.15 does not have stable-v1.3 channel
+					}
+					Expect(channels).To(HaveLen(len(expectedChannels)))
 
-				for _, entry := range deprecation.Entries {
-					Expect(expectedDeprecations).To(ContainElement(entry.Reference.Name))
-				}
+					for _, channel := range channels {
+						Expect(channel.Package).To(Equal(olmPackage))
+						Expect(expectedChannels).To(ContainElement(channel.Name))
+					}
+				})
+
+				It("contains operator-bundle", func() {
+					bundleImageHash := support.ExtractHash(bundleImage)
+					Expect(bundleImageHash).NotTo(BeEmpty(), "rhtas-operator-bundle-image in snapshot missing or does not have a hash")
+					exists := false
+
+					for _, bundle := range bundles {
+						Expect(bundle.Package).To(Equal(olmPackage))
+						if bundle.Image == fmt.Sprintf("%s@sha256:%s", operatorBundleImage, bundleImageHash) {
+							exists = true
+						}
+					}
+					Expect(exists).To(BeTrue(), fmt.Sprintf("olm bundle with %s hash not found", bundleImageHash))
+				})
+
+				It("verify deprecations", func() {
+					expectedDeprecations := []string{"stable-v1.1", "rhtas-operator.v1.1.0", "rhtas-operator.v1.1.1", "rhtas-operator.v1.1.2"}
+					Expect(deprecation.Entries).To(HaveLen(len(expectedDeprecations)))
+
+					for _, entry := range deprecation.Entries {
+						Expect(expectedDeprecations).To(ContainElement(entry.Reference.Name))
+					}
+				})
 			})
 		},
 		ocps)
