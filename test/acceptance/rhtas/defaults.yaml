@@ -24,15 +24,17 @@ fbcOverrides:
       - stable-v1.1
       - stable-v1.2
 
-# Mandatory TAS operator image keys. Default = 1.2 set (13). When VERSION is unset, 1.2.x passes. Override "1.3" = 15.
+# Mandatory TAS operator image keys (default = 1.3.2). Override only for 1.2.2.
 mandatoryTasOperatorImageKeys:
   - trillian-log-server-image
   - trillian-log-signer-image
   - trillian-db-image
+  - createtree-image
   - fulcio-server-image
   - rekor-redis-image
   - rekor-search-ui-image
   - rekor-server-image
+  - rekor-monitor-image
   - backfill-redis-image
   - tuf-image
   - ctlog-image
@@ -55,24 +57,8 @@ mandatoryTasOperatorImageKeysOverrides:
     - client-server-image
     - segment-backup-job-image
     - timestamp-authority-image
-  "1.3":
-    - trillian-log-server-image
-    - trillian-log-signer-image
-    - trillian-db-image
-    - createtree-image
-    - fulcio-server-image
-    - rekor-redis-image
-    - rekor-search-ui-image
-    - rekor-server-image
-    - rekor-monitor-image
-    - backfill-redis-image
-    - tuf-image
-    - ctlog-image
-    - client-server-image
-    - segment-backup-job-image
-    - timestamp-authority-image
 
-# Ansible image keys: TAS keys (used to split ansible definition) and other keys. VERSION selects override.
+# Ansible image keys (default = 1.3.2). Override only for 1.2.2.
 ansibleTasImageKeys:
   - tas_single_node_fulcio_server_image
   - tas_single_node_trillian_log_server_image
@@ -88,11 +74,11 @@ ansibleTasImageKeys:
   - tas_single_node_client_server_image
   - tas_single_node_backfill_redis_image
 
-# Default = 1.2 set (3 other). When VERSION is unset, 1.2.x runs pass. Use override "1.3" for 4 other.
 ansibleOtherImageKeys:
   - tas_single_node_http_server_image
   - tas_single_node_trillian_netcat_image
   - tas_single_node_nginx_image
+  - tas_single_node_rekor_monitor_image
 
 ansibleImageKeysOverrides:
   "1.2":
@@ -114,9 +100,3 @@ ansibleImageKeysOverrides:
       - tas_single_node_http_server_image
       - tas_single_node_trillian_netcat_image
       - tas_single_node_nginx_image
-  "1.3":
-    ansibleOtherImageKeys:
-      - tas_single_node_http_server_image
-      - tas_single_node_trillian_netcat_image
-      - tas_single_node_nginx_image
-      - tas_single_node_rekor_monitor_image
