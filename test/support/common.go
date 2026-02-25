@@ -35,6 +35,17 @@ func GetEnvAsSecret(key string) string {
 	return getEnv(key, true)
 }
 
+// GetTestConfigContent returns the content of the file pointed to by TEST_CONFIG when set.
+// Returns (nil, nil) when TEST_CONFIG is empty. Callers should use embedded defaults when nil.
+// This allows the config file to override embedded defaults for operator keys, ansible keys, and FBC.
+func GetTestConfigContent() ([]byte, error) {
+	path := GetEnv(EnvTestConfig)
+	if path == "" {
+		return nil, nil
+	}
+	return GetFileContent(path)
+}
+
 func getEnv(key string, isSecret bool) string {
 	envValue, _ := os.LookupEnv(key)
 	var logMessage string

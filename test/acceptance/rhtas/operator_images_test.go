@@ -28,8 +28,12 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 	)
 
 	BeforeAll(func() {
+		defaultsToUse := defaults
+		if content, err := support.GetTestConfigContent(); err == nil && len(content) > 0 {
+			defaultsToUse = content
+		}
 		var err error
-		mandatoryTasKeys, err = support.GetMandatoryTasOperatorImageKeysFromConfig(defaults)
+		mandatoryTasKeys, err = support.GetMandatoryTasOperatorImageKeysFromConfig(defaultsToUse)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
