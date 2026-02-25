@@ -14,8 +14,10 @@ import (
 )
 
 // DescribeFBCImageTests verifies file-based catalog images for the given product.
+// Each FBC version (table entry) uses Ordered so a failure skips only remaining specs
+// for that version; other versions still run.
 func DescribeFBCImageTests(product string, defaultsData []byte) bool {
-	return Describe("File-based catalog images", Ordered, func() {
+	return Describe("File-based catalog images", func() {
 		defer GinkgoRecover()
 
 		cfg, err := GetFBCConfig(product, defaultsData)
@@ -36,7 +38,9 @@ func DescribeFBCImageTests(product string, defaultsData []byte) bool {
 		bundleImage := snapshotData.Images[bundleImageKey]
 
 		DescribeTableSubtree("ocp", func(key, fbcImage string) {
-			verifyCatalogImage(cfg, key, fbcImage, bundleImage)
+			Describe(key, Ordered, func() {
+				verifyCatalogImage(cfg, key, fbcImage, bundleImage)
+			})
 		}, ocps)
 	})
 }
