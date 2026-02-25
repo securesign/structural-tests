@@ -54,16 +54,16 @@ func resolveTestConfig() (TestConfig, error) {
 	return cfg, nil
 }
 
-func toMap(v interface{}) (map[string]interface{}, bool) {
-	if v == nil {
+func toMap(value interface{}) (map[string]interface{}, bool) {
+	if value == nil {
 		return nil, false
 	}
-	m, ok := v.(map[string]interface{})
+	m, ok := value.(map[string]interface{})
 	if ok {
 		return m, true
 	}
 	// yaml.Unmarshal may produce map[interface{}]interface{}
-	if m2, ok := v.(map[interface{}]interface{}); ok {
+	if m2, ok := value.(map[interface{}]interface{}); ok {
 		out := make(map[string]interface{}, len(m2))
 		for k, val := range m2 {
 			if ks, ok := k.(string); ok {

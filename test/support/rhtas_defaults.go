@@ -19,35 +19,33 @@ func GetMandatoryTasOperatorImageKeysFromConfig(defaultsYaml []byte) ([]string, 
 	if len(defaultsYaml) == 0 {
 		return MandatoryTasOperatorImageKeys(), nil
 	}
-	var d rhtasDefaults
-	if err := yaml.Unmarshal(defaultsYaml, &d); err != nil {
+	var parsed rhtasDefaults
+	if err := yaml.Unmarshal(defaultsYaml, &parsed); err != nil {
 		return nil, fmt.Errorf("parse rhtas defaults: %w", err)
 	}
-	if len(d.MandatoryTasOperatorImageKeys) == 0 {
+	if len(parsed.MandatoryTasOperatorImageKeys) == 0 {
 		return MandatoryTasOperatorImageKeys(), nil
 	}
-	return d.MandatoryTasOperatorImageKeys, nil
+	return parsed.MandatoryTasOperatorImageKeys, nil
 }
 
 // GetAnsibleImageKeysFromConfig returns both ansible TAS and other image key lists from rhtas defaults.yaml.
 // If defaultsYaml is nil/empty or a key is missing, returns AnsibleTasImageKeys() / AnsibleOtherImageKeys() as fallback.
-func GetAnsibleImageKeysFromConfig(defaultsYaml []byte) (tasKeys, otherKeys []string, err error) {
+func GetAnsibleImageKeysFromConfig(defaultsYaml []byte) ([]string, []string, error) {
 	if len(defaultsYaml) == 0 {
 		return AnsibleTasImageKeys(), AnsibleOtherImageKeys(), nil
 	}
-	var d rhtasDefaults
-	if err := yaml.Unmarshal(defaultsYaml, &d); err != nil {
+	var parsed rhtasDefaults
+	if err := yaml.Unmarshal(defaultsYaml, &parsed); err != nil {
 		return nil, nil, fmt.Errorf("parse rhtas defaults: %w", err)
 	}
-	if len(d.AnsibleTasImageKeys) == 0 {
+	tasKeys := parsed.AnsibleTasImageKeys
+	if len(tasKeys) == 0 {
 		tasKeys = AnsibleTasImageKeys()
-	} else {
-		tasKeys = d.AnsibleTasImageKeys
 	}
-	if len(d.AnsibleOtherImageKeys) == 0 {
+	otherKeys := parsed.AnsibleOtherImageKeys
+	if len(otherKeys) == 0 {
 		otherKeys = AnsibleOtherImageKeys()
-	} else {
-		otherKeys = d.AnsibleOtherImageKeys
 	}
 	return tasKeys, otherKeys, nil
 }
