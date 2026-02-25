@@ -24,7 +24,14 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 		operatorTasImages   support.OperatorMap
 		operatorOtherImages support.OperatorMap
 		operator            string
+		mandatoryTasKeys    []string
 	)
+
+	BeforeAll(func() {
+		var err error
+		mandatoryTasKeys, err = support.GetMandatoryTasOperatorImageKeysFromConfig(defaults, support.VersionForConfig())
+		Expect(err).NotTo(HaveOccurred())
+	})
 
 	It("get and parse snapshot file", func() {
 		var err error
@@ -65,8 +72,8 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 	})
 
 	It("operator TAS images are all valid", func() {
-		Expect(support.GetMapKeys(operatorTasImages)).To(ContainElements(support.MandatoryTasOperatorImageKeys()))
-		Expect(len(operatorTasImages)).To(BeNumerically("==", len(support.MandatoryTasOperatorImageKeys())))
+		Expect(support.GetMapKeys(operatorTasImages)).To(ContainElements(mandatoryTasKeys))
+		Expect(len(operatorTasImages)).To(BeNumerically("==", len(mandatoryTasKeys)))
 		Expect(operatorTasImages).To(HaveEach(MatchRegexp(support.TasImageDefinitionRegexp)))
 	})
 
@@ -78,7 +85,7 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 
 	It("all image hashes are also defined in releases snapshot", func() {
 		mapped := make(map[string]string)
-		for _, imageKey := range support.MandatoryTasOperatorImageKeys() {
+		for _, imageKey := range mandatoryTasKeys {
 			oSha := support.ExtractHash(operatorTasImages[imageKey])
 			if _, keyExist := snapshotData.Images[imageKey]; !keyExist {
 				mapped[imageKey] = "MISSING"

@@ -4,11 +4,31 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"slices"
 )
 
 func GetEnv(key string) string {
 	return getEnv(key, false)
+}
+
+// VersionForConfig returns VERSION env if set; otherwise tries to infer version from SNAPSHOT path
+// (e.g. "../releases-1.3.2/1.3.2/stable/snapshot.json" -> "1.3.2"). Used so 1.2.x and 1.3.x config overrides apply without setting VERSION.
+func VersionForConfig() string {
+	if v := GetEnv(EnvVersion); v != "" {
+		return v
+	}
+	snapshotPath := GetEnv(EnvReleasesSnapshotFile)
+	if snapshotPath == "" {
+		return ""
+	}
+	// Match semver in path (e.g. 1.2.2, 1.3.2); take last match in case path has multiple numbers.
+	re := regexp.MustCompile(`(\d+\.\d+\.\d+)`)
+	matches := re.FindAllString(snapshotPath, -1)
+	if len(matches) > 0 {
+		return matches[len(matches)-1]
+	}
+	return ""
 }
 
 func GetEnvAsSecret(key string) string {
