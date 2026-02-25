@@ -11,6 +11,9 @@ import (
 type TestConfig map[string]map[string]interface{}
 
 // GetTestConfig returns test configuration from TEST_CONFIG env or the default path.
+// Accepts both formats: (1) product -> section -> data (e.g. rhtas.fbc), and (2) flat defaults
+// with top-level fbc, fbcOverrides, and list keys (mandatoryTasOperatorImageKeys, etc.).
+// In format (2), top-level "fbc" is treated as rhtas.fbc so FBC config is still found.
 func GetTestConfig() (TestConfig, error) {
 	return resolveTestConfig()
 }
@@ -26,11 +29,50 @@ func resolveTestConfig() (TestConfig, error) {
 		return nil, fmt.Errorf("read test config %s: %w", path, err)
 	}
 
-	var cfg TestConfig
-	if err := yaml.Unmarshal(content, &cfg); err != nil {
+	var raw map[string]interface{}
+	if err := yaml.Unmarshal(content, &raw); err != nil {
 		return nil, fmt.Errorf("parse test config %s: %w", path, err)
 	}
+
+	cfg := make(TestConfig)
+	if raw == nil {
+		return cfg, nil
+	}
+
+	if rhtas, ok := raw["rhtas"]; ok {
+		if rhtasMap, ok := toMap(rhtas); ok {
+			cfg["rhtas"] = rhtasMap
+			return cfg, nil
+		}
+	}
+	if fbc, ok := raw["fbc"]; ok {
+		if fbcMap, ok := toMap(fbc); ok {
+			cfg["rhtas"] = map[string]interface{}{"fbc": fbcMap}
+			return cfg, nil
+		}
+	}
 	return cfg, nil
+}
+
+func toMap(v interface{}) (map[string]interface{}, bool) {
+	if v == nil {
+		return nil, false
+	}
+	m, ok := v.(map[string]interface{})
+	if ok {
+		return m, true
+	}
+	// yaml.Unmarshal may produce map[interface{}]interface{}
+	if m2, ok := v.(map[interface{}]interface{}); ok {
+		out := make(map[string]interface{}, len(m2))
+		for k, val := range m2 {
+			if ks, ok := k.(string); ok {
+				out[ks] = val
+			}
+		}
+		return out, true
+	}
+	return nil, false
 }
 
 // DecodeSection unmarshals a product's configuration section into target.

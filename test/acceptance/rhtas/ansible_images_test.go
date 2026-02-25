@@ -52,13 +52,13 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 		}
 
 		By("check supported version")
-		version := support.VersionForConfig()
-		if version != "" && semver.Compare("v"+version, "v1.2.0") < 0 && ansibleCollectionURL == "" {
+		version := support.GetEnv(support.EnvVersion)
+		if semver.Compare("v"+version, "v1.2.0") < 0 && ansibleCollectionURL == "" {
 			Skip("Ansible is optional for " + version)
 		}
 
 		By("load ansible image key lists from config")
-		ansibleTasKeys, ansibleOtherKeys, err = support.GetAnsibleImageKeysFromConfig(defaults, version)
+		ansibleTasKeys, ansibleOtherKeys, err = support.GetAnsibleImageKeysFromConfig(defaults)
 		Expect(err).NotTo(HaveOccurred())
 	})
 

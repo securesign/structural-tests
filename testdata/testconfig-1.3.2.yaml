@@ -10,7 +10,6 @@ fbc:
     - stable-v1.1
     - stable-v1.2
     - stable-v1.3
-    - stable-v1.4
   expectedDeprecations:
     - stable-v1.1
     - rhtas-operator.v1.1.0
@@ -19,7 +18,7 @@ fbc:
 
 # Optional per-version overrides (key = FBC image key, e.g. fbc-v4-15). Only set fields that differ from fbc.
 fbcOverrides:
-  fbc-v4-21:
+  fbc-v4-15:
     expectedChannels:
       - stable
       - stable-v1.3
@@ -40,8 +39,8 @@ mandatoryTasOperatorImageKeys:
   - tuf-image
   - ctlog-image
   - client-server-image
+  - segment-backup-job-image
   - timestamp-authority-image
-  - ctlog-monitor-image
 
 ansibleTasImageKeys:
   - tas_single_node_fulcio_server_image
