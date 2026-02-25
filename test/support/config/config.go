@@ -18,7 +18,7 @@ func GetTestConfig() (TestConfig, error) {
 func resolveTestConfig() (TestConfig, error) {
 	path := support.GetEnv(support.EnvTestConfig)
 	if path == "" {
-		path = support.DefaultTestConfigPath
+		return TestConfig{}, nil
 	}
 
 	content, err := support.GetFileContent(path)
