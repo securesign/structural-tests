@@ -1,3 +1,4 @@
+# Shared FBC configuration for all versions. Override per version in fbcOverrides.
 fbc:
   olmPackage: "rhtas-operator"
   operatorBundleImage: "registry.redhat.io/rhtas/rhtas-operator-bundle"
@@ -14,3 +15,11 @@ fbc:
     - rhtas-operator.v1.1.0
     - rhtas-operator.v1.1.1
     - rhtas-operator.v1.1.2
+
+# Optional per-version overrides (key = FBC image key, e.g. fbc-v4-15). Only set fields that differ from fbc.
+fbcOverrides:
+  fbc-v4-15:
+    expectedChannels:
+      - stable
+      - stable-v1.1
+      - stable-v1.2

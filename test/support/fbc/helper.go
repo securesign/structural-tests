@@ -39,7 +39,9 @@ func DescribeFBCImageTests(product string, defaultsData []byte) bool {
 
 		DescribeTableSubtree("ocp", func(key, fbcImage string) {
 			Describe(key, Ordered, func() {
-				verifyCatalogImage(cfg, key, fbcImage, bundleImage)
+				versionCfg, err := GetFBCConfigForVersion(product, key, defaultsData)
+				Expect(err).NotTo(HaveOccurred(), "failed to load FBC config for product %q version %q", product, key)
+				verifyCatalogImage(versionCfg, key, fbcImage, bundleImage)
 			})
 		}, ocps)
 	})
