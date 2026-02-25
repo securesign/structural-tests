@@ -8,8 +8,6 @@ const (
 	EnvVersion              = "VERSION"
 	EnvTestConfig           = "TEST_CONFIG"
 
-	DefaultTestConfigPath = "testdata/test-config.yaml"
-
 	PolicyControllerOperatorImageKey       = "policy-controller-operator-image"
 	PolicyControllerOperatorBundleImageKey = "policy-controller-operator-bundle-image"
 	ModelValidationOperatorImageKey        = "model-validation-operator-image"
