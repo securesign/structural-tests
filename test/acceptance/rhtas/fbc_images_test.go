@@ -6,10 +6,15 @@ import (
 )
 
 func fbcDefaults() []byte {
-	if content, err := support.GetTestConfigContent(); err == nil && len(content) > 0 {
-		return content
+	content, err := support.GetTestConfigContent()
+	if err != nil || len(content) == 0 {
+		return defaults
 	}
-	return defaults
+	merged, err := support.MergeRhtasConfig(defaults, content)
+	if err != nil {
+		return defaults
+	}
+	return merged
 }
 
 var _ = fbc.DescribeFBCImageTests(product, fbcDefaults())

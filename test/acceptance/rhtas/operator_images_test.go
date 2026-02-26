@@ -31,7 +31,8 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 	BeforeAll(func() {
 		defaultsToUse := defaults
 		if content, err := support.GetTestConfigContent(); err == nil && len(content) > 0 {
-			defaultsToUse = content
+			defaultsToUse, err = support.MergeRhtasConfig(defaults, content)
+			Expect(err).NotTo(HaveOccurred())
 		}
 		var err error
 		mandatoryTasKeys, err = support.GetMandatoryTasOperatorImageKeysFromConfig(defaultsToUse)

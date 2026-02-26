@@ -53,7 +53,8 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 		By("load ansible image key lists from config")
 		defaultsToUse := defaults
 		if content, err := support.GetTestConfigContent(); err == nil && len(content) > 0 {
-			defaultsToUse = content
+			defaultsToUse, err = support.MergeRhtasConfig(defaults, content)
+			Expect(err).NotTo(HaveOccurred())
 		}
 		ansibleTasKeys, ansibleOtherKeys, err = support.GetAnsibleImageKeysFromConfig(defaultsToUse)
 		Expect(err).NotTo(HaveOccurred())

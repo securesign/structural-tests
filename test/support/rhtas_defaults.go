@@ -6,6 +6,30 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// MergeRhtasConfig overlays fileContent on top of baseDefaults. Keys present in fileContent
+// override baseDefaults; keys only in baseDefaults (e.g. otherOperatorImageKeys) are preserved.
+// Use this when TEST_CONFIG points to a partial config file so embedded defaults fill in missing keys.
+func MergeRhtasConfig(baseDefaults, fileContent []byte) ([]byte, error) {
+	if len(fileContent) == 0 {
+		return baseDefaults, nil
+	}
+	var base, overlay map[string]interface{}
+	if err := yaml.Unmarshal(baseDefaults, &base); err != nil {
+		return nil, fmt.Errorf("parse base defaults: %w", err)
+	}
+	if err := yaml.Unmarshal(fileContent, &overlay); err != nil {
+		return nil, fmt.Errorf("parse config file: %w", err)
+	}
+	for k, v := range overlay {
+		base[k] = v
+	}
+	merged, err := yaml.Marshal(base)
+	if err != nil {
+		return nil, fmt.Errorf("marshal merged config: %w", err)
+	}
+	return merged, nil
+}
+
 // rhtasDefaults is the subset of test/acceptance/rhtas/defaults.yaml used for operator and ansible image keys.
 type rhtasDefaults struct {
 	OtherOperatorImageKeys        []string `yaml:"otherOperatorImageKeys"`
