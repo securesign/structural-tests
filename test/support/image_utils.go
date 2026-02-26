@@ -249,9 +249,9 @@ func GetAnsibleCollectionArchiveFromImage(ctx context.Context, imageName string)
 }
 
 func findAndReadCollectionArchiveFromTar(reader io.Reader) ([]byte, error) {
-	tr := tar.NewReader(reader)
+	tarReader := tar.NewReader(reader)
 	for {
-		header, err := tr.Next()
+		header, err := tarReader.Next()
 		if errors.Is(err, io.EOF) {
 			break
 		}
@@ -263,7 +263,7 @@ func findAndReadCollectionArchiveFromTar(reader io.Reader) ([]byte, error) {
 		}
 		base := filepath.Base(header.Name)
 		if strings.HasPrefix(base, "redhat-artifact_signer") && strings.HasSuffix(base, ".tar.gz") {
-			b, err := io.ReadAll(tr)
+			b, err := io.ReadAll(tarReader)
 			if err != nil {
 				return nil, fmt.Errorf("read %s: %w", header.Name, err)
 			}

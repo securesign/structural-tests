@@ -19,7 +19,7 @@ type FBCConfig struct {
 }
 
 type productDefaults struct {
-	FBC          *FBCConfig           `yaml:"fbc"`
+	FBC          *FBCConfig            `yaml:"fbc"`
 	FBCOverrides map[string]*FBCConfig `yaml:"fbcOverrides,omitempty"`
 }
 

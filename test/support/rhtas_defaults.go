@@ -1,6 +1,7 @@
 package support
 
 import (
+	"errors"
 	"fmt"
 
 	"gopkg.in/yaml.v3"
@@ -32,24 +33,24 @@ func MergeRhtasConfig(baseDefaults, fileContent []byte) ([]byte, error) {
 
 // rhtasDefaults is the subset of test/acceptance/rhtas/defaults.yaml used for operator and ansible image keys.
 type rhtasDefaults struct {
-	OperatorImageKeys     []string `yaml:"operatorImageKeys"`
+	OperatorImageKeys      []string `yaml:"operatorImageKeys"`
 	OperatorOtherImageKeys []string `yaml:"operatorOtherImageKeys"`
-	AnsibleImageKeys      []string `yaml:"ansibleImageKeys"`
-	AnsibleOtherImageKeys []string `yaml:"ansibleOtherImageKeys"`
+	AnsibleImageKeys       []string `yaml:"ansibleImageKeys"`
+	AnsibleOtherImageKeys  []string `yaml:"ansibleOtherImageKeys"`
 }
 
 // GetOperatorImageKeysFromConfig returns the TAS operator image key list from
 // rhtas defaults.yaml or TEST_CONFIG. Returns an error if config is missing or the key is empty.
 func GetOperatorImageKeysFromConfig(defaultsYaml []byte) ([]string, error) {
 	if len(defaultsYaml) == 0 {
-		return nil, fmt.Errorf("defaults config is required for operatorImageKeys")
+		return nil, errors.New("defaults config is required for operatorImageKeys")
 	}
 	var parsed rhtasDefaults
 	if err := yaml.Unmarshal(defaultsYaml, &parsed); err != nil {
 		return nil, fmt.Errorf("parse rhtas defaults: %w", err)
 	}
 	if len(parsed.OperatorImageKeys) == 0 {
-		return nil, fmt.Errorf("operatorImageKeys is missing or empty in config")
+		return nil, errors.New("operatorImageKeys is missing or empty in config")
 	}
 	return parsed.OperatorImageKeys, nil
 }
@@ -58,14 +59,14 @@ func GetOperatorImageKeysFromConfig(defaultsYaml []byte) ([]string, error) {
 // rhtas defaults.yaml or TEST_CONFIG. Returns an error if config is missing or the key is empty.
 func GetOperatorOtherImageKeysFromConfig(defaultsYaml []byte) ([]string, error) {
 	if len(defaultsYaml) == 0 {
-		return nil, fmt.Errorf("defaults config is required for operatorOtherImageKeys")
+		return nil, errors.New("defaults config is required for operatorOtherImageKeys")
 	}
 	var parsed rhtasDefaults
 	if err := yaml.Unmarshal(defaultsYaml, &parsed); err != nil {
 		return nil, fmt.Errorf("parse rhtas defaults: %w", err)
 	}
 	if len(parsed.OperatorOtherImageKeys) == 0 {
-		return nil, fmt.Errorf("operatorOtherImageKeys is missing or empty in config")
+		return nil, errors.New("operatorOtherImageKeys is missing or empty in config")
 	}
 	return parsed.OperatorOtherImageKeys, nil
 }
@@ -74,17 +75,17 @@ func GetOperatorOtherImageKeysFromConfig(defaultsYaml []byte) ([]string, error) 
 // rhtas defaults.yaml or TEST_CONFIG. Returns an error if config is missing or a key is empty.
 func GetAnsibleImageKeysFromConfig(defaultsYaml []byte) ([]string, []string, error) {
 	if len(defaultsYaml) == 0 {
-		return nil, nil, fmt.Errorf("defaults config is required for ansible image keys")
+		return nil, nil, errors.New("defaults config is required for ansible image keys")
 	}
 	var parsed rhtasDefaults
 	if err := yaml.Unmarshal(defaultsYaml, &parsed); err != nil {
 		return nil, nil, fmt.Errorf("parse rhtas defaults: %w", err)
 	}
 	if len(parsed.AnsibleImageKeys) == 0 {
-		return nil, nil, fmt.Errorf("ansibleImageKeys is missing or empty in config")
+		return nil, nil, errors.New("ansibleImageKeys is missing or empty in config")
 	}
 	if len(parsed.AnsibleOtherImageKeys) == 0 {
-		return nil, nil, fmt.Errorf("ansibleOtherImageKeys is missing or empty in config")
+		return nil, nil, errors.New("ansibleOtherImageKeys is missing or empty in config")
 	}
 	return parsed.AnsibleImageKeys, parsed.AnsibleOtherImageKeys, nil
 }
