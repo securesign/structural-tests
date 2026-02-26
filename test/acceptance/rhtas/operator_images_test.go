@@ -25,6 +25,7 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 		operatorOtherImages support.OperatorMap
 		operator            string
 		mandatoryTasKeys    []string
+		otherOperatorKeys   []string
 	)
 
 	BeforeAll(func() {
@@ -34,6 +35,8 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 		}
 		var err error
 		mandatoryTasKeys, err = support.GetMandatoryTasOperatorImageKeysFromConfig(defaultsToUse)
+		Expect(err).NotTo(HaveOccurred())
+		otherOperatorKeys, err = support.GetOtherOperatorImageKeysFromConfig(defaultsToUse)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
@@ -58,7 +61,7 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 		helpLogs, err := support.RunImage(operator, []string{}, []string{"-h"})
 		Expect(err).NotTo(HaveOccurred())
 
-		operatorTasImages, operatorOtherImages = support.ParseOperatorImages(helpLogs)
+		operatorTasImages, operatorOtherImages = support.ParseOperatorImages(helpLogs, otherOperatorKeys)
 		support.LogMap(fmt.Sprintf("Operator TAS images (%d):", len(operatorTasImages)), operatorTasImages)
 		support.LogMap(fmt.Sprintf("Operator other images (%d):", len(operatorOtherImages)), operatorOtherImages)
 		Expect(operatorTasImages).NotTo(BeEmpty())
@@ -82,8 +85,8 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 	})
 
 	It("operator other images are all valid", func() {
-		Expect(support.GetMapKeys(operatorOtherImages)).To(ContainElements(support.OtherOperatorImageKeys()))
-		Expect(len(operatorOtherImages)).To(BeNumerically("==", len(support.OtherOperatorImageKeys())))
+		Expect(support.GetMapKeys(operatorOtherImages)).To(ContainElements(otherOperatorKeys))
+		Expect(len(operatorOtherImages)).To(BeNumerically("==", len(otherOperatorKeys)))
 		Expect(operatorOtherImages).To(HaveEach(MatchRegexp(support.OtherImageDefinitionRegexp)))
 	})
 
