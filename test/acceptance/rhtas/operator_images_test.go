@@ -35,9 +35,9 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 			Expect(err).NotTo(HaveOccurred())
 		}
 		var err error
-		mandatoryTasKeys, err = support.GetMandatoryTasOperatorImageKeysFromConfig(defaultsToUse)
+		mandatoryTasKeys, err = support.GetOperatorImageKeysFromConfig(defaultsToUse)
 		Expect(err).NotTo(HaveOccurred())
-		otherOperatorKeys, err = support.GetOtherOperatorImageKeysFromConfig(defaultsToUse)
+		otherOperatorKeys, err = support.GetOperatorOtherImageKeysFromConfig(defaultsToUse)
 		Expect(err).NotTo(HaveOccurred())
 	})
 

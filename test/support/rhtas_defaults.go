@@ -7,7 +7,7 @@ import (
 )
 
 // MergeRhtasConfig overlays fileContent on top of baseDefaults. Keys present in fileContent
-// override baseDefaults; keys only in baseDefaults (e.g. otherOperatorImageKeys) are preserved.
+// override baseDefaults; keys only in baseDefaults (e.g. operatorOtherImageKeys) are preserved.
 // Use this when TEST_CONFIG points to a partial config file so embedded defaults fill in missing keys.
 func MergeRhtasConfig(baseDefaults, fileContent []byte) ([]byte, error) {
 	if len(fileContent) == 0 {
@@ -32,42 +32,42 @@ func MergeRhtasConfig(baseDefaults, fileContent []byte) ([]byte, error) {
 
 // rhtasDefaults is the subset of test/acceptance/rhtas/defaults.yaml used for operator and ansible image keys.
 type rhtasDefaults struct {
-	OtherOperatorImageKeys        []string `yaml:"otherOperatorImageKeys"`
-	MandatoryTasOperatorImageKeys []string `yaml:"mandatoryTasOperatorImageKeys"`
-	AnsibleTasImageKeys           []string `yaml:"ansibleTasImageKeys"`
-	AnsibleOtherImageKeys         []string `yaml:"ansibleOtherImageKeys"`
+	OperatorImageKeys     []string `yaml:"operatorImageKeys"`
+	OperatorOtherImageKeys []string `yaml:"operatorOtherImageKeys"`
+	AnsibleImageKeys      []string `yaml:"ansibleImageKeys"`
+	AnsibleOtherImageKeys []string `yaml:"ansibleOtherImageKeys"`
 }
 
-// GetMandatoryTasOperatorImageKeysFromConfig returns the mandatory TAS operator image key list from
+// GetOperatorImageKeysFromConfig returns the TAS operator image key list from
 // rhtas defaults.yaml or TEST_CONFIG. Returns an error if config is missing or the key is empty.
-func GetMandatoryTasOperatorImageKeysFromConfig(defaultsYaml []byte) ([]string, error) {
+func GetOperatorImageKeysFromConfig(defaultsYaml []byte) ([]string, error) {
 	if len(defaultsYaml) == 0 {
-		return nil, fmt.Errorf("defaults config is required for mandatoryTasOperatorImageKeys")
+		return nil, fmt.Errorf("defaults config is required for operatorImageKeys")
 	}
 	var parsed rhtasDefaults
 	if err := yaml.Unmarshal(defaultsYaml, &parsed); err != nil {
 		return nil, fmt.Errorf("parse rhtas defaults: %w", err)
 	}
-	if len(parsed.MandatoryTasOperatorImageKeys) == 0 {
-		return nil, fmt.Errorf("mandatoryTasOperatorImageKeys is missing or empty in config")
+	if len(parsed.OperatorImageKeys) == 0 {
+		return nil, fmt.Errorf("operatorImageKeys is missing or empty in config")
 	}
-	return parsed.MandatoryTasOperatorImageKeys, nil
+	return parsed.OperatorImageKeys, nil
 }
 
-// GetOtherOperatorImageKeysFromConfig returns the other (non-TAS) operator image key list from
+// GetOperatorOtherImageKeysFromConfig returns the other (non-TAS) operator image key list from
 // rhtas defaults.yaml or TEST_CONFIG. Returns an error if config is missing or the key is empty.
-func GetOtherOperatorImageKeysFromConfig(defaultsYaml []byte) ([]string, error) {
+func GetOperatorOtherImageKeysFromConfig(defaultsYaml []byte) ([]string, error) {
 	if len(defaultsYaml) == 0 {
-		return nil, fmt.Errorf("defaults config is required for otherOperatorImageKeys")
+		return nil, fmt.Errorf("defaults config is required for operatorOtherImageKeys")
 	}
 	var parsed rhtasDefaults
 	if err := yaml.Unmarshal(defaultsYaml, &parsed); err != nil {
 		return nil, fmt.Errorf("parse rhtas defaults: %w", err)
 	}
-	if len(parsed.OtherOperatorImageKeys) == 0 {
-		return nil, fmt.Errorf("otherOperatorImageKeys is missing or empty in config")
+	if len(parsed.OperatorOtherImageKeys) == 0 {
+		return nil, fmt.Errorf("operatorOtherImageKeys is missing or empty in config")
 	}
-	return parsed.OtherOperatorImageKeys, nil
+	return parsed.OperatorOtherImageKeys, nil
 }
 
 // GetAnsibleImageKeysFromConfig returns both ansible TAS and other image key lists from
@@ -80,11 +80,11 @@ func GetAnsibleImageKeysFromConfig(defaultsYaml []byte) ([]string, []string, err
 	if err := yaml.Unmarshal(defaultsYaml, &parsed); err != nil {
 		return nil, nil, fmt.Errorf("parse rhtas defaults: %w", err)
 	}
-	if len(parsed.AnsibleTasImageKeys) == 0 {
-		return nil, nil, fmt.Errorf("ansibleTasImageKeys is missing or empty in config")
+	if len(parsed.AnsibleImageKeys) == 0 {
+		return nil, nil, fmt.Errorf("ansibleImageKeys is missing or empty in config")
 	}
 	if len(parsed.AnsibleOtherImageKeys) == 0 {
 		return nil, nil, fmt.Errorf("ansibleOtherImageKeys is missing or empty in config")
 	}
-	return parsed.AnsibleTasImageKeys, parsed.AnsibleOtherImageKeys, nil
+	return parsed.AnsibleImageKeys, parsed.AnsibleOtherImageKeys, nil
 }

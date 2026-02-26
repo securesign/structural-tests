@@ -26,11 +26,7 @@ fbcOverrides:
       - stable-v1.4
     expectedDeprecations: []
 
-otherOperatorImageKeys:
-  - trillian-netcat-image
-  - http-server-image
-
-mandatoryTasOperatorImageKeys:
+operatorImageKeys:
   - trillian-log-server-image
   - trillian-log-signer-image
   - trillian-db-image
@@ -47,7 +43,11 @@ mandatoryTasOperatorImageKeys:
   - timestamp-authority-image
   - ctlog-monitor-image
 
-ansibleTasImageKeys:
+operatorOtherImageKeys:
+  - trillian-netcat-image
+  - http-server-image
+
+ansibleImageKeys:
   - tas_single_node_fulcio_server_image
   - tas_single_node_trillian_log_server_image
   - tas_single_node_trillian_log_signer_image
