@@ -116,6 +116,22 @@ func DecompressGzipFile(gzipPath string, outputPath string) error {
 	return nil
 }
 
+// LoadAnsibleCollectionFromImage extracts the collection archive from the image
+// at /releases/redhat-artifact_signer-*.tar.gz and returns the content of the
+// given file inside that archive (e.g. roles/tas_single_node/defaults/main.yml).
+func LoadAnsibleCollectionFromImage(ctx context.Context, imageRef, ansibleImagesFile string) ([]byte, error) {
+	archiveBytes, err := GetAnsibleCollectionArchiveFromImage(ctx, imageRef)
+	if err != nil {
+		return nil, err
+	}
+	gzReader, err := gzip.NewReader(bytes.NewReader(archiveBytes))
+	if err != nil {
+		return nil, fmt.Errorf("gunzip collection archive: %w", err)
+	}
+	defer gzReader.Close()
+	return lookThroughTarFile(gzReader, ansibleImagesFile)
+}
+
 func LoadAnsibleCollectionSnapshotFile(zipFileURL, ansibleImagesFile string) ([]byte, error) {
 	zipData, err := GetFileContent(zipFileURL)
 	if err != nil {

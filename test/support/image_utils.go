@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
@@ -215,4 +216,60 @@ func extractFileFromTar(reader io.Reader, writer io.Writer) error {
 		}
 	}
 	return errors.New("failed to find file in tar")
+}
+
+// GetAnsibleCollectionArchiveFromImage copies /releases from the image, finds
+// redhat-artifact_signer*.tar.gz in the tar stream, and returns its content.
+func GetAnsibleCollectionArchiveFromImage(ctx context.Context, imageName string) ([]byte, error) {
+	err := PullImageIfNotPresentLocally(ctx, imageName)
+	if err != nil {
+		return nil, err
+	}
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return nil, fmt.Errorf("docker client: %w", err)
+	}
+	defer cli.Close()
+	resp, err := cli.ContainerCreate(ctx, &container.Config{
+		Image: imageName,
+		Cmd:   []string{"echo", "dummy"},
+	}, nil, nil, nil, "")
+	if err != nil {
+		return nil, fmt.Errorf("create container: %w", err)
+	}
+	defer func() {
+		_ = cli.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
+	}()
+	reader, _, err := cli.CopyFromContainer(ctx, resp.ID, AnsibleCollectionPathInImage)
+	if err != nil {
+		return nil, fmt.Errorf("copy %s from container: %w", AnsibleCollectionPathInImage, err)
+	}
+	defer reader.Close()
+	return findAndReadCollectionArchiveFromTar(reader)
+}
+
+func findAndReadCollectionArchiveFromTar(reader io.Reader) ([]byte, error) {
+	tr := tar.NewReader(reader)
+	for {
+		header, err := tr.Next()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("read tar: %w", err)
+		}
+		if header.Typeflag != tar.TypeReg {
+			continue
+		}
+		base := filepath.Base(header.Name)
+		if strings.HasPrefix(base, "redhat-artifact_signer") && strings.HasSuffix(base, ".tar.gz") {
+			b, err := io.ReadAll(tr)
+			if err != nil {
+				return nil, fmt.Errorf("read %s: %w", header.Name, err)
+			}
+			log.Printf("Found collection archive in image: %s (%d bytes)\n", header.Name, len(b))
+			return b, nil
+		}
+	}
+	return nil, errors.New("redhat-artifact_signer*.tar.gz not found in image /releases")
 }

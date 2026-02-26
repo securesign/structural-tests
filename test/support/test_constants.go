@@ -15,6 +15,8 @@ const (
 	OperatorImageKey                       = "rhtas-operator-image"
 	OperatorBundleImageKey                 = "rhtas-operator-bundle-image"
 	AnsibleCollectionKey                   = "artifact-signer-ansible.collection.url"
+	AnsibleCollectionImageKey             = "artifact-signer-ansible.collection.image"
+	AnsibleCollectionPathInImage          = "/releases"
 
 	AnsibleCollectionSnapshotFile                           = "roles/tas_single_node/defaults/main.yml"
 	AnsibleArtifactsURL                                     = "https://api.github.com/repos/securesign/artifact-signer-ansible/actions/artifacts"
