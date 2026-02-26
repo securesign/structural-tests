@@ -38,13 +38,7 @@ func extractImages(rawData map[string]interface{}, snapshotData SnapshotData) {
 				snapshotData.Images[key] = valueType
 			}
 		case map[string]interface{}:
-			if key == "artifact-signer-ansible" {
-				if collection, ok := value.(map[string]interface{})["collection"].(map[string]interface{}); ok {
-					if url, ok := collection["url"].(string); ok {
-						snapshotData.Others[AnsibleCollectionKey] = url
-					}
-				}
-			} else if key == "ansible" || ansibleImageRe.MatchString(key) {
+			if key == "ansible" || ansibleImageRe.MatchString(key) {
 				// Image-based format: "ansible" or "ansible-v1-3": { "artifact-signer-ansible" or "artifact-signer-ansible-v1-3": "quay.io/...@sha256:..." }
 				for subKey, subVal := range valueType {
 					if strings.Contains(subKey, "artifact-signer-ansible") {

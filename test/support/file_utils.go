@@ -2,7 +2,6 @@ package support
 
 import (
 	"archive/tar"
-	"archive/zip"
 	"bytes"
 	"compress/gzip"
 	"context"
@@ -12,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	testroot "github.com/securesign/structural-tests/test"
@@ -132,44 +130,6 @@ func LoadAnsibleCollectionFromImage(ctx context.Context, imageRef, ansibleImages
 	return lookThroughTarFile(gzReader, ansibleImagesFile)
 }
 
-func LoadAnsibleCollectionSnapshotFile(zipFileURL, ansibleImagesFile string) ([]byte, error) {
-	zipData, err := GetFileContent(zipFileURL)
-	if err != nil {
-		return nil, err
-	}
-
-	zipReader, err := zip.NewReader(bytes.NewReader(zipData), int64(len(zipData)))
-	if err != nil {
-		return nil, fmt.Errorf("failed to read a zip file: %w", err)
-	}
-
-	for _, zipFile := range zipReader.File {
-		log.Printf("Extracted from zip: %s\n", zipFile.Name)
-		zipFileContent, err := zipFile.Open()
-		if err != nil {
-			return nil, fmt.Errorf("failed to open zip file: %w", err)
-		}
-		defer zipFileContent.Close()
-
-		gzipReader, err := gzip.NewReader(zipFileContent)
-		if err != nil {
-			return nil, fmt.Errorf("failed to gunzip file: %w", err)
-		}
-		defer gzipReader.Close()
-
-		log.Printf("Extracted from gzip %s\n", gzipReader.Name)
-		tarFileContent, err := lookThroughTarFile(gzipReader, ansibleImagesFile)
-		if err != nil {
-			return nil, err
-		}
-		if tarFileContent != nil {
-			return tarFileContent, nil
-		}
-	}
-
-	return nil, nil
-}
-
 func lookThroughTarFile(reader io.Reader, filePath string) ([]byte, error) {
 	tarReader := tar.NewReader(reader)
 	for {
@@ -194,25 +154,4 @@ func lookThroughTarFile(reader io.Reader, filePath string) ([]byte, error) {
 		}
 	}
 	return nil, nil
-}
-
-func LogAvailableAnsibleArtifacts() {
-	log.Println("Getting list of available ansible artifacts ...")
-	artifacts, err := GetFileContent(AnsibleArtifactsURL)
-	if err != nil {
-		log.Printf("Failed to load list of ansible artifacts: %v", err)
-	} else {
-		log.Printf("\n%s\n", string(artifacts))
-	}
-}
-
-func MapAnsibleZipFileURL(originalPath string) (string, error) {
-	re := regexp.MustCompile(`\d+$`)
-	match := re.FindString(originalPath)
-	if match == "" {
-		return "", fmt.Errorf("artifact ID not found at the end of the URL: %s", originalPath)
-	}
-	newPath := AnsibleArtifactsURL + "/" + match + "/zip"
-	log.Printf("URL mapped to %s\n", newPath)
-	return newPath, nil
 }

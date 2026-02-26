@@ -14,11 +14,9 @@ import (
 var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 
 	var (
-		snapshotData support.SnapshotData
-		repositories *support.RepositoryList
-
+		snapshotData           support.SnapshotData
+		repositories           *support.RepositoryList
 		ansibleFileContent     []byte
-		ansibleCollectionURL   string
 		ansibleCollectionImage string
 
 		ansibleTasImages   support.AnsibleMap
@@ -40,26 +38,15 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(repositories.Data).NotTo(BeEmpty(), "No images were detected in repositories file")
 
-		By("resolve ansible collection source (URL or image)")
-		ansibleCollectionURL = support.GetEnv(support.EnvAnsibleImagesFile)
-		if ansibleCollectionURL == "" {
-			support.LogAvailableAnsibleArtifacts()
-			snapshotAnsibleURL := snapshotData.Others[support.AnsibleCollectionKey]
-			if snapshotAnsibleURL != "" {
-				log.Printf("Using ansible collection URL from snapshot.json\n")
-				ansibleCollectionURL, err = support.MapAnsibleZipFileURL(snapshotAnsibleURL)
-				Expect(err).NotTo(HaveOccurred())
-			}
-			ansibleCollectionImage = snapshotData.Others[support.AnsibleCollectionImageKey]
-			if ansibleCollectionImage != "" {
-				log.Printf("Using ansible collection from image: %s\n", ansibleCollectionImage)
-			}
+		By("resolve ansible collection image from snapshot")
+		ansibleCollectionImage = snapshotData.Others[support.AnsibleCollectionImageKey]
+		if ansibleCollectionImage != "" {
+			log.Printf("Using ansible collection from image: %s\n", ansibleCollectionImage)
 		}
 
 		By("check supported version")
 		version := support.GetEnv(support.EnvVersion)
-		hasAnsibleSource := ansibleCollectionURL != "" || ansibleCollectionImage != ""
-		if semver.Compare("v"+version, "v1.2.0") < 0 && !hasAnsibleSource {
+		if semver.Compare("v"+version, "v1.2.0") < 0 && ansibleCollectionImage == "" {
 			Skip("Ansible is optional for " + version)
 		}
 
@@ -73,13 +60,9 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 	})
 
 	It("load ansible definition file", func() {
+		Expect(ansibleCollectionImage).NotTo(BeEmpty(), "need ansible collection image from snapshot")
 		var err error
-		Expect(ansibleCollectionURL != "" || ansibleCollectionImage != "").To(BeTrue(), "need ansible collection URL or image from snapshot")
-		if ansibleCollectionImage != "" {
-			ansibleFileContent, err = support.LoadAnsibleCollectionFromImage(context.Background(), ansibleCollectionImage, support.AnsibleCollectionSnapshotFile)
-		} else {
-			ansibleFileContent, err = support.LoadAnsibleCollectionSnapshotFile(ansibleCollectionURL, support.AnsibleCollectionSnapshotFile)
-		}
+		ansibleFileContent, err = support.LoadAnsibleCollectionFromImage(context.Background(), ansibleCollectionImage, support.AnsibleCollectionSnapshotFile)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(ansibleFileContent).NotTo(BeEmpty(), "Ansible definition file seems to be empty")
 	})

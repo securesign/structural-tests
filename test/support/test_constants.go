@@ -2,7 +2,6 @@ package support
 
 const (
 	EnvReleasesSnapshotFile = "SNAPSHOT"
-	EnvAnsibleImagesFile    = "ANSIBLE"
 	EnvRepositoriesFile     = "REPOSITORIES"
 	EnvTestGithubToken      = "TEST_GITHUB_TOKEN" // #nosec G101
 	EnvVersion              = "VERSION"
@@ -14,12 +13,10 @@ const (
 	ModelValidationOperatorBundleImageKey  = "model-validation-operator-bundle-image"
 	OperatorImageKey                       = "rhtas-operator-image"
 	OperatorBundleImageKey                 = "rhtas-operator-bundle-image"
-	AnsibleCollectionKey                   = "artifact-signer-ansible.collection.url"
-	AnsibleCollectionImageKey             = "artifact-signer-ansible.collection.image"
-	AnsibleCollectionPathInImage          = "/releases"
+	AnsibleCollectionImageKey              = "artifact-signer-ansible.collection.image"
+	AnsibleCollectionPathInImage           = "/releases"
 
 	AnsibleCollectionSnapshotFile                           = "roles/tas_single_node/defaults/main.yml"
-	AnsibleArtifactsURL                                     = "https://api.github.com/repos/securesign/artifact-signer-ansible/actions/artifacts"
 	OperatorBundleClusterServiceVersionFile                 = "rhtas-operator.clusterserviceversion.yaml"
 	PolicyControllerOperatorBundleClusterServiceVersionFile = "policy-controller-operator.clusterserviceversion.yaml"
 	ModelValidationOperatorBundleClusterServiceVersionFile  = "model-validation-operator.clusterserviceversion.yaml"
