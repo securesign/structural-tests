@@ -3,3 +3,6 @@
 
 # editor and IDE paraphernalia
 .idea
+
+# Local config file
+testdata/test-config.yaml

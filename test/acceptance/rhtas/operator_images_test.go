@@ -24,7 +24,22 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 		operatorTasImages   support.OperatorMap
 		operatorOtherImages support.OperatorMap
 		operator            string
+		mandatoryTasKeys    []string
+		otherOperatorKeys   []string
 	)
+
+	BeforeAll(func() {
+		defaultsToUse := defaults
+		if content, err := support.GetTestConfigContent(); err == nil && len(content) > 0 {
+			defaultsToUse, err = support.MergeRhtasConfig(defaults, content)
+			Expect(err).NotTo(HaveOccurred())
+		}
+		var err error
+		mandatoryTasKeys, err = support.GetOperatorImageKeysFromConfig(defaultsToUse)
+		Expect(err).NotTo(HaveOccurred())
+		otherOperatorKeys, err = support.GetOperatorOtherImageKeysFromConfig(defaultsToUse)
+		Expect(err).NotTo(HaveOccurred())
+	})
 
 	It("get and parse snapshot file", func() {
 		var err error
@@ -47,7 +62,7 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 		helpLogs, err := support.RunImage(operator, []string{}, []string{"-h"})
 		Expect(err).NotTo(HaveOccurred())
 
-		operatorTasImages, operatorOtherImages = support.ParseOperatorImages(helpLogs)
+		operatorTasImages, operatorOtherImages = support.ParseOperatorImages(helpLogs, otherOperatorKeys)
 		support.LogMap(fmt.Sprintf("Operator TAS images (%d):", len(operatorTasImages)), operatorTasImages)
 		support.LogMap(fmt.Sprintf("Operator other images (%d):", len(operatorOtherImages)), operatorOtherImages)
 		Expect(operatorTasImages).NotTo(BeEmpty())
@@ -65,20 +80,20 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 	})
 
 	It("operator TAS images are all valid", func() {
-		Expect(support.GetMapKeys(operatorTasImages)).To(ContainElements(support.MandatoryTasOperatorImageKeys()))
-		Expect(len(operatorTasImages)).To(BeNumerically("==", len(support.MandatoryTasOperatorImageKeys())))
+		Expect(support.GetMapKeys(operatorTasImages)).To(ContainElements(mandatoryTasKeys))
+		Expect(len(operatorTasImages)).To(BeNumerically("==", len(mandatoryTasKeys)))
 		Expect(operatorTasImages).To(HaveEach(MatchRegexp(support.TasImageDefinitionRegexp)))
 	})
 
 	It("operator other images are all valid", func() {
-		Expect(support.GetMapKeys(operatorOtherImages)).To(ContainElements(support.OtherOperatorImageKeys()))
-		Expect(len(operatorOtherImages)).To(BeNumerically("==", len(support.OtherOperatorImageKeys())))
+		Expect(support.GetMapKeys(operatorOtherImages)).To(ContainElements(otherOperatorKeys))
+		Expect(len(operatorOtherImages)).To(BeNumerically("==", len(otherOperatorKeys)))
 		Expect(operatorOtherImages).To(HaveEach(MatchRegexp(support.OtherImageDefinitionRegexp)))
 	})
 
 	It("all image hashes are also defined in releases snapshot", func() {
 		mapped := make(map[string]string)
-		for _, imageKey := range support.MandatoryTasOperatorImageKeys() {
+		for _, imageKey := range mandatoryTasKeys {
 			oSha := support.ExtractHash(operatorTasImages[imageKey])
 			if _, keyExist := snapshotData.Images[imageKey]; !keyExist {
 				mapped[imageKey] = "MISSING"

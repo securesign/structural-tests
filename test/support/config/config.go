@@ -26,11 +26,84 @@ func resolveTestConfig() (TestConfig, error) {
 		return nil, fmt.Errorf("read test config %s: %w", path, err)
 	}
 
-	var cfg TestConfig
-	if err := yaml.Unmarshal(content, &cfg); err != nil {
+	var raw map[string]interface{}
+	if err := yaml.Unmarshal(content, &raw); err != nil {
 		return nil, fmt.Errorf("parse test config %s: %w", path, err)
 	}
+
+	cfg := make(TestConfig)
+	if raw == nil {
+		return cfg, nil
+	}
+
+	if rhtas, ok := raw["rhtas"]; ok {
+		if rhtasMap, ok := toMap(rhtas); ok {
+			cfg["rhtas"] = rhtasMap
+			return cfg, nil
+		}
+	}
+	// Suite-level file (operator, ansible, fbc at top level) without package wrapper
+	if _, hasOperator := raw["operator"]; hasOperator {
+		cfg["rhtas"] = raw
+		return cfg, nil
+	}
+	if _, hasAnsible := raw["ansible"]; hasAnsible {
+		cfg["rhtas"] = raw
+		return cfg, nil
+	}
+	if fbc, ok := raw["fbc"]; ok {
+		if fbcMap, ok := toMap(fbc); ok {
+			cfg["rhtas"] = map[string]interface{}{"fbc": fbcMap}
+			return cfg, nil
+		}
+	}
 	return cfg, nil
+}
+
+func toMap(value interface{}) (map[string]interface{}, bool) {
+	if value == nil {
+		return nil, false
+	}
+	m, ok := value.(map[string]interface{})
+	if ok {
+		return m, true
+	}
+	// yaml.Unmarshal may produce map[interface{}]interface{}
+	if m2, ok := value.(map[interface{}]interface{}); ok {
+		out := make(map[string]interface{}, len(m2))
+		for k, val := range m2 {
+			if ks, ok := k.(string); ok {
+				out[ks] = val
+			}
+		}
+		return out, true
+	}
+	return nil, false
+}
+
+// toDeepStringMap recursively converts map[interface{}]interface{} to map[string]interface{}
+// so YAML marshal produces correct keys (e.g. catalogPath).
+func toDeepStringMap(input interface{}) interface{} {
+	if input == nil {
+		return nil
+	}
+	if m, ok := input.(map[interface{}]interface{}); ok {
+		out := make(map[string]interface{}, len(m))
+		for k, val := range m {
+			if ks, ok := k.(string); ok {
+				out[ks] = toDeepStringMap(val)
+			}
+		}
+		return out
+	}
+	if s, ok := input.([]interface{}); ok {
+		out := make([]interface{}, len(s))
+		for i, val := range s {
+			out[i] = toDeepStringMap(val)
+		}
+		return out
+	}
+	return input
 }
 
 // DecodeSection unmarshals a product's configuration section into target.
@@ -44,6 +117,7 @@ func DecodeSection(cfg TestConfig, product, section string, target interface{}) 
 	if !ok {
 		return false, nil
 	}
+	sectionData = toDeepStringMap(sectionData)
 	raw, err := yaml.Marshal(sectionData)
 	if err != nil {
 		return false, fmt.Errorf("re-marshal section %q of product %q: %w", section, product, err)

@@ -1,6 +1,7 @@
 package acceptance
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -13,14 +14,16 @@ import (
 var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 
 	var (
-		snapshotData support.SnapshotData
-		repositories *support.RepositoryList
-
-		ansibleFileContent   []byte
-		ansibleCollectionURL string
+		snapshotData           support.SnapshotData
+		repositories           *support.RepositoryList
+		ansibleFileContent     []byte
+		ansibleCollectionImage string
 
 		ansibleTasImages   support.AnsibleMap
 		ansibleOtherImages support.AnsibleMap
+
+		ansibleTasKeys   []string
+		ansibleOtherKeys []string
 	)
 
 	BeforeAll(func() {
@@ -35,30 +38,32 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(repositories.Data).NotTo(BeEmpty(), "No images were detected in repositories file")
 
-		By("resolve ansible collection URL")
-		ansibleCollectionURL = support.GetEnv(support.EnvAnsibleImagesFile)
-		if ansibleCollectionURL == "" {
-			support.LogAvailableAnsibleArtifacts()
-			// standard way - use ansible definition file path from releases snapshot.json file
-			snapshotAnsibleURL := snapshotData.Others[support.AnsibleCollectionKey]
-			if snapshotAnsibleURL != "" {
-				log.Printf("Using %s URL from snapshot.json file\n", snapshotAnsibleURL)
-				ansibleCollectionURL, err = support.MapAnsibleZipFileURL(snapshotAnsibleURL)
-				Expect(err).NotTo(HaveOccurred())
-			}
+		By("resolve ansible collection image from snapshot")
+		ansibleCollectionImage = snapshotData.Others[support.AnsibleCollectionImageKey]
+		if ansibleCollectionImage != "" {
+			log.Printf("Using ansible collection from image: %s\n", ansibleCollectionImage)
 		}
 
 		By("check supported version")
 		version := support.GetEnv(support.EnvVersion)
-		if semver.Compare("v"+version, "v1.2.0") < 0 && ansibleCollectionURL == "" {
+		if semver.Compare("v"+version, "v1.2.0") < 0 && ansibleCollectionImage == "" {
 			Skip("Ansible is optional for " + version)
 		}
+
+		By("load ansible image key lists from config")
+		defaultsToUse := defaults
+		if content, err := support.GetTestConfigContent(); err == nil && len(content) > 0 {
+			defaultsToUse, err = support.MergeRhtasConfig(defaults, content)
+			Expect(err).NotTo(HaveOccurred())
+		}
+		ansibleTasKeys, ansibleOtherKeys, err = support.GetAnsibleImageKeysFromConfig(defaultsToUse)
+		Expect(err).NotTo(HaveOccurred())
 	})
 
 	It("load ansible definition file", func() {
+		Expect(ansibleCollectionImage).NotTo(BeEmpty(), "need ansible collection image from snapshot")
 		var err error
-		Expect(ansibleCollectionURL).NotTo(BeEmpty())
-		ansibleFileContent, err = support.LoadAnsibleCollectionSnapshotFile(ansibleCollectionURL, support.AnsibleCollectionSnapshotFile)
+		ansibleFileContent, err = support.LoadAnsibleCollectionFromImage(context.Background(), ansibleCollectionImage, support.AnsibleCollectionSnapshotFile)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(ansibleFileContent).NotTo(BeEmpty(), "Ansible definition file seems to be empty")
 	})
@@ -67,7 +72,7 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 		ansibleAllImages, err := support.MapAnsibleImages(ansibleFileContent)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(ansibleAllImages).NotTo(BeEmpty())
-		ansibleTasImages, ansibleOtherImages = support.SplitMap(ansibleAllImages, support.AnsibleTasImageKeys())
+		ansibleTasImages, ansibleOtherImages = support.SplitMap(ansibleAllImages, ansibleTasKeys)
 		Expect(ansibleTasImages).NotTo(BeEmpty())
 		Expect(ansibleOtherImages).NotTo(BeEmpty())
 		support.LogMap(fmt.Sprintf("Ansible TAS images (%d):", len(ansibleTasImages)), ansibleTasImages)
@@ -85,20 +90,20 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 	})
 
 	It("ansible TAS images are all valid", func() {
-		Expect(support.GetMapKeys(ansibleTasImages)).To(ContainElements(support.AnsibleTasImageKeys()))
-		Expect(len(ansibleTasImages)).To(BeNumerically("==", len(support.AnsibleTasImageKeys())))
+		Expect(support.GetMapKeys(ansibleTasImages)).To(ContainElements(ansibleTasKeys))
+		Expect(len(ansibleTasImages)).To(BeNumerically("==", len(ansibleTasKeys)))
 		Expect(ansibleTasImages).To(HaveEach(MatchRegexp(support.TasImageDefinitionRegexp)))
 	})
 
 	It("ansible other images are all valid", func() {
-		Expect(support.GetMapKeys(ansibleOtherImages)).To(ContainElements(support.AnsibleOtherImageKeys()))
-		Expect(len(ansibleOtherImages)).To(BeNumerically("==", len(support.AnsibleOtherImageKeys())))
+		Expect(support.GetMapKeys(ansibleOtherImages)).To(ContainElements(ansibleOtherKeys))
+		Expect(len(ansibleOtherImages)).To(BeNumerically("==", len(ansibleOtherKeys)))
 		Expect(ansibleOtherImages).To(HaveEach(MatchRegexp(support.OtherImageDefinitionRegexp)))
 	})
 
 	It("all ansible TAS image hashes are also defined in releases snapshot", func() {
 		mapped := make(map[string]string)
-		for _, imageKey := range support.AnsibleTasImageKeys() {
+		for _, imageKey := range ansibleTasKeys {
 			aSha := support.ExtractHash(ansibleTasImages[imageKey])
 			if _, keyExist := snapshotData.Images[support.ConvertAnsibleImageKey(imageKey)]; !keyExist {
 				mapped[imageKey] = "MISSING"

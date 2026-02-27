@@ -29,7 +29,9 @@ func ParseSnapshotData() (SnapshotData, error) {
 	return snapshotData, nil
 }
 
-func ParseOperatorImages(helpContent string) (OperatorMap, OperatorMap) {
+// ParseOperatorImages parses operator help output into TAS and other image maps.
+// otherKeys is the list of image keys that belong to "other" (e.g. from otherOperatorImageKeys in config).
+func ParseOperatorImages(helpContent string, otherKeys []string) (OperatorMap, OperatorMap) {
 	const minimumValidMatches = 3
 	re := regexp.MustCompile(`-([\w-]+image)\s+string[^"]+default "([^"]+)"`)
 	matches := re.FindAllStringSubmatch(helpContent, -1)
@@ -39,7 +41,7 @@ func ParseOperatorImages(helpContent string) (OperatorMap, OperatorMap) {
 		if len(match) >= minimumValidMatches {
 			key := match[1]
 			value := match[2]
-			if slices.Contains(OtherOperatorImageKeys(), key) {
+			if slices.Contains(otherKeys, key) {
 				operatorOtherImages[key] = value
 				continue
 			}

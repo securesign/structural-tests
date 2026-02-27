@@ -30,7 +30,6 @@ for the tests are taken from that file, as shown below:
 * ``SNAPSHOT`` - points to the ``snapshot.json`` file, can be local or on a server (github).
 * ``VERSION`` - version of realease in semver format. Example ``1.2.0``
 * ``TEST_GITHUB_TOKEN`` - token used to access  ``releases`` project on github.
-* ``ANSIBLE`` - ansible collection zip file used instead of the one defined in ``snapshot.json`` file. Can also be local.
 * ``REPOSITORIES`` - file with images published in ``registry.redhat.io``, default ``testdata/repositories.json``. For how to get or update this file, 
   check [Repository List](#repository-list) chapter.
 
@@ -44,12 +43,6 @@ Run tests based on a github file:
 Run the same tests on a local (cloned) file:
 
     SNAPSHOT=../releases/1.1.1/stable/snapshot.json \
-    go test -v ./test/acceptance/rhtas/... --ginkgo.v
-
-Force different ansible collection instead of the one defined in ``snapshot.json`` file. This may be useful, when checking ansible collection not yet published:
-
-    SNAPSHOT=../releases/1.1.1/stable/snapshot.json \
-    ANSIBLE=https://api.github.com/repos/securesign/artifact-signer-ansible/actions/artifacts/2442056100/zip \
     go test -v ./test/acceptance/rhtas/... --ginkgo.v
 
 To run just individual test use ``--ginkgo.fokus-file`` parameter:

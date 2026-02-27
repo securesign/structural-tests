@@ -1,0 +1,68 @@
+# 1.3.2 overrides – package rhtas, suites: operator, ansible, fbc
+
+rhtas:
+  operator:
+    imageKeys:
+      - trillian-log-server-image
+      - trillian-log-signer-image
+      - trillian-db-image
+      - createtree-image
+      - fulcio-server-image
+      - rekor-redis-image
+      - rekor-search-ui-image
+      - rekor-server-image
+      - rekor-monitor-image
+      - backfill-redis-image
+      - tuf-image
+      - ctlog-image
+      - client-server-image
+      - segment-backup-job-image
+      - timestamp-authority-image
+    otherImageKeys:
+      - trillian-netcat-image
+      - http-server-image
+
+  ansible:
+    imageKeys:
+      - tas_single_node_fulcio_server_image
+      - tas_single_node_trillian_log_server_image
+      - tas_single_node_trillian_log_signer_image
+      - tas_single_node_rekor_server_image
+      - tas_single_node_ctlog_image
+      - tas_single_node_rekor_redis_image
+      - tas_single_node_trillian_db_image
+      - tas_single_node_tuf_image
+      - tas_single_node_timestamp_authority_image
+      - tas_single_node_rekor_search_ui_image
+      - tas_single_node_createtree_image
+      - tas_single_node_client_server_image
+      - tas_single_node_backfill_redis_image
+    otherImageKeys:
+      - tas_single_node_http_server_image
+      - tas_single_node_trillian_netcat_image
+      - tas_single_node_nginx_image
+      - tas_single_node_rekor_monitor_image
+
+  fbc:
+    olmPackage: "rhtas-operator"
+    operatorBundleImage: "registry.redhat.io/rhtas/rhtas-operator-bundle"
+    catalogPath: "/configs/rhtas-operator/catalog.json"
+    imageKeyPrefix: "fbc-"
+    defaultChannel: "stable"
+    expectedChannels:
+      - stable
+      - stable-v1.1
+      - stable-v1.2
+      - stable-v1.3
+    expectedDeprecations:
+      - stable-v1.1
+      - rhtas-operator.v1.1.0
+      - rhtas-operator.v1.1.1
+      - rhtas-operator.v1.1.2
+    override:
+      fbc-v4-15:
+        expectedChannels:
+          - stable
+          - stable-v1.3
+          - stable-v1.4
+        expectedDeprecations: []
