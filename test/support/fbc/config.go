@@ -64,8 +64,43 @@ func decodeFBCSection(in interface{}) (fbcSuiteSection, error) {
 	if err := yaml.Unmarshal(bytes, &out); err != nil {
 		return out, fmt.Errorf("decode fbc section: %w", err)
 	}
-	extractExpectedChannelsFromMap(conv, &out)
+	backfillFBCFromMap(conv, &out)
 	return out, nil
+}
+
+// backfillFBCFromMap sets FBC struct fields from the config map when unmarshal left them empty.
+// This fixes decoding when the source is a nested map (e.g. embedded defaults) and avoids hardcoding.
+func backfillFBCFromMap(conv interface{}, out *fbcSuiteSection) {
+	convMap, isMap := conv.(map[string]interface{})
+	if !isMap {
+		return
+	}
+	if out.CatalogPath == "" {
+		if v, ok := convMap["catalogPath"].(string); ok {
+			out.CatalogPath = v
+		}
+	}
+	if out.ImageKeyPrefix == "" {
+		if v, ok := convMap["imageKeyPrefix"].(string); ok {
+			out.ImageKeyPrefix = v
+		}
+	}
+	if out.OLMPackage == "" {
+		if v, ok := convMap["olmPackage"].(string); ok {
+			out.OLMPackage = v
+		}
+	}
+	if out.OperatorBundleImage == "" {
+		if v, ok := convMap["operatorBundleImage"].(string); ok {
+			out.OperatorBundleImage = v
+		}
+	}
+	if out.DefaultChannel == "" {
+		if v, ok := convMap["defaultChannel"].(string); ok {
+			out.DefaultChannel = v
+		}
+	}
+	extractExpectedChannelsFromMap(conv, out)
 }
 
 // extractExpectedChannelsFromMap backfills ExpectedChannels from the map when unmarshal left it empty.
@@ -144,7 +179,6 @@ func GetFBCConfigForVersion(product, versionKey string, defaultsData []byte) (FB
 			applyFBCOverride(&base, ov)
 		}
 	}
-	ensureFBCDefaults(product, &base)
 	return base, nil
 }
 
@@ -167,39 +201,10 @@ func getFBCConfigBase(product string, defaultsData []byte) (FBCConfig, error) {
 	if found {
 		applyFBCDefaults(&userFBC.FBCConfig, &defaultsFBC.FBCConfig)
 		base := userFBC.FBCConfig
-		ensureFBCDefaults(product, &base)
 		return base, nil
 	}
 	base := defaultsFBC.FBCConfig
-	ensureFBCDefaults(product, &base)
 	return base, nil
-}
-
-// ensureFBCDefaults sets required defaults so FBC tests never use wrong images or empty paths.
-// Without ImageKeyPrefix we would match all snapshot images (e.g. backfill-redis) as "FBC" and fail.
-func ensureFBCDefaults(product string, base *FBCConfig) {
-	if product != "rhtas" {
-		return
-	}
-	if base.CatalogPath == "" {
-		base.CatalogPath = "/configs/rhtas-operator/catalog.json"
-	}
-	if base.ImageKeyPrefix == "" {
-		base.ImageKeyPrefix = "fbc-"
-	}
-	if base.OLMPackage == "" {
-		base.OLMPackage = "rhtas-operator"
-	}
-	if base.OperatorBundleImage == "" {
-		base.OperatorBundleImage = "registry.redhat.io/rhtas/rhtas-operator-bundle"
-	}
-	if base.DefaultChannel == "" {
-		base.DefaultChannel = "stable"
-	}
-	if len(base.ExpectedChannels) == 0 {
-		// Default set matches FBC catalog (stable + versioned channels), e.g. 1.3.x and 1.4.0.
-		base.ExpectedChannels = []string{"stable", "stable-v1.1", "stable-v1.2", "stable-v1.3", "stable-v1.4"}
-	}
 }
 
 func applyFBCDefaults(from, defaults *FBCConfig) {
