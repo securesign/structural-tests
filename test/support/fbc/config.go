@@ -28,11 +28,11 @@ type fbcSuiteSection struct {
 
 // ensureStringKeys converts map[interface{}]interface{} to map[string]interface{} recursively
 // so yaml.Marshal produces correct keys (e.g. catalogPath) when decoding from parsed YAML.
-func ensureStringKeys(in interface{}) interface{} {
-	if in == nil {
+func ensureStringKeys(input interface{}) interface{} {
+	if input == nil {
 		return nil
 	}
-	if m, ok := in.(map[interface{}]interface{}); ok {
+	if m, ok := input.(map[interface{}]interface{}); ok {
 		out := make(map[string]interface{}, len(m))
 		for k, val := range m {
 			if ks, ok := k.(string); ok {
@@ -41,14 +41,14 @@ func ensureStringKeys(in interface{}) interface{} {
 		}
 		return out
 	}
-	if s, ok := in.([]interface{}); ok {
+	if s, ok := input.([]interface{}); ok {
 		out := make([]interface{}, len(s))
 		for i, val := range s {
 			out[i] = ensureStringKeys(val)
 		}
 		return out
 	}
-	return in
+	return input
 }
 
 func decodeFBCSection(in interface{}) (fbcSuiteSection, error) {
@@ -73,20 +73,20 @@ func extractExpectedChannelsFromMap(conv interface{}, out *fbcSuiteSection) {
 	if len(out.ExpectedChannels) != 0 {
 		return
 	}
-	m, ok := conv.(map[string]interface{})
-	if !ok {
+	convMap, isMap := conv.(map[string]interface{})
+	if !isMap {
 		return
 	}
-	ch, ok := m["expectedChannels"]
-	if !ok {
+	ch, hasCh := convMap["expectedChannels"]
+	if !hasCh {
 		return
 	}
-	sl, ok := ch.([]interface{})
-	if !ok {
+	sl, isSlice := ch.([]interface{})
+	if !isSlice {
 		return
 	}
 	for _, item := range sl {
-		if s, ok := item.(string); ok {
+		if s, isStr := item.(string); isStr {
 			out.ExpectedChannels = append(out.ExpectedChannels, s)
 		}
 	}

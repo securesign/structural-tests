@@ -86,11 +86,11 @@ func toMap(value interface{}) (map[string]interface{}, bool) {
 
 // toDeepStringMap recursively converts map[interface{}]interface{} to map[string]interface{}
 // so YAML marshal produces correct keys (e.g. catalogPath).
-func toDeepStringMap(in interface{}) interface{} {
-	if in == nil {
+func toDeepStringMap(input interface{}) interface{} {
+	if input == nil {
 		return nil
 	}
-	if m, ok := in.(map[interface{}]interface{}); ok {
+	if m, ok := input.(map[interface{}]interface{}); ok {
 		out := make(map[string]interface{}, len(m))
 		for k, val := range m {
 			if ks, ok := k.(string); ok {
@@ -99,14 +99,14 @@ func toDeepStringMap(in interface{}) interface{} {
 		}
 		return out
 	}
-	if s, ok := in.([]interface{}); ok {
+	if s, ok := input.([]interface{}); ok {
 		out := make([]interface{}, len(s))
 		for i, val := range s {
 			out[i] = toDeepStringMap(val)
 		}
 		return out
 	}
-	return in
+	return input
 }
 
 // DecodeSection unmarshals a product's configuration section into target.
