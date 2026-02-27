@@ -11,9 +11,6 @@ import (
 type TestConfig map[string]map[string]interface{}
 
 // GetTestConfig returns test configuration from TEST_CONFIG env or the default path.
-// Accepts both formats: (1) product -> section -> data (e.g. rhtas.fbc), and (2) flat defaults
-// with top-level fbc, fbcOverrides, and list keys (mandatoryTasOperatorImageKeys, etc.).
-// In format (2), top-level "fbc" is treated as rhtas.fbc so FBC config is still found.
 func GetTestConfig() (TestConfig, error) {
 	return resolveTestConfig()
 }

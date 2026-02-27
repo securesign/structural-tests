@@ -13,7 +13,7 @@ func GetEnv(key string) string {
 }
 
 // VersionForConfig returns VERSION env if set; otherwise tries to infer version from SNAPSHOT path
-// (e.g. "../releases-1.3.2/1.3.2/stable/snapshot.json" -> "1.3.2"). Used so 1.2.x and 1.3.x config overrides apply without setting VERSION.
+// (e.g. "../1.3.2/stable/snapshot.json" -> "1.3.2"). Used so 1.2.x and 1.3.x config overrides apply without setting VERSION.
 func VersionForConfig() string {
 	if v := GetEnv(EnvVersion); v != "" {
 		return v
