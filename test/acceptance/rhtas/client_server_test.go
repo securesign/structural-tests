@@ -103,6 +103,10 @@ var _ = Describe("Client server", Ordered, func() {
 					})
 
 					It(fmt.Sprintf("compare checkum of %s-%s with source image", osName, arch), func() {
+						if support.IsVersion("1.4.0") {
+							Skip("Skipping for version 1.4.0 - SECURESIGN-3939")
+						}
+
 						var (
 							targetPath = tmpDir
 							fileName   string

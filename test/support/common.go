@@ -6,18 +6,36 @@ import (
 	"os"
 	"regexp"
 	"slices"
+
+	"golang.org/x/mod/semver"
 )
 
 func GetEnv(key string) string {
 	return getEnv(key, false)
 }
 
-// VersionForConfig returns VERSION env if set; otherwise tries to infer version from SNAPSHOT path
-// (e.g. "../1.3.2/stable/snapshot.json" -> "1.3.2"). Used so 1.2.x and 1.3.x config overrides apply without setting VERSION.
-func VersionForConfig() string {
+func IsVersion(testedVersion string) bool {
+	actualVersion := parseVersion()
+	if actualVersion == "" {
+		return false
+	}
+	return semver.Compare("v"+actualVersion, "v"+testedVersion) == 0
+}
+
+func IsBeforeVersion(testedVersion string) bool {
+	actualVersion := parseVersion()
+	if actualVersion == "" {
+		return false
+	}
+	return semver.Compare("v"+actualVersion, "v"+testedVersion) < 0
+}
+
+func parseVersion() string {
+	// get version from environment variable
 	if v := GetEnv(EnvVersion); v != "" {
 		return v
 	}
+	// try to get version from snapshot path
 	snapshotPath := GetEnv(EnvReleasesSnapshotFile)
 	if snapshotPath == "" {
 		return ""

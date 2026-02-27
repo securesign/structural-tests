@@ -8,7 +8,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/securesign/structural-tests/test/support"
-	"golang.org/x/mod/semver"
 )
 
 var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
@@ -46,7 +45,7 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 
 		By("check supported version")
 		version := support.GetEnv(support.EnvVersion)
-		if semver.Compare("v"+version, "v1.2.0") < 0 && ansibleCollectionImage == "" {
+		if support.IsBeforeVersion("1.2.0") && ansibleCollectionImage == "" {
 			Skip("Ansible is optional for " + version)
 		}
 
