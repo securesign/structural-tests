@@ -45,6 +45,15 @@ func resolveTestConfig() (TestConfig, error) {
 			return cfg, nil
 		}
 	}
+	// Suite-level file (operator, ansible, fbc at top level) without package wrapper
+	if _, hasOperator := raw["operator"]; hasOperator {
+		cfg["rhtas"] = raw
+		return cfg, nil
+	}
+	if _, hasAnsible := raw["ansible"]; hasAnsible {
+		cfg["rhtas"] = raw
+		return cfg, nil
+	}
 	if fbc, ok := raw["fbc"]; ok {
 		if fbcMap, ok := toMap(fbc); ok {
 			cfg["rhtas"] = map[string]interface{}{"fbc": fbcMap}
@@ -75,6 +84,31 @@ func toMap(value interface{}) (map[string]interface{}, bool) {
 	return nil, false
 }
 
+// toDeepStringMap recursively converts map[interface{}]interface{} to map[string]interface{}
+// so YAML marshal produces correct keys (e.g. catalogPath).
+func toDeepStringMap(v interface{}) interface{} {
+	if v == nil {
+		return nil
+	}
+	if m, ok := v.(map[interface{}]interface{}); ok {
+		out := make(map[string]interface{}, len(m))
+		for k, val := range m {
+			if ks, ok := k.(string); ok {
+				out[ks] = toDeepStringMap(val)
+			}
+		}
+		return out
+	}
+	if s, ok := v.([]interface{}); ok {
+		out := make([]interface{}, len(s))
+		for i, val := range s {
+			out[i] = toDeepStringMap(val)
+		}
+		return out
+	}
+	return v
+}
+
 // DecodeSection unmarshals a product's configuration section into target.
 // Returns false if the product or section is not present.
 func DecodeSection(cfg TestConfig, product, section string, target interface{}) (bool, error) {
@@ -86,6 +120,7 @@ func DecodeSection(cfg TestConfig, product, section string, target interface{}) 
 	if !ok {
 		return false, nil
 	}
+	sectionData = toDeepStringMap(sectionData)
 	raw, err := yaml.Marshal(sectionData)
 	if err != nil {
 		return false, fmt.Errorf("re-marshal section %q of product %q: %w", section, product, err)

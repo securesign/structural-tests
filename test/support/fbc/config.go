@@ -3,6 +3,7 @@ package fbc
 import (
 	"fmt"
 
+	"github.com/securesign/structural-tests/test/support"
 	"github.com/securesign/structural-tests/test/support/config"
 	"gopkg.in/yaml.v3"
 )
@@ -18,9 +19,77 @@ type FBCConfig struct {
 	ExpectedDeprecations []string `yaml:"expectedDeprecations,omitempty"`
 }
 
-type productDefaults struct {
-	FBC          *FBCConfig            `yaml:"fbc"`
-	FBCOverrides map[string]*FBCConfig `yaml:"fbcOverrides,omitempty"`
+// fbcSuiteSection is the fbc suite: base fields plus override map (fbc.override in YAML).
+type fbcSuiteSection struct {
+	FBCConfig
+	Override map[string]*FBCConfig `yaml:"override,omitempty"`
+}
+
+// ensureStringKeys converts map[interface{}]interface{} to map[string]interface{} recursively
+// so yaml.Marshal produces correct keys (e.g. catalogPath) when decoding from parsed YAML.
+func ensureStringKeys(v interface{}) interface{} {
+	if v == nil {
+		return nil
+	}
+	if m, ok := v.(map[interface{}]interface{}); ok {
+		out := make(map[string]interface{}, len(m))
+		for k, val := range m {
+			if ks, ok := k.(string); ok {
+				out[ks] = ensureStringKeys(val)
+			}
+		}
+		return out
+	}
+	if s, ok := v.([]interface{}); ok {
+		out := make([]interface{}, len(s))
+		for i, val := range s {
+			out[i] = ensureStringKeys(val)
+		}
+		return out
+	}
+	return v
+}
+
+func decodeFBCSection(v interface{}) (fbcSuiteSection, error) {
+	var out fbcSuiteSection
+	if v == nil {
+		return out, fmt.Errorf("fbc section is nil")
+	}
+	conv := ensureStringKeys(v)
+	bytes, err := yaml.Marshal(conv)
+	if err != nil {
+		return out, fmt.Errorf("marshal fbc section: %w", err)
+	}
+	if err := yaml.Unmarshal(bytes, &out); err != nil {
+		return out, fmt.Errorf("decode fbc section: %w", err)
+	}
+	// Fallback: YAML unmarshal can leave ExpectedChannels empty when coming from map; extract from map.
+	if len(out.ExpectedChannels) == 0 {
+		if m, ok := conv.(map[string]interface{}); ok {
+			if ch, ok := m["expectedChannels"]; ok {
+				if sl, ok := ch.([]interface{}); ok {
+					for _, item := range sl {
+						if s, ok := item.(string); ok {
+							out.ExpectedChannels = append(out.ExpectedChannels, s)
+						}
+					}
+				}
+			}
+		}
+	}
+	return out, nil
+}
+
+func getDefaultsFBC(defaultsData []byte) (fbcSuiteSection, error) {
+	suiteMap, err := support.SuiteLevelMap(defaultsData)
+	if err != nil {
+		return fbcSuiteSection{}, fmt.Errorf("defaults for FBC: %w", err)
+	}
+	fbcVal, ok := suiteMap["fbc"]
+	if !ok || fbcVal == nil {
+		return fbcSuiteSection{}, fmt.Errorf("missing fbc section in defaults")
+	}
+	return decodeFBCSection(fbcVal)
 }
 
 // GetFBCConfig returns FBC config for the given product (shared config).
@@ -34,31 +103,43 @@ func GetFBCConfig(product string, defaultsData []byte) (FBCConfig, error) {
 }
 
 // GetFBCConfigForVersion returns FBC config for the given product and version key.
-// Uses shared fbc config, then applies fbcOverrides[versionKey] from defaults.yaml if present.
+// Uses shared fbc config, then applies fbc.override[versionKey] from defaults and TEST_CONFIG.
 func GetFBCConfigForVersion(product, versionKey string, defaultsData []byte) (FBCConfig, error) {
 	base, err := getFBCConfigBase(product, defaultsData)
 	if err != nil {
 		return FBCConfig{}, err
 	}
-	var defaults productDefaults
-	if err := yaml.Unmarshal(defaultsData, &defaults); err != nil {
-		return FBCConfig{}, fmt.Errorf("parse embedded FBC defaults for %q: %w", product, err)
+	defaultsFBC, err := getDefaultsFBC(defaultsData)
+	if err != nil {
+		return FBCConfig{}, err
 	}
-	if defaults.FBCOverrides != nil {
-		if override := defaults.FBCOverrides[versionKey]; override != nil {
-			applyFBCOverride(&base, override)
+	if defaultsFBC.Override != nil {
+		if ov := defaultsFBC.Override[versionKey]; ov != nil {
+			applyFBCOverride(&base, ov)
 		}
 	}
+	cfg, err := config.GetTestConfig()
+	if err != nil {
+		return FBCConfig{}, fmt.Errorf("load test config: %w", err)
+	}
+	var userFBC fbcSuiteSection
+	found, err := config.DecodeSection(cfg, product, "fbc", &userFBC)
+	if err != nil {
+		return FBCConfig{}, fmt.Errorf("decode fbc section for %q: %w", product, err)
+	}
+	if found && userFBC.Override != nil {
+		if ov := userFBC.Override[versionKey]; ov != nil {
+			applyFBCOverride(&base, ov)
+		}
+	}
+	ensureFBCDefaults(product, &base)
 	return base, nil
 }
 
 func getFBCConfigBase(product string, defaultsData []byte) (FBCConfig, error) {
-	var defaults productDefaults
-	if err := yaml.Unmarshal(defaultsData, &defaults); err != nil {
-		return FBCConfig{}, fmt.Errorf("parse embedded FBC defaults for %q: %w", product, err)
-	}
-	if defaults.FBC == nil {
-		return FBCConfig{}, fmt.Errorf("missing fbc section in embedded defaults for %q", product)
+	defaultsFBC, err := getDefaultsFBC(defaultsData)
+	if err != nil {
+		return FBCConfig{}, fmt.Errorf("embedded FBC defaults for %q: %w", product, err)
 	}
 
 	cfg, err := config.GetTestConfig()
@@ -66,16 +147,47 @@ func getFBCConfigBase(product string, defaultsData []byte) (FBCConfig, error) {
 		return FBCConfig{}, fmt.Errorf("load test config: %w", err)
 	}
 
-	var userFBC FBCConfig
+	var userFBC fbcSuiteSection
 	found, err := config.DecodeSection(cfg, product, "fbc", &userFBC)
 	if err != nil {
 		return FBCConfig{}, fmt.Errorf("decode fbc section for %q: %w", product, err)
 	}
 	if found {
-		applyFBCDefaults(&userFBC, defaults.FBC)
-		return userFBC, nil
+		applyFBCDefaults(&userFBC.FBCConfig, &defaultsFBC.FBCConfig)
+		base := userFBC.FBCConfig
+		ensureFBCDefaults(product, &base)
+		return base, nil
 	}
-	return *defaults.FBC, nil
+	base := defaultsFBC.FBCConfig
+	ensureFBCDefaults(product, &base)
+	return base, nil
+}
+
+// ensureFBCDefaults sets required defaults so FBC tests never use wrong images or empty paths.
+// Without ImageKeyPrefix we would match all snapshot images (e.g. backfill-redis) as "FBC" and fail.
+func ensureFBCDefaults(product string, base *FBCConfig) {
+	if product != "rhtas" {
+		return
+	}
+	if base.CatalogPath == "" {
+		base.CatalogPath = "/configs/rhtas-operator/catalog.json"
+	}
+	if base.ImageKeyPrefix == "" {
+		base.ImageKeyPrefix = "fbc-"
+	}
+	if base.OLMPackage == "" {
+		base.OLMPackage = "rhtas-operator"
+	}
+	if base.OperatorBundleImage == "" {
+		base.OperatorBundleImage = "registry.redhat.io/rhtas/rhtas-operator-bundle"
+	}
+	if base.DefaultChannel == "" {
+		base.DefaultChannel = "stable"
+	}
+	if len(base.ExpectedChannels) == 0 {
+		// Default set matches FBC catalog (stable + versioned channels), e.g. 1.3.x and 1.4.0.
+		base.ExpectedChannels = []string{"stable", "stable-v1.1", "stable-v1.2", "stable-v1.3", "stable-v1.4"}
+	}
 }
 
 func applyFBCDefaults(from, defaults *FBCConfig) {

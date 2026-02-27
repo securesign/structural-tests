@@ -1,4 +1,48 @@
-# Shared FBC configuration for all versions. Override per version in fbcOverrides.
+# Suite-based config: operator, ansible, fbc. No package top-level (file is in test/acceptance/rhtas/).
+
+operator:
+  imageKeys:
+    - trillian-log-server-image
+    - trillian-log-signer-image
+    - trillian-db-image
+    - createtree-image
+    - fulcio-server-image
+    - rekor-redis-image
+    - rekor-search-ui-image
+    - rekor-server-image
+    - rekor-monitor-image
+    - backfill-redis-image
+    - tuf-image
+    - ctlog-image
+    - client-server-image
+    - timestamp-authority-image
+    - ctlog-monitor-image
+  otherImageKeys:
+    - trillian-netcat-image
+    - http-server-image
+
+ansible:
+  imageKeys:
+    - tas_single_node_fulcio_server_image
+    - tas_single_node_trillian_log_server_image
+    - tas_single_node_trillian_log_signer_image
+    - tas_single_node_rekor_server_image
+    - tas_single_node_ctlog_image
+    - tas_single_node_rekor_redis_image
+    - tas_single_node_trillian_db_image
+    - tas_single_node_tuf_image
+    - tas_single_node_timestamp_authority_image
+    - tas_single_node_rekor_search_ui_image
+    - tas_single_node_createtree_image
+    - tas_single_node_client_server_image
+    - tas_single_node_backfill_redis_image
+  otherImageKeys:
+    - tas_single_node_http_server_image
+    - tas_single_node_trillian_netcat_image
+    - tas_single_node_nginx_image
+    - tas_single_node_rekor_monitor_image
+    - tas_single_node_ctlog_monitor_image
+
 fbc:
   olmPackage: "rhtas-operator"
   operatorBundleImage: "registry.redhat.io/rhtas/rhtas-operator-bundle"
@@ -16,55 +60,10 @@ fbc:
     - rhtas-operator.v1.1.0
     - rhtas-operator.v1.1.1
     - rhtas-operator.v1.1.2
-
-# Optional per-version overrides (key = FBC image key, e.g. fbc-v4-15). Only set fields that differ from fbc.
-fbcOverrides:
-  fbc-v4-21:
-    expectedChannels:
-      - stable
-      - stable-v1.3
-      - stable-v1.4
-    expectedDeprecations: []
-
-operatorImageKeys:
-  - trillian-log-server-image
-  - trillian-log-signer-image
-  - trillian-db-image
-  - createtree-image
-  - fulcio-server-image
-  - rekor-redis-image
-  - rekor-search-ui-image
-  - rekor-server-image
-  - rekor-monitor-image
-  - backfill-redis-image
-  - tuf-image
-  - ctlog-image
-  - client-server-image
-  - timestamp-authority-image
-  - ctlog-monitor-image
-
-operatorOtherImageKeys:
-  - trillian-netcat-image
-  - http-server-image
-
-ansibleImageKeys:
-  - tas_single_node_fulcio_server_image
-  - tas_single_node_trillian_log_server_image
-  - tas_single_node_trillian_log_signer_image
-  - tas_single_node_rekor_server_image
-  - tas_single_node_ctlog_image
-  - tas_single_node_rekor_redis_image
-  - tas_single_node_trillian_db_image
-  - tas_single_node_tuf_image
-  - tas_single_node_timestamp_authority_image
-  - tas_single_node_rekor_search_ui_image
-  - tas_single_node_createtree_image
-  - tas_single_node_client_server_image
-  - tas_single_node_backfill_redis_image
-
-ansibleOtherImageKeys:
-  - tas_single_node_http_server_image
-  - tas_single_node_trillian_netcat_image
-  - tas_single_node_nginx_image
-  - tas_single_node_rekor_monitor_image
-  - tas_single_node_ctlog_monitor_image
+  override:
+    fbc-v4-21:
+      expectedChannels:
+        - stable
+        - stable-v1.3
+        - stable-v1.4
+      expectedDeprecations: []

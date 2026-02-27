@@ -7,21 +7,70 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// MergeRhtasConfig overlays fileContent on top of baseDefaults. Keys present in fileContent
-// override baseDefaults; keys only in baseDefaults (e.g. operatorOtherImageKeys) are preserved.
-// Use this when TEST_CONFIG points to a partial config file so embedded defaults fill in missing keys.
+// SuiteLevelMap returns config with operator/ansible/fbc at top level.
+// If the root has a "rhtas" key (package wrapper), returns that inner map; otherwise returns root.
+func SuiteLevelMap(data []byte) (map[string]interface{}, error) {
+	var raw map[string]interface{}
+	if err := yaml.Unmarshal(data, &raw); err != nil {
+		return nil, fmt.Errorf("parse config: %w", err)
+	}
+	if raw == nil {
+		return nil, errors.New("config is empty")
+	}
+	if rhtas, ok := raw["rhtas"]; ok {
+		if m, ok := toMapAny(rhtas); ok {
+			return m, nil
+		}
+	}
+	return raw, nil
+}
+
+func toMapAny(v interface{}) (map[string]interface{}, bool) {
+	if v == nil {
+		return nil, false
+	}
+	if m, ok := v.(map[string]interface{}); ok {
+		return m, true
+	}
+	if m, ok := v.(map[interface{}]interface{}); ok {
+		out := make(map[string]interface{}, len(m))
+		for k, val := range m {
+			if ks, ok := k.(string); ok {
+				out[ks] = val
+			}
+		}
+		return out, true
+	}
+	return nil, false
+}
+
+// MergeRhtasConfig overlays fileContent on top of baseDefaults. Both may use package wrapper (rhtas:)
+// or suite-level (operator, ansible, fbc). Result is always suite-level. Keys in fileContent override baseDefaults.
 func MergeRhtasConfig(baseDefaults, fileContent []byte) ([]byte, error) {
 	if len(fileContent) == 0 {
 		return baseDefaults, nil
 	}
-	var base, overlay map[string]interface{}
-	if err := yaml.Unmarshal(baseDefaults, &base); err != nil {
-		return nil, fmt.Errorf("parse base defaults: %w", err)
+	base, err := SuiteLevelMap(baseDefaults)
+	if err != nil {
+		return nil, fmt.Errorf("base defaults: %w", err)
 	}
-	if err := yaml.Unmarshal(fileContent, &overlay); err != nil {
-		return nil, fmt.Errorf("parse config file: %w", err)
+	overlay, err := SuiteLevelMap(fileContent)
+	if err != nil {
+		return nil, fmt.Errorf("config file: %w", err)
 	}
 	for k, v := range overlay {
+		if k == "fbc" {
+			// Deep-merge fbc so overlay does not wipe base fields (e.g. catalogPath)
+			baseFbc, ok1 := toMapAny(base["fbc"])
+			overlayFbc, ok2 := toMapAny(v)
+			if ok1 && ok2 {
+				for kk, vv := range overlayFbc {
+					baseFbc[kk] = vv
+				}
+				base["fbc"] = baseFbc
+				continue
+			}
+		}
 		base[k] = v
 	}
 	merged, err := yaml.Marshal(base)
@@ -31,61 +80,78 @@ func MergeRhtasConfig(baseDefaults, fileContent []byte) ([]byte, error) {
 	return merged, nil
 }
 
-// rhtasDefaults is the subset of test/acceptance/rhtas/defaults.yaml used for operator and ansible image keys.
-type rhtasDefaults struct {
-	OperatorImageKeys      []string `yaml:"operatorImageKeys"`
-	OperatorOtherImageKeys []string `yaml:"operatorOtherImageKeys"`
-	AnsibleImageKeys       []string `yaml:"ansibleImageKeys"`
-	AnsibleOtherImageKeys  []string `yaml:"ansibleOtherImageKeys"`
+// rhtasSuites is the suite-based config: operator, ansible, fbc (no package level).
+type rhtasSuites struct {
+	Operator struct {
+		ImageKeys      []string `yaml:"imageKeys"`
+		OtherImageKeys []string `yaml:"otherImageKeys"`
+	} `yaml:"operator"`
+	Ansible struct {
+		ImageKeys      []string `yaml:"imageKeys"`
+		OtherImageKeys []string `yaml:"otherImageKeys"`
+	} `yaml:"ansible"`
 }
 
-// GetOperatorImageKeysFromConfig returns the TAS operator image key list from
-// rhtas defaults.yaml or TEST_CONFIG. Returns an error if config is missing or the key is empty.
+func parseSuites(defaultsYaml []byte) (rhtasSuites, error) {
+	var parsed rhtasSuites
+	suites, err := SuiteLevelMap(defaultsYaml)
+	if err != nil {
+		return parsed, err
+	}
+	bytes, err := yaml.Marshal(suites)
+	if err != nil {
+		return parsed, fmt.Errorf("marshal suites: %w", err)
+	}
+	if err := yaml.Unmarshal(bytes, &parsed); err != nil {
+		return parsed, fmt.Errorf("parse rhtas suites: %w", err)
+	}
+	return parsed, nil
+}
+
+// GetOperatorImageKeysFromConfig returns the TAS operator image key list (operator.imageKeys).
 func GetOperatorImageKeysFromConfig(defaultsYaml []byte) ([]string, error) {
 	if len(defaultsYaml) == 0 {
-		return nil, errors.New("defaults config is required for operatorImageKeys")
+		return nil, errors.New("defaults config is required for operator.imageKeys")
 	}
-	var parsed rhtasDefaults
-	if err := yaml.Unmarshal(defaultsYaml, &parsed); err != nil {
-		return nil, fmt.Errorf("parse rhtas defaults: %w", err)
+	parsed, err := parseSuites(defaultsYaml)
+	if err != nil {
+		return nil, err
 	}
-	if len(parsed.OperatorImageKeys) == 0 {
-		return nil, errors.New("operatorImageKeys is missing or empty in config")
+	if len(parsed.Operator.ImageKeys) == 0 {
+		return nil, errors.New("operator.imageKeys is missing or empty in config")
 	}
-	return parsed.OperatorImageKeys, nil
+	return parsed.Operator.ImageKeys, nil
 }
 
-// GetOperatorOtherImageKeysFromConfig returns the other (non-TAS) operator image key list from
-// rhtas defaults.yaml or TEST_CONFIG. Returns an error if config is missing or the key is empty.
+// GetOperatorOtherImageKeysFromConfig returns the other operator image key list (operator.otherImageKeys).
 func GetOperatorOtherImageKeysFromConfig(defaultsYaml []byte) ([]string, error) {
 	if len(defaultsYaml) == 0 {
-		return nil, errors.New("defaults config is required for operatorOtherImageKeys")
+		return nil, errors.New("defaults config is required for operator.otherImageKeys")
 	}
-	var parsed rhtasDefaults
-	if err := yaml.Unmarshal(defaultsYaml, &parsed); err != nil {
-		return nil, fmt.Errorf("parse rhtas defaults: %w", err)
+	parsed, err := parseSuites(defaultsYaml)
+	if err != nil {
+		return nil, err
 	}
-	if len(parsed.OperatorOtherImageKeys) == 0 {
-		return nil, errors.New("operatorOtherImageKeys is missing or empty in config")
+	if len(parsed.Operator.OtherImageKeys) == 0 {
+		return nil, errors.New("operator.otherImageKeys is missing or empty in config")
 	}
-	return parsed.OperatorOtherImageKeys, nil
+	return parsed.Operator.OtherImageKeys, nil
 }
 
-// GetAnsibleImageKeysFromConfig returns both ansible TAS and other image key lists from
-// rhtas defaults.yaml or TEST_CONFIG. Returns an error if config is missing or a key is empty.
+// GetAnsibleImageKeysFromConfig returns ansible imageKeys and otherImageKeys (ansible.imageKeys, ansible.otherImageKeys).
 func GetAnsibleImageKeysFromConfig(defaultsYaml []byte) ([]string, []string, error) {
 	if len(defaultsYaml) == 0 {
 		return nil, nil, errors.New("defaults config is required for ansible image keys")
 	}
-	var parsed rhtasDefaults
-	if err := yaml.Unmarshal(defaultsYaml, &parsed); err != nil {
-		return nil, nil, fmt.Errorf("parse rhtas defaults: %w", err)
+	parsed, err := parseSuites(defaultsYaml)
+	if err != nil {
+		return nil, nil, err
 	}
-	if len(parsed.AnsibleImageKeys) == 0 {
-		return nil, nil, errors.New("ansibleImageKeys is missing or empty in config")
+	if len(parsed.Ansible.ImageKeys) == 0 {
+		return nil, nil, errors.New("ansible.imageKeys is missing or empty in config")
 	}
-	if len(parsed.AnsibleOtherImageKeys) == 0 {
-		return nil, nil, errors.New("ansibleOtherImageKeys is missing or empty in config")
+	if len(parsed.Ansible.OtherImageKeys) == 0 {
+		return nil, nil, errors.New("ansible.otherImageKeys is missing or empty in config")
 	}
-	return parsed.AnsibleImageKeys, parsed.AnsibleOtherImageKeys, nil
+	return parsed.Ansible.ImageKeys, parsed.Ansible.OtherImageKeys, nil
 }
