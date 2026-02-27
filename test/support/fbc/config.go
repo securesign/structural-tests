@@ -1,6 +1,7 @@
 package fbc
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/securesign/structural-tests/test/support"
@@ -27,11 +28,11 @@ type fbcSuiteSection struct {
 
 // ensureStringKeys converts map[interface{}]interface{} to map[string]interface{} recursively
 // so yaml.Marshal produces correct keys (e.g. catalogPath) when decoding from parsed YAML.
-func ensureStringKeys(v interface{}) interface{} {
-	if v == nil {
+func ensureStringKeys(in interface{}) interface{} {
+	if in == nil {
 		return nil
 	}
-	if m, ok := v.(map[interface{}]interface{}); ok {
+	if m, ok := in.(map[interface{}]interface{}); ok {
 		out := make(map[string]interface{}, len(m))
 		for k, val := range m {
 			if ks, ok := k.(string); ok {
@@ -40,22 +41,22 @@ func ensureStringKeys(v interface{}) interface{} {
 		}
 		return out
 	}
-	if s, ok := v.([]interface{}); ok {
+	if s, ok := in.([]interface{}); ok {
 		out := make([]interface{}, len(s))
 		for i, val := range s {
 			out[i] = ensureStringKeys(val)
 		}
 		return out
 	}
-	return v
+	return in
 }
 
-func decodeFBCSection(v interface{}) (fbcSuiteSection, error) {
+func decodeFBCSection(in interface{}) (fbcSuiteSection, error) {
 	var out fbcSuiteSection
-	if v == nil {
-		return out, fmt.Errorf("fbc section is nil")
+	if in == nil {
+		return out, errors.New("fbc section is nil")
 	}
-	conv := ensureStringKeys(v)
+	conv := ensureStringKeys(in)
 	bytes, err := yaml.Marshal(conv)
 	if err != nil {
 		return out, fmt.Errorf("marshal fbc section: %w", err)
@@ -63,21 +64,32 @@ func decodeFBCSection(v interface{}) (fbcSuiteSection, error) {
 	if err := yaml.Unmarshal(bytes, &out); err != nil {
 		return out, fmt.Errorf("decode fbc section: %w", err)
 	}
-	// Fallback: YAML unmarshal can leave ExpectedChannels empty when coming from map; extract from map.
-	if len(out.ExpectedChannels) == 0 {
-		if m, ok := conv.(map[string]interface{}); ok {
-			if ch, ok := m["expectedChannels"]; ok {
-				if sl, ok := ch.([]interface{}); ok {
-					for _, item := range sl {
-						if s, ok := item.(string); ok {
-							out.ExpectedChannels = append(out.ExpectedChannels, s)
-						}
-					}
-				}
-			}
+	extractExpectedChannelsFromMap(conv, &out)
+	return out, nil
+}
+
+// extractExpectedChannelsFromMap backfills ExpectedChannels from the map when unmarshal left it empty.
+func extractExpectedChannelsFromMap(conv interface{}, out *fbcSuiteSection) {
+	if len(out.ExpectedChannels) != 0 {
+		return
+	}
+	m, ok := conv.(map[string]interface{})
+	if !ok {
+		return
+	}
+	ch, ok := m["expectedChannels"]
+	if !ok {
+		return
+	}
+	sl, ok := ch.([]interface{})
+	if !ok {
+		return
+	}
+	for _, item := range sl {
+		if s, ok := item.(string); ok {
+			out.ExpectedChannels = append(out.ExpectedChannels, s)
 		}
 	}
-	return out, nil
 }
 
 func getDefaultsFBC(defaultsData []byte) (fbcSuiteSection, error) {
@@ -87,7 +99,7 @@ func getDefaultsFBC(defaultsData []byte) (fbcSuiteSection, error) {
 	}
 	fbcVal, ok := suiteMap["fbc"]
 	if !ok || fbcVal == nil {
-		return fbcSuiteSection{}, fmt.Errorf("missing fbc section in defaults")
+		return fbcSuiteSection{}, errors.New("missing fbc section in defaults")
 	}
 	return decodeFBCSection(fbcVal)
 }

@@ -25,14 +25,14 @@ func SuiteLevelMap(data []byte) (map[string]interface{}, error) {
 	return raw, nil
 }
 
-func toMapAny(v interface{}) (map[string]interface{}, bool) {
-	if v == nil {
+func toMapAny(in interface{}) (map[string]interface{}, bool) {
+	if in == nil {
 		return nil, false
 	}
-	if m, ok := v.(map[string]interface{}); ok {
+	if m, ok := in.(map[string]interface{}); ok {
 		return m, true
 	}
-	if m, ok := v.(map[interface{}]interface{}); ok {
+	if m, ok := in.(map[interface{}]interface{}); ok {
 		out := make(map[string]interface{}, len(m))
 		for k, val := range m {
 			if ks, ok := k.(string); ok {
@@ -58,11 +58,11 @@ func MergeRhtasConfig(baseDefaults, fileContent []byte) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("config file: %w", err)
 	}
-	for k, v := range overlay {
+	for k, overlayVal := range overlay {
 		if k == "fbc" {
 			// Deep-merge fbc so overlay does not wipe base fields (e.g. catalogPath)
 			baseFbc, ok1 := toMapAny(base["fbc"])
-			overlayFbc, ok2 := toMapAny(v)
+			overlayFbc, ok2 := toMapAny(overlayVal)
 			if ok1 && ok2 {
 				for kk, vv := range overlayFbc {
 					baseFbc[kk] = vv
@@ -71,7 +71,7 @@ func MergeRhtasConfig(baseDefaults, fileContent []byte) ([]byte, error) {
 				continue
 			}
 		}
-		base[k] = v
+		base[k] = overlayVal
 	}
 	merged, err := yaml.Marshal(base)
 	if err != nil {
