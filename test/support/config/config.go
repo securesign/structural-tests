@@ -36,12 +36,19 @@ func resolveTestConfig() (TestConfig, error) {
 		return cfg, nil
 	}
 
-	if rhtas, ok := raw["rhtas"]; ok {
-		if rhtasMap, ok := toMap(rhtas); ok {
-			cfg["rhtas"] = rhtasMap
-			return cfg, nil
+	for key, value := range raw {
+		switch key {
+		case "operator", "ansible", "fbc":
+			continue
+		}
+		if productMap, ok := toMap(value); ok {
+			cfg[key] = productMap
 		}
 	}
+	if len(cfg) > 0 {
+		return cfg, nil
+	}
+
 	// Suite-level file (operator, ansible, fbc at top level) without package wrapper
 	if _, hasOperator := raw["operator"]; hasOperator {
 		cfg["rhtas"] = raw

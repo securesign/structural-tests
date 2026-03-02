@@ -22,8 +22,8 @@ type FBCConfig struct {
 
 // fbcSuiteSection is the fbc suite: base fields plus override map (fbc.override in YAML).
 type fbcSuiteSection struct {
-	FBCConfig
-	Override map[string]*FBCConfig `yaml:"override,omitempty"`
+	FBCConfig `yaml:",inline"`
+	Override  map[string]*FBCConfig `yaml:"override,omitempty"`
 }
 
 // ensureStringKeys converts map[interface{}]interface{} to map[string]interface{} recursively
