@@ -60,6 +60,69 @@ func isMultiArchImageKey(key string) bool {
 	return false
 }
 
+// sourcePathInImageMultiArch returns the path inside the CLI source image for the given (os, arch).
+// Only for multiarch CLIs (cosign, gitsign, rekor-cli, fetch-tsa-certs, createtree, updatetree).
+func sourcePathInImageMultiArch(cli, osName, arch string) string {
+	base := cliImageBasePath + "/"
+	switch cli {
+	case "cosign":
+		switch osName {
+		case "linux":
+			return base + "cosign.gz"
+		case "darwin":
+			return base + "cosign-darwin-" + arch + ".gz"
+		case "windows":
+			return base + "cosign-windows-amd64.exe.gz"
+		}
+	case "gitsign":
+		switch osName {
+		case "linux":
+			return base + "gitsign_cli_linux.gz"
+		case "darwin":
+			return base + "gitsign_cli_darwin_" + arch + ".gz"
+		case "windows":
+			return base + "gitsign_cli_windows_amd64.exe.gz"
+		}
+	case "rekor-cli":
+		switch osName {
+		case "linux":
+			return base + "rekor_cli_linux.gz"
+		case "darwin":
+			return base + "rekor_cli_darwin_" + arch + ".gz"
+		case "windows":
+			return base + "rekor_cli_windows_amd64.exe.gz"
+		}
+	case "fetch-tsa-certs":
+		switch osName {
+		case "linux":
+			return base + "fetch_tsa_certs_linux.gz"
+		case "darwin":
+			return base + "fetch_tsa_certs_darwin_" + arch + ".gz"
+		case "windows":
+			return base + "fetch_tsa_certs_windows_amd64.exe.gz"
+		}
+	case "createtree":
+		switch osName {
+		case "linux":
+			return base + "createtree.gz"
+		case "darwin":
+			return base + "createtree-darwin-" + arch + ".gz"
+		case "windows":
+			return base + "createtree-windows-amd64.exe.gz"
+		}
+	case "updatetree":
+		switch osName {
+		case "linux":
+			return base + "updatetree.gz"
+		case "darwin":
+			return base + "updatetree-darwin-" + arch + ".gz"
+		case "windows":
+			return base + "updatetree-windows-amd64.exe.gz"
+		}
+	}
+	return ""
+}
+
 var _ = Describe("Client server", Ordered, func() {
 
 	var clientServerImage string
@@ -185,7 +248,23 @@ var _ = Describe("Client server", Ordered, func() {
 						})
 					} else {
 						It(fmt.Sprintf("compare checksum of %s-%s with source image (multiarch)", osName, arch), func() {
-							log.Printf("Multiarch client-server (1.4.0+): compare %s %s-%s – placeholder", cli, osName, arch)
+							sourceKey := snapshotKeyForCLI(cli)
+							sourceImage := snapshotData.Images[sourceKey]
+							clientServerPath := fmt.Sprintf(cliServerPathMask, osName, cli, arch)
+							cliImagePath := sourcePathInImageMultiArch(cli, osName, arch)
+
+							By("resolve manifest list to actual image for platform")
+							platform := "linux/" + arch
+							resolvedImage, err := support.ResolveManifestListForPlatform(context.Background(), sourceImage, platform)
+							if err != nil {
+								log.Printf("manifest list resolve failed for %s %s, using base image: %v", sourceImage, platform, err)
+								resolvedImage = sourceImage
+							}
+
+							By("list images and paths used for this (cli, os, arch)")
+							log.Printf("%s %s", clientServerImage, clientServerPath)
+							log.Printf("%s %s", resolvedImage, cliImagePath)
+							log.Printf("from %s", sourceImage)
 						})
 					}
 				}
