@@ -123,11 +123,15 @@ func sourcePathInImageMultiArch(cli, osName, arch string) string {
 	return ""
 }
 
+// multiArchCLIs is the list of CLI names that use multiarch (manifest list) source images.
+var multiArchCLIs = []string{"cosign", "gitsign", "rekor-cli", "fetch-tsa-certs", "createtree", "updatetree"}
+
 var _ = Describe("Client server", Ordered, func() {
 
 	var clientServerImage string
 	var snapshotData support.SnapshotData
 	var tmpDir string
+	var serverChecksums map[string][]byte // key: "cli/osName/arch", populated by verify Its (all CLIs)
 
 	Describe("client-server image", func() {
 		It("snapshot.json", func() {
@@ -143,6 +147,7 @@ var _ = Describe("Client server", Ordered, func() {
 			var err error
 			tmpDir, err = os.MkdirTemp("", "client-server")
 			Expect(err).NotTo(HaveOccurred())
+			serverChecksums = make(map[string][]byte)
 			log.Printf("TEMP directory: %s", tmpDir)
 		})
 	})
@@ -156,7 +161,6 @@ var _ = Describe("Client server", Ordered, func() {
 
 	DescribeTableSubtree("cli",
 		func(cli string, matrix support.OSArchMatrix) {
-			serverChecksums := make(map[string][]byte) // key: osName/arch, populated by verify Its
 			for osName, archs := range matrix {
 				for _, arch := range archs {
 					var image string
@@ -197,7 +201,7 @@ var _ = Describe("Client server", Ordered, func() {
 						var err error
 						gzipServerSHA, err = checksumFile(filepath.Join(osPath, fmt.Sprintf(cliServerFileMask, cli, arch)))
 						Expect(err).NotTo(HaveOccurred())
-						serverChecksums[osName+"/"+arch] = append([]byte(nil), gzipServerSHA...)
+						serverChecksums[cli+"/"+osName+"/"+arch] = append([]byte(nil), gzipServerSHA...)
 					})
 
 					if support.IsBeforeVersion("1.4.0") || !isMultiArchImageKey(snapshotKeyForCLI(cli)) {
@@ -251,65 +255,6 @@ var _ = Describe("Client server", Ordered, func() {
 					}
 				}
 			}
-
-			It("compare all multiarch binaries with source images", func() {
-				if support.IsBeforeVersion("1.4.0") || !isMultiArchImageKey(snapshotKeyForCLI(cli)) {
-					Skip("not multiarch or version < 1.4.0")
-				}
-				var errMsgs []string
-				for osName, archs := range matrix {
-					for _, arch := range archs {
-						sourceKey := snapshotKeyForCLI(cli)
-						sourceImage := snapshotData.Images[sourceKey]
-						clientServerPath := fmt.Sprintf(cliServerPathMask, osName, cli, arch)
-						cliImagePath := sourcePathInImageMultiArch(cli, osName, arch)
-						platform := "linux/" + arch
-
-						resolvedImage, err := support.ResolveManifestListForPlatform(context.Background(), sourceImage, platform)
-						if err != nil {
-							errMsgs = append(errMsgs, fmt.Sprintf("%s %s-%s: resolve manifest: %v", cli, osName, arch, err))
-							continue
-						}
-
-						log.Printf("%s %s", clientServerImage, clientServerPath)
-						log.Printf("%s %s", resolvedImage, cliImagePath)
-						log.Printf("from %s", sourceImage)
-
-						srcDir := filepath.Join(tmpDir, "multiarch-src", cli, osName, arch)
-						if err := os.MkdirAll(srcDir, 0755); err != nil {
-							errMsgs = append(errMsgs, fmt.Sprintf("%s %s-%s: mkdir: %v", cli, osName, arch, err))
-							continue
-						}
-						ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
-						if err := support.FileFromImage(ctx, resolvedImage, cliImagePath, srcDir); err != nil {
-							cancel()
-							errMsgs = append(errMsgs, fmt.Sprintf("%s %s-%s: copy from image: %v", cli, osName, arch, err))
-							continue
-						}
-						cancel()
-
-						sourceGzipPath := filepath.Join(srcDir, filepath.Base(cliImagePath))
-						gzipSourceSHA, err := checksumFile(sourceGzipPath)
-						if err != nil {
-							errMsgs = append(errMsgs, fmt.Sprintf("%s %s-%s: checksum: %v", cli, osName, arch, err))
-							continue
-						}
-						key := osName + "/" + arch
-						gzipServerSHA, ok := serverChecksums[key]
-						if !ok {
-							errMsgs = append(errMsgs, fmt.Sprintf("%s %s-%s: no server checksum", cli, osName, arch))
-							continue
-						}
-						if string(gzipSourceSHA) != string(gzipServerSHA) {
-							errMsgs = append(errMsgs, fmt.Sprintf("%s %s-%s: gzip checksum mismatch\n  client-server SHA256: %x\n  source image SHA256: %x",
-								cli, osName, arch, gzipServerSHA, gzipSourceSHA))
-						}
-					}
-				}
-				if len(errMsgs) > 0 {
-					Fail("multiarch checksum failures:\n\n" + strings.Join(errMsgs, "\n\n"))
-				}
-			})
 		},
 		Entry("cosign", "cosign", support.GetOSArchMatrix()),
 		Entry("gitsign", "gitsign", support.GetOSArchMatrix()),
@@ -322,6 +267,71 @@ var _ = Describe("Client server", Ordered, func() {
 		Entry("updatetree", "updatetree", support.GetOSArchMatrix()),
 		Entry("createtree", "createtree", support.GetOSArchMatrix()),
 	)
+
+	It("compare all multiarch binaries (all CLIs) with source images", func() {
+		if support.IsBeforeVersion("1.4.0") {
+			Skip("multiarch comparison only for version 1.4.0 and later")
+		}
+		matrix := support.GetOSArchMatrix()
+		var errMsgs []string
+		for _, cli := range multiArchCLIs {
+			if !isMultiArchImageKey(snapshotKeyForCLI(cli)) {
+				continue
+			}
+			for osName, archs := range matrix {
+				for _, arch := range archs {
+					sourceKey := snapshotKeyForCLI(cli)
+					sourceImage := snapshotData.Images[sourceKey]
+					clientServerPath := fmt.Sprintf(cliServerPathMask, osName, cli, arch)
+					cliImagePath := sourcePathInImageMultiArch(cli, osName, arch)
+					platform := "linux/" + arch
+
+					resolvedImage, err := support.ResolveManifestListForPlatform(context.Background(), sourceImage, platform)
+					if err != nil {
+						errMsgs = append(errMsgs, fmt.Sprintf("%s %s-%s: resolve manifest: %v", cli, osName, arch, err))
+						continue
+					}
+
+					log.Printf("%s %s", clientServerImage, clientServerPath)
+					log.Printf("%s %s", resolvedImage, cliImagePath)
+					log.Printf("from %s", sourceImage)
+
+					srcDir := filepath.Join(tmpDir, "multiarch-src", cli, osName, arch)
+					if err := os.MkdirAll(srcDir, 0755); err != nil {
+						errMsgs = append(errMsgs, fmt.Sprintf("%s %s-%s: mkdir: %v", cli, osName, arch, err))
+						continue
+					}
+					ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+					if err := support.FileFromImage(ctx, resolvedImage, cliImagePath, srcDir); err != nil {
+						cancel()
+						errMsgs = append(errMsgs, fmt.Sprintf("%s %s-%s: copy from image: %v", cli, osName, arch, err))
+						continue
+					}
+					cancel()
+
+					sourceGzipPath := filepath.Join(srcDir, filepath.Base(cliImagePath))
+					gzipSourceSHA, err := checksumFile(sourceGzipPath)
+					if err != nil {
+						errMsgs = append(errMsgs, fmt.Sprintf("%s %s-%s: checksum: %v", cli, osName, arch, err))
+						continue
+					}
+					key := cli + "/" + osName + "/" + arch
+					gzipServerSHA, ok := serverChecksums[key]
+					if !ok {
+						errMsgs = append(errMsgs, fmt.Sprintf("%s %s-%s: no server checksum", cli, osName, arch))
+						continue
+					}
+					if string(gzipSourceSHA) != string(gzipServerSHA) {
+						errMsgs = append(errMsgs, fmt.Sprintf("%s %s-%s: gzip checksum mismatch\n  client-server SHA256: %x\n  source image SHA256: %x",
+							cli, osName, arch, gzipServerSHA, gzipSourceSHA))
+					}
+				}
+			}
+		}
+		if len(errMsgs) > 0 {
+			Fail("multiarch checksum failures:\n\n" + strings.Join(errMsgs, "\n\n"))
+		}
+	})
 })
 
 // verifyExecutable verifies that the executable file matches the target OS and architecture.
