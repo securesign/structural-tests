@@ -13,7 +13,7 @@ type SnapshotData struct {
 }
 
 var (
-	imageRegexp    = regexp.MustCompile(`^(fbc-[\w-]+|pco-fbc-[\w-]+|mvo-fbc-[\w-]+|[\w-]+-image)$`)
+	imageRegexp    = regexp.MustCompile(`^(fbc-[\w-]+|pco-fbc-[\w-]+|mvo-fbc-[\w-]+|rhtas-fbc-[\w-]+|[\w-]+-image)$`)
 	ansibleImageRe = regexp.MustCompile(`^ansible-v1-\d+$`)
 )
 
