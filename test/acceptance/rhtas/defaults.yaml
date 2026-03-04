@@ -47,7 +47,7 @@ fbc:
   olmPackage: "rhtas-operator"
   operatorBundleImage: "registry.redhat.io/rhtas/rhtas-operator-bundle"
   catalogPath: "/configs/rhtas-operator/catalog.json"
-  imageKeyPrefix: "fbc-"
+  imageKeyPrefix: "rhtas-fbc-"
   defaultChannel: "stable"
   expectedChannels:
     - stable
@@ -61,7 +61,7 @@ fbc:
     - rhtas-operator.v1.1.1
     - rhtas-operator.v1.1.2
   override:
-    fbc-v4-21:
+    rhtas-fbc-v4-21:
       expectedChannels:
         - stable
         - stable-v1.3
