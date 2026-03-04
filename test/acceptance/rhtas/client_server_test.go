@@ -25,11 +25,23 @@ const (
 
 	cliImageBasePath = "/usr/local/bin"
 	cliImageFileMask = "%s_cli_%s_%s.gz"
+
+	osLinux   = "linux"
+	osDarwin  = "darwin"
+	osWindows = "windows"
+
+	cliCosign         = "cosign"
+	cliGitsign        = "gitsign"
+	cliRekorCli       = "rekor-cli"
+	cliFetchTsaCerts  = "fetch-tsa-certs"
+	cliCreatetree     = "createtree"
+	cliUpdatetree     = "updatetree"
+	cliTuftool        = "tuftool"
 )
 
 // Multiarch CLIs: built per-arch (manifest list in snapshot). From Dockerfile.clients.rh.
 // Single-image CLIs (ec, tuftool) are not in this list.
-var multiArchCLISnapshotKeys = []string{
+var multiArchCLISnapshotKeys = []string{ //nolint:gochecknoglobals // test CLI snapshot keys
 	"cosign-cli-image",
 	"gitsign-cli-image",
 	"fetch-tsa-certs-cli-image",
@@ -40,11 +52,11 @@ var multiArchCLISnapshotKeys = []string{
 
 func snapshotKeyForCLI(cli string) string {
 	switch cli {
-	case "createtree", "updatetree":
+	case cliCreatetree, cliUpdatetree:
 		return cli + "-image"
-	case "tuftool":
+	case cliTuftool:
 		return "tuf-tool-image"
-	case "rekor-cli":
+	case cliRekorCli:
 		return "rekor-cli-image"
 	default:
 		return cli + "-cli-image"
@@ -62,61 +74,63 @@ func isMultiArchImageKey(key string) bool {
 
 // sourcePathInImageMultiArch returns the path inside the CLI source image for the given (os, arch).
 // Only for multiarch CLIs (cosign, gitsign, rekor-cli, fetch-tsa-certs, createtree, updatetree).
+//
+//nolint:funlen // path lookup table per CLI/OS
 func sourcePathInImageMultiArch(cli, osName, arch string) string {
 	base := cliImageBasePath + "/"
 	switch cli {
-	case "cosign":
+	case cliCosign:
 		switch osName {
-		case "linux":
+		case osLinux:
 			return base + "cosign.gz"
-		case "darwin":
+		case osDarwin:
 			return base + "cosign-darwin-" + arch + ".gz"
-		case "windows":
+		case osWindows:
 			return base + "cosign-windows-amd64.exe.gz"
 		}
-	case "gitsign":
+	case cliGitsign:
 		switch osName {
-		case "linux":
+		case osLinux:
 			return base + "gitsign_cli_linux.gz"
-		case "darwin":
+		case osDarwin:
 			return base + "gitsign_cli_darwin_" + arch + ".gz"
-		case "windows":
+		case osWindows:
 			return base + "gitsign_cli_windows_amd64.exe.gz"
 		}
-	case "rekor-cli":
+	case cliRekorCli:
 		switch osName {
-		case "linux":
+		case osLinux:
 			return base + "rekor_cli_linux.gz"
-		case "darwin":
+		case osDarwin:
 			return base + "rekor_cli_darwin_" + arch + ".gz"
-		case "windows":
+		case osWindows:
 			return base + "rekor_cli_windows_amd64.exe.gz"
 		}
-	case "fetch-tsa-certs":
+	case cliFetchTsaCerts:
 		switch osName {
-		case "linux":
+		case osLinux:
 			return base + "fetch_tsa_certs_linux.gz"
-		case "darwin":
+		case osDarwin:
 			return base + "fetch_tsa_certs_darwin_" + arch + ".gz"
-		case "windows":
+		case osWindows:
 			return base + "fetch_tsa_certs_windows_amd64.exe.gz"
 		}
-	case "createtree":
+	case cliCreatetree:
 		switch osName {
-		case "linux":
+		case osLinux:
 			return base + "createtree.gz"
-		case "darwin":
+		case osDarwin:
 			return base + "createtree-darwin-" + arch + ".gz"
-		case "windows":
+		case osWindows:
 			return base + "createtree-windows-amd64.exe.gz"
 		}
-	case "updatetree":
+	case cliUpdatetree:
 		switch osName {
-		case "linux":
+		case osLinux:
 			return base + "updatetree.gz"
-		case "darwin":
+		case osDarwin:
 			return base + "updatetree-darwin-" + arch + ".gz"
-		case "windows":
+		case osWindows:
 			return base + "updatetree-windows-amd64.exe.gz"
 		}
 	}
@@ -124,7 +138,7 @@ func sourcePathInImageMultiArch(cli, osName, arch string) string {
 }
 
 // multiArchCLIs is the list of CLI names that use multiarch (manifest list) source images.
-var multiArchCLIs = []string{"cosign", "gitsign", "rekor-cli", "fetch-tsa-certs", "createtree", "updatetree"}
+var multiArchCLIs = []string{cliCosign, cliGitsign, cliRekorCli, cliFetchTsaCerts, cliCreatetree, cliUpdatetree} //nolint:gochecknoglobals // test CLI list
 
 var _ = Describe("Client server", Ordered, func() {
 
@@ -168,11 +182,11 @@ var _ = Describe("Client server", Ordered, func() {
 
 					It("init", func() {
 						switch cli {
-						case "createtree", "updatetree":
+						case cliCreatetree, cliUpdatetree:
 							image = snapshotData.Images[cli+"-image"]
-						case "tuftool":
+						case cliTuftool:
 							image = snapshotData.Images["tuf-tool-image"]
-						case "rekor-cli":
+						case cliRekorCli:
 							image = snapshotData.Images["rekor-cli-image"]
 						default:
 							image = snapshotData.Images[cli+"-cli-image"]
@@ -213,25 +227,25 @@ var _ = Describe("Client server", Ordered, func() {
 							)
 
 							switch cli {
-							case "tuftool":
+							case cliTuftool:
 								Skip("`tuftool` do not have gzip in source image")
 							case "ec":
 								Skip("`ec` source image is not part of handover")
-							case "cosign", "updatetree", "createtree":
-								if osName == "windows" { //nolint:goconst
+							case cliCosign, cliUpdatetree, cliCreatetree:
+								if osName == osWindows {
 									fileName = fmt.Sprintf("%s-%s-%s.exe.gz", cli, osName, arch)
 								} else {
 									fileName = fmt.Sprintf("%s-%s-%s.gz", cli, osName, arch)
 								}
-							case "rekor-cli", "fetch-tsa-certs":
+							case cliRekorCli, cliFetchTsaCerts:
 								ncli := strings.ReplaceAll(cli, "-", "_")
-								if osName == "windows" {
+								if osName == osWindows {
 									fileName = fmt.Sprintf("%s_%s_%s.exe.gz", ncli, osName, arch)
 								} else {
 									fileName = fmt.Sprintf("%s_%s_%s.gz", ncli, osName, arch)
 								}
 							default:
-								if osName == "windows" {
+								if osName == osWindows {
 									fileName = fmt.Sprintf(cliImageFileMask, cli, osName, arch+".exe")
 								} else {
 									fileName = fmt.Sprintf(cliImageFileMask, cli, osName, arch)
@@ -256,16 +270,16 @@ var _ = Describe("Client server", Ordered, func() {
 				}
 			}
 		},
-		Entry("cosign", "cosign", support.GetOSArchMatrix()),
-		Entry("gitsign", "gitsign", support.GetOSArchMatrix()),
-		Entry("rekor-cli", "rekor-cli", support.GetOSArchMatrix()),
+		Entry("cosign", cliCosign, support.GetOSArchMatrix()),
+		Entry("gitsign", cliGitsign, support.GetOSArchMatrix()),
+		Entry("rekor-cli", cliRekorCli, support.GetOSArchMatrix()),
 		Entry("ec", "ec", support.GetOSArchMatrix()),
-		Entry("fetch-tsa-certs", "fetch-tsa-certs", support.GetOSArchMatrix()),
-		Entry("tuftool", "tuftool", map[string][]string{
-			"linux": {"amd64"},
+		Entry("fetch-tsa-certs", cliFetchTsaCerts, support.GetOSArchMatrix()),
+		Entry("tuftool", cliTuftool, map[string][]string{
+			osLinux: {"amd64"},
 		}),
-		Entry("updatetree", "updatetree", support.GetOSArchMatrix()),
-		Entry("createtree", "createtree", support.GetOSArchMatrix()),
+		Entry("updatetree", cliUpdatetree, support.GetOSArchMatrix()),
+		Entry("createtree", cliCreatetree, support.GetOSArchMatrix()),
 	)
 
 	It("compare all multiarch binaries (all CLIs) with source images", func() {

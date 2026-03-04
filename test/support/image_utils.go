@@ -285,8 +285,8 @@ type manifestListPlatform struct {
 
 // manifestListEntry is one entry in the manifests array.
 type manifestListEntry struct {
-	Digest   string                `json:"digest"`
-	Platform manifestListPlatform   `json:"platform"`
+	Digest   string               `json:"digest"`
+	Platform manifestListPlatform `json:"platform"`
 }
 
 // manifestListOutput is the JSON output of podman/docker manifest inspect.
@@ -298,9 +298,11 @@ type manifestListOutput struct {
 // by inspecting the manifest list. imageRef is the manifest list ref (e.g. quay.io/...@sha256:...).
 // platform is e.g. "linux/amd64" or "linux/arm64". Returns the same ref if the image is not
 // a manifest list (e.g. single-arch) or if resolution fails.
+const platformPartCount = 2 // os/arch
+
 func ResolveManifestListForPlatform(ctx context.Context, imageRef, platform string) (string, error) {
-	parts := strings.SplitN(platform, "/", 2)
-	if len(parts) != 2 {
+	parts := strings.SplitN(platform, "/", platformPartCount)
+	if len(parts) != platformPartCount {
 		return imageRef, fmt.Errorf("platform must be os/arch, got %q", platform)
 	}
 	wantOS, wantArch := parts[0], parts[1]
@@ -325,16 +327,16 @@ func ResolveManifestListForPlatform(ctx context.Context, imageRef, platform stri
 		return imageRef, fmt.Errorf("parse manifest list: %w", err)
 	}
 	if len(list.Manifests) == 0 {
-		return imageRef, fmt.Errorf("manifest list has no manifests")
+		return imageRef, errors.New("manifest list has no manifests")
 	}
 
-	for _, m := range list.Manifests {
-		if m.Platform.OS == wantOS && m.Platform.Architecture == wantArch {
+	for _, entry := range list.Manifests {
+		if entry.Platform.OS == wantOS && entry.Platform.Architecture == wantArch {
 			repo := imageRef
 			if at := strings.Index(imageRef, "@"); at != -1 {
 				repo = imageRef[:at]
 			}
-			return repo + "@" + m.Digest, nil
+			return repo + "@" + entry.Digest, nil
 		}
 	}
 	return imageRef, fmt.Errorf("no manifest for platform %s", platform)
