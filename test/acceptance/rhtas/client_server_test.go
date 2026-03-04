@@ -256,15 +256,25 @@ var _ = Describe("Client server", Ordered, func() {
 							By("resolve manifest list to actual image for platform")
 							platform := "linux/" + arch
 							resolvedImage, err := support.ResolveManifestListForPlatform(context.Background(), sourceImage, platform)
-							if err != nil {
-								log.Printf("manifest list resolve failed for %s %s, using base image: %v", sourceImage, platform, err)
-								resolvedImage = sourceImage
-							}
+							Expect(err).NotTo(HaveOccurred(), "resolve manifest list for %s", platform)
 
 							By("list images and paths used for this (cli, os, arch)")
 							log.Printf("%s %s", clientServerImage, clientServerPath)
 							log.Printf("%s %s", resolvedImage, cliImagePath)
 							log.Printf("from %s", sourceImage)
+
+							By("get gzip file from resolved source image")
+							srcDir := filepath.Join(tmpDir, "multiarch-src", cli, osName, arch)
+							Expect(os.MkdirAll(srcDir, 0755)).To(Succeed())
+							ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+							defer cancel()
+							Expect(support.FileFromImage(ctx, resolvedImage, cliImagePath, srcDir)).To(Succeed())
+
+							By("compare checksum with client-server file")
+							sourceGzipPath := filepath.Join(srcDir, filepath.Base(cliImagePath))
+							gzipSourceSHA, err := checksumFile(sourceGzipPath)
+							Expect(err).NotTo(HaveOccurred())
+							Expect(gzipSourceSHA).To(Equal(gzipServerSHA))
 						})
 					}
 				}
