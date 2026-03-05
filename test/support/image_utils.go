@@ -4,11 +4,13 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -272,4 +274,70 @@ func findAndReadCollectionArchiveFromTar(reader io.Reader) ([]byte, error) {
 		}
 	}
 	return nil, errors.New("redhat-artifact_signer*.tar.gz not found in image /releases")
+}
+
+// manifestListPlatform is the platform field in a manifest list entry.
+type manifestListPlatform struct {
+	OS           string `json:"os"`
+	Architecture string `json:"architecture"`
+	Variant      string `json:"variant,omitempty"`
+}
+
+// manifestListEntry is one entry in the manifests array.
+type manifestListEntry struct {
+	Digest   string               `json:"digest"`
+	Platform manifestListPlatform `json:"platform"`
+}
+
+// manifestListOutput is the JSON output of podman/docker manifest inspect.
+type manifestListOutput struct {
+	Manifests []manifestListEntry `json:"manifests"`
+}
+
+// ResolveManifestListForPlatform returns the image ref (repo@digest) for the given platform
+// by inspecting the manifest list. imageRef is the manifest list ref (e.g. quay.io/...@sha256:...).
+// platform is e.g. "linux/amd64" or "linux/arm64". Returns the same ref if the image is not
+// a manifest list (e.g. single-arch) or if resolution fails.
+const platformPartCount = 2 // os/arch
+
+func ResolveManifestListForPlatform(ctx context.Context, imageRef, platform string) (string, error) {
+	parts := strings.SplitN(platform, "/", platformPartCount)
+	if len(parts) != platformPartCount {
+		return imageRef, fmt.Errorf("platform must be os/arch, got %q", platform)
+	}
+	wantOS, wantArch := parts[0], parts[1]
+
+	// Try podman first, then docker
+	var out []byte
+	var err error
+	for _, cmdName := range []string{"podman", "docker"} {
+		cmd := exec.CommandContext(ctx, cmdName, "manifest", "inspect", imageRef)
+		out, err = cmd.Output()
+		if err != nil {
+			continue
+		}
+		break
+	}
+	if err != nil {
+		return imageRef, fmt.Errorf("manifest inspect failed (tried podman and docker): %w", err)
+	}
+
+	var list manifestListOutput
+	if err := json.Unmarshal(out, &list); err != nil {
+		return imageRef, fmt.Errorf("parse manifest list: %w", err)
+	}
+	if len(list.Manifests) == 0 {
+		return imageRef, errors.New("manifest list has no manifests")
+	}
+
+	for _, entry := range list.Manifests {
+		if entry.Platform.OS == wantOS && entry.Platform.Architecture == wantArch {
+			repo := imageRef
+			if at := strings.Index(imageRef, "@"); at != -1 {
+				repo = imageRef[:at]
+			}
+			return repo + "@" + entry.Digest, nil
+		}
+	}
+	return imageRef, fmt.Errorf("no manifest for platform %s", platform)
 }

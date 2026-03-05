@@ -25,13 +25,161 @@ const (
 
 	cliImageBasePath = "/usr/local/bin"
 	cliImageFileMask = "%s_cli_%s_%s.gz"
+
+	osLinux   = "linux"
+	osDarwin  = "darwin"
+	osWindows = "windows"
+
+	cliCosign        = "cosign"
+	cliGitsign       = "gitsign"
+	cliRekorCli      = "rekor-cli"
+	cliFetchTsaCerts = "fetch-tsa-certs"
+	cliCreatetree    = "createtree"
+	cliUpdatetree    = "updatetree"
+	cliTuftool       = "tuftool"
 )
+
+// Multiarch CLIs: built per-arch (manifest list in snapshot). From Dockerfile.clients.rh.
+// Single-image CLIs (ec, tuftool) are not in this list.
+var multiArchCLISnapshotKeys = []string{ //nolint:gochecknoglobals // test CLI snapshot keys
+	"cosign-cli-image",
+	"gitsign-cli-image",
+	"fetch-tsa-certs-cli-image",
+	"rekor-cli-image",
+	"createtree-image",
+	"updatetree-image",
+}
+
+func snapshotKeyForCLI(cli string) string {
+	switch cli {
+	case cliCreatetree, cliUpdatetree:
+		return cli + "-image"
+	case cliTuftool:
+		return "tuf-tool-image"
+	case cliRekorCli:
+		return "rekor-cli-image"
+	default:
+		return cli + "-cli-image"
+	}
+}
+
+func isMultiArchImageKey(key string) bool {
+	for _, k := range multiArchCLISnapshotKeys {
+		if k == key {
+			return true
+		}
+	}
+	return false
+}
+
+func sourcePathCosign(osName, arch string) string {
+	switch osName {
+	case osLinux:
+		return "cosign.gz"
+	case osDarwin:
+		return "cosign-darwin-" + arch + ".gz"
+	case osWindows:
+		return "cosign-windows-amd64.exe.gz"
+	}
+	return ""
+}
+
+func sourcePathGitsign(osName, arch string) string {
+	switch osName {
+	case osLinux:
+		return "gitsign_cli_linux.gz"
+	case osDarwin:
+		return "gitsign_cli_darwin_" + arch + ".gz"
+	case osWindows:
+		return "gitsign_cli_windows_amd64.exe.gz"
+	}
+	return ""
+}
+
+func sourcePathRekorCli(osName, arch string) string {
+	switch osName {
+	case osLinux:
+		return "rekor_cli_linux.gz"
+	case osDarwin:
+		return "rekor_cli_darwin_" + arch + ".gz"
+	case osWindows:
+		return "rekor_cli_windows_amd64.exe.gz"
+	}
+	return ""
+}
+
+func sourcePathFetchTsaCerts(osName, arch string) string {
+	switch osName {
+	case osLinux:
+		return "fetch_tsa_certs_linux.gz"
+	case osDarwin:
+		return "fetch_tsa_certs_darwin_" + arch + ".gz"
+	case osWindows:
+		return "fetch_tsa_certs_windows_amd64.exe.gz"
+	}
+	return ""
+}
+
+func sourcePathCreatetree(osName, arch string) string {
+	switch osName {
+	case osLinux:
+		return "createtree.gz"
+	case osDarwin:
+		return "createtree-darwin-" + arch + ".gz"
+	case osWindows:
+		return "createtree-windows-amd64.exe.gz"
+	}
+	return ""
+}
+
+func sourcePathUpdatetree(osName, arch string) string {
+	switch osName {
+	case osLinux:
+		return "updatetree.gz"
+	case osDarwin:
+		return "updatetree-darwin-" + arch + ".gz"
+	case osWindows:
+		return "updatetree-windows-amd64.exe.gz"
+	}
+	return ""
+}
+
+// sourcePathInImageMultiArch returns the path inside the CLI source image for the given (os, arch).
+// Only for multiarch CLIs (cosign, gitsign, rekor-cli, fetch-tsa-certs, createtree, updatetree).
+func sourcePathInImageMultiArch(cli, osName, arch string) string {
+	base := cliImageBasePath + "/"
+	var suffix string
+	switch cli {
+	case cliCosign:
+		suffix = sourcePathCosign(osName, arch)
+	case cliGitsign:
+		suffix = sourcePathGitsign(osName, arch)
+	case cliRekorCli:
+		suffix = sourcePathRekorCli(osName, arch)
+	case cliFetchTsaCerts:
+		suffix = sourcePathFetchTsaCerts(osName, arch)
+	case cliCreatetree:
+		suffix = sourcePathCreatetree(osName, arch)
+	case cliUpdatetree:
+		suffix = sourcePathUpdatetree(osName, arch)
+	default:
+		return ""
+	}
+	if suffix == "" {
+		return ""
+	}
+	return base + suffix
+}
+
+// multiArchCLIs is the list of CLI names that use multiarch (manifest list) source images.
+var multiArchCLIs = []string{cliCosign, cliGitsign, cliRekorCli, cliFetchTsaCerts, cliCreatetree, cliUpdatetree} //nolint:gochecknoglobals // test CLI list
 
 var _ = Describe("Client server", Ordered, func() {
 
 	var clientServerImage string
 	var snapshotData support.SnapshotData
 	var tmpDir string
+	var serverChecksums map[string][]byte // key: "cli/osName/arch", populated by verify Its (all CLIs)
 
 	Describe("client-server image", func() {
 		It("snapshot.json", func() {
@@ -47,6 +195,7 @@ var _ = Describe("Client server", Ordered, func() {
 			var err error
 			tmpDir, err = os.MkdirTemp("", "client-server")
 			Expect(err).NotTo(HaveOccurred())
+			serverChecksums = make(map[string][]byte)
 			log.Printf("TEMP directory: %s", tmpDir)
 		})
 	})
@@ -67,11 +216,11 @@ var _ = Describe("Client server", Ordered, func() {
 
 					It("init", func() {
 						switch cli {
-						case "createtree", "updatetree":
+						case cliCreatetree, cliUpdatetree:
 							image = snapshotData.Images[cli+"-image"]
-						case "tuftool":
+						case cliTuftool:
 							image = snapshotData.Images["tuf-tool-image"]
-						case "rekor-cli":
+						case cliRekorCli:
 							image = snapshotData.Images["rekor-cli-image"]
 						default:
 							image = snapshotData.Images[cli+"-cli-image"]
@@ -100,74 +249,137 @@ var _ = Describe("Client server", Ordered, func() {
 						var err error
 						gzipServerSHA, err = checksumFile(filepath.Join(osPath, fmt.Sprintf(cliServerFileMask, cli, arch)))
 						Expect(err).NotTo(HaveOccurred())
+						serverChecksums[cli+"/"+osName+"/"+arch] = append([]byte(nil), gzipServerSHA...)
 					})
 
-					It(fmt.Sprintf("compare checkum of %s-%s with source image", osName, arch), func() {
-						if support.IsVersion("1.4.0") {
-							Skip("Skipping for version 1.4.0 - SECURESIGN-3939")
-						}
+					if support.IsBeforeVersion("1.4.0") || !isMultiArchImageKey(snapshotKeyForCLI(cli)) {
+						It(fmt.Sprintf("compare checkum of %s-%s with source image", osName, arch), func() {
+							var (
+								targetPath = tmpDir
+								fileName   string
+								filePath   string
+							)
 
-						var (
-							targetPath = tmpDir
-							fileName   string
-							filePath   string
-						)
-
-						switch cli {
-						case "tuftool":
-							Skip("`tuftool` do not have gzip in source image")
-						case "ec":
-							Skip("`ec` source image is not part of handover")
-						case "cosign", "updatetree", "createtree":
-							if osName == "windows" { //nolint:goconst
-								fileName = fmt.Sprintf("%s-%s-%s.exe.gz", cli, osName, arch)
-							} else {
-								fileName = fmt.Sprintf("%s-%s-%s.gz", cli, osName, arch)
+							switch cli {
+							case cliTuftool:
+								Skip("`tuftool` do not have gzip in source image")
+							case "ec":
+								Skip("`ec` source image is not part of handover")
+							case cliCosign, cliUpdatetree, cliCreatetree:
+								if osName == osWindows {
+									fileName = fmt.Sprintf("%s-%s-%s.exe.gz", cli, osName, arch)
+								} else {
+									fileName = fmt.Sprintf("%s-%s-%s.gz", cli, osName, arch)
+								}
+							case cliRekorCli, cliFetchTsaCerts:
+								ncli := strings.ReplaceAll(cli, "-", "_")
+								if osName == osWindows {
+									fileName = fmt.Sprintf("%s_%s_%s.exe.gz", ncli, osName, arch)
+								} else {
+									fileName = fmt.Sprintf("%s_%s_%s.gz", ncli, osName, arch)
+								}
+							default:
+								if osName == osWindows {
+									fileName = fmt.Sprintf(cliImageFileMask, cli, osName, arch+".exe")
+								} else {
+									fileName = fmt.Sprintf(cliImageFileMask, cli, osName, arch)
+								}
 							}
-						case "rekor-cli", "fetch-tsa-certs":
-							ncli := strings.ReplaceAll(cli, "-", "_")
-							if osName == "windows" {
-								fileName = fmt.Sprintf("%s_%s_%s.exe.gz", ncli, osName, arch)
-							} else {
-								fileName = fmt.Sprintf("%s_%s_%s.gz", ncli, osName, arch)
-							}
-						default:
-							if osName == "windows" {
-								fileName = fmt.Sprintf(cliImageFileMask, cli, osName, arch+".exe")
-							} else {
-								fileName = fmt.Sprintf(cliImageFileMask, cli, osName, arch)
-							}
-						}
-						filePath = filepath.Join(cliImageBasePath, fileName)
+							filePath = filepath.Join(cliImageBasePath, fileName)
 
-						By("get gzip file from container image")
-						ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
-						defer cancel()
+							By("get gzip file from container image")
+							ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+							defer cancel()
 
-						Expect(support.FileFromImage(ctx, image, filePath, targetPath)).To(Succeed())
+							Expect(support.FileFromImage(ctx, image, filePath, targetPath)).To(Succeed())
 
-						By("checksums of gzip file")
-						gzipImageSHA, err := checksumFile(filepath.Join(targetPath, fileName))
-						Expect(err).NotTo(HaveOccurred())
+							By("checksums of gzip file")
+							gzipImageSHA, err := checksumFile(filepath.Join(targetPath, fileName))
+							Expect(err).NotTo(HaveOccurred())
 
-						By("compare checksum with client server file")
-						Expect(gzipImageSHA).To(Equal(gzipServerSHA))
-					})
+							By("compare checksum with client server file")
+							Expect(gzipImageSHA).To(Equal(gzipServerSHA))
+						})
+					}
 				}
 			}
-
 		},
-		Entry("cosign", "cosign", support.GetOSArchMatrix()),
-		Entry("gitsign", "gitsign", support.GetOSArchMatrix()),
-		Entry("rekor-cli", "rekor-cli", support.GetOSArchMatrix()),
+		Entry("cosign", cliCosign, support.GetOSArchMatrix()),
+		Entry("gitsign", cliGitsign, support.GetOSArchMatrix()),
+		Entry("rekor-cli", cliRekorCli, support.GetOSArchMatrix()),
 		Entry("ec", "ec", support.GetOSArchMatrix()),
-		Entry("fetch-tsa-certs", "fetch-tsa-certs", support.GetOSArchMatrix()),
-		Entry("tuftool", "tuftool", map[string][]string{
-			"linux": {"amd64"},
+		Entry("fetch-tsa-certs", cliFetchTsaCerts, support.GetOSArchMatrix()),
+		Entry("tuftool", cliTuftool, map[string][]string{
+			osLinux: {"amd64"},
 		}),
-		Entry("updatetree", "updatetree", support.GetOSArchMatrix()),
-		Entry("createtree", "createtree", support.GetOSArchMatrix()),
+		Entry("updatetree", cliUpdatetree, support.GetOSArchMatrix()),
+		Entry("createtree", cliCreatetree, support.GetOSArchMatrix()),
 	)
+
+	It("compare all multiarch binaries (all CLIs) with source images", func() {
+		if support.IsBeforeVersion("1.4.0") {
+			Skip("multiarch comparison only for version 1.4.0 and later")
+		}
+		matrix := support.GetOSArchMatrix()
+		var errMsgs []string
+		for _, cli := range multiArchCLIs {
+			if !isMultiArchImageKey(snapshotKeyForCLI(cli)) {
+				continue
+			}
+			for osName, archs := range matrix {
+				for _, arch := range archs {
+					sourceKey := snapshotKeyForCLI(cli)
+					sourceImage := snapshotData.Images[sourceKey]
+					clientServerPath := fmt.Sprintf(cliServerPathMask, osName, cli, arch)
+					cliImagePath := sourcePathInImageMultiArch(cli, osName, arch)
+					platform := "linux/" + arch
+
+					resolvedImage, err := support.ResolveManifestListForPlatform(context.Background(), sourceImage, platform)
+					if err != nil {
+						errMsgs = append(errMsgs, fmt.Sprintf("%s %s-%s: resolve manifest: %v", cli, osName, arch, err))
+						continue
+					}
+
+					log.Printf("%s %s", clientServerImage, clientServerPath)
+					log.Printf("%s %s", resolvedImage, cliImagePath)
+					log.Printf("from %s", sourceImage)
+
+					srcDir := filepath.Join(tmpDir, "multiarch-src", cli, osName, arch)
+					if err := os.MkdirAll(srcDir, 0755); err != nil {
+						errMsgs = append(errMsgs, fmt.Sprintf("%s %s-%s: mkdir: %v", cli, osName, arch, err))
+						continue
+					}
+					ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+					if err := support.FileFromImage(ctx, resolvedImage, cliImagePath, srcDir); err != nil {
+						cancel()
+						errMsgs = append(errMsgs, fmt.Sprintf("%s %s-%s: copy from image: %v", cli, osName, arch, err))
+						continue
+					}
+					cancel()
+
+					sourceGzipPath := filepath.Join(srcDir, filepath.Base(cliImagePath))
+					gzipSourceSHA, err := checksumFile(sourceGzipPath)
+					if err != nil {
+						errMsgs = append(errMsgs, fmt.Sprintf("%s %s-%s: checksum: %v", cli, osName, arch, err))
+						continue
+					}
+					key := cli + "/" + osName + "/" + arch
+					gzipServerSHA, ok := serverChecksums[key]
+					if !ok {
+						errMsgs = append(errMsgs, fmt.Sprintf("%s %s-%s: no server checksum", cli, osName, arch))
+						continue
+					}
+					if string(gzipSourceSHA) != string(gzipServerSHA) {
+						errMsgs = append(errMsgs, fmt.Sprintf("%s %s-%s: gzip checksum mismatch\n  client-server SHA256: %x\n  source image SHA256: %x",
+							cli, osName, arch, gzipServerSHA, gzipSourceSHA))
+					}
+				}
+			}
+		}
+		if len(errMsgs) > 0 {
+			Fail("multiarch checksum failures:\n\n" + strings.Join(errMsgs, "\n\n"))
+		}
+	})
 })
 
 // verifyExecutable verifies that the executable file matches the target OS and architecture.
