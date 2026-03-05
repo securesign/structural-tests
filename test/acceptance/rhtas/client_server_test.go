@@ -30,13 +30,13 @@ const (
 	osDarwin  = "darwin"
 	osWindows = "windows"
 
-	cliCosign         = "cosign"
-	cliGitsign        = "gitsign"
-	cliRekorCli       = "rekor-cli"
-	cliFetchTsaCerts  = "fetch-tsa-certs"
-	cliCreatetree     = "createtree"
-	cliUpdatetree     = "updatetree"
-	cliTuftool        = "tuftool"
+	cliCosign        = "cosign"
+	cliGitsign       = "gitsign"
+	cliRekorCli      = "rekor-cli"
+	cliFetchTsaCerts = "fetch-tsa-certs"
+	cliCreatetree    = "createtree"
+	cliUpdatetree    = "updatetree"
+	cliTuftool       = "tuftool"
 )
 
 // Multiarch CLIs: built per-arch (manifest list in snapshot). From Dockerfile.clients.rh.
@@ -72,69 +72,103 @@ func isMultiArchImageKey(key string) bool {
 	return false
 }
 
-// sourcePathInImageMultiArch returns the path inside the CLI source image for the given (os, arch).
-// Only for multiarch CLIs (cosign, gitsign, rekor-cli, fetch-tsa-certs, createtree, updatetree).
-//
-//nolint:funlen // path lookup table per CLI/OS
-func sourcePathInImageMultiArch(cli, osName, arch string) string {
-	base := cliImageBasePath + "/"
-	switch cli {
-	case cliCosign:
-		switch osName {
-		case osLinux:
-			return base + "cosign.gz"
-		case osDarwin:
-			return base + "cosign-darwin-" + arch + ".gz"
-		case osWindows:
-			return base + "cosign-windows-amd64.exe.gz"
-		}
-	case cliGitsign:
-		switch osName {
-		case osLinux:
-			return base + "gitsign_cli_linux.gz"
-		case osDarwin:
-			return base + "gitsign_cli_darwin_" + arch + ".gz"
-		case osWindows:
-			return base + "gitsign_cli_windows_amd64.exe.gz"
-		}
-	case cliRekorCli:
-		switch osName {
-		case osLinux:
-			return base + "rekor_cli_linux.gz"
-		case osDarwin:
-			return base + "rekor_cli_darwin_" + arch + ".gz"
-		case osWindows:
-			return base + "rekor_cli_windows_amd64.exe.gz"
-		}
-	case cliFetchTsaCerts:
-		switch osName {
-		case osLinux:
-			return base + "fetch_tsa_certs_linux.gz"
-		case osDarwin:
-			return base + "fetch_tsa_certs_darwin_" + arch + ".gz"
-		case osWindows:
-			return base + "fetch_tsa_certs_windows_amd64.exe.gz"
-		}
-	case cliCreatetree:
-		switch osName {
-		case osLinux:
-			return base + "createtree.gz"
-		case osDarwin:
-			return base + "createtree-darwin-" + arch + ".gz"
-		case osWindows:
-			return base + "createtree-windows-amd64.exe.gz"
-		}
-	case cliUpdatetree:
-		switch osName {
-		case osLinux:
-			return base + "updatetree.gz"
-		case osDarwin:
-			return base + "updatetree-darwin-" + arch + ".gz"
-		case osWindows:
-			return base + "updatetree-windows-amd64.exe.gz"
-		}
+func sourcePathCosign(osName, arch string) string {
+	switch osName {
+	case osLinux:
+		return "cosign.gz"
+	case osDarwin:
+		return "cosign-darwin-" + arch + ".gz"
+	case osWindows:
+		return "cosign-windows-amd64.exe.gz"
 	}
 	return ""
+}
+
+func sourcePathGitsign(osName, arch string) string {
+	switch osName {
+	case osLinux:
+		return "gitsign_cli_linux.gz"
+	case osDarwin:
+		return "gitsign_cli_darwin_" + arch + ".gz"
+	case osWindows:
+		return "gitsign_cli_windows_amd64.exe.gz"
+	}
+	return ""
+}
+
+func sourcePathRekorCli(osName, arch string) string {
+	switch osName {
+	case osLinux:
+		return "rekor_cli_linux.gz"
+	case osDarwin:
+		return "rekor_cli_darwin_" + arch + ".gz"
+	case osWindows:
+		return "rekor_cli_windows_amd64.exe.gz"
+	}
+	return ""
+}
+
+func sourcePathFetchTsaCerts(osName, arch string) string {
+	switch osName {
+	case osLinux:
+		return "fetch_tsa_certs_linux.gz"
+	case osDarwin:
+		return "fetch_tsa_certs_darwin_" + arch + ".gz"
+	case osWindows:
+		return "fetch_tsa_certs_windows_amd64.exe.gz"
+	}
+	return ""
+}
+
+func sourcePathCreatetree(osName, arch string) string {
+	switch osName {
+	case osLinux:
+		return "createtree.gz"
+	case osDarwin:
+		return "createtree-darwin-" + arch + ".gz"
+	case osWindows:
+		return "createtree-windows-amd64.exe.gz"
+	}
+	return ""
+}
+
+func sourcePathUpdatetree(osName, arch string) string {
+	switch osName {
+	case osLinux:
+		return "updatetree.gz"
+	case osDarwin:
+		return "updatetree-darwin-" + arch + ".gz"
+	case osWindows:
+		return "updatetree-windows-amd64.exe.gz"
+	}
+	return ""
+}
+
+// sourcePathInImageMultiArch returns the path inside the CLI source image for the given (os, arch).
+// Only for multiarch CLIs (cosign, gitsign, rekor-cli, fetch-tsa-certs, createtree, updatetree).
+func sourcePathInImageMultiArch(cli, osName, arch string) string {
+	base := cliImageBasePath + "/"
+	var suffix string
+	switch cli {
+	case cliCosign:
+		suffix = sourcePathCosign(osName, arch)
+	case cliGitsign:
+		suffix = sourcePathGitsign(osName, arch)
+	case cliRekorCli:
+		suffix = sourcePathRekorCli(osName, arch)
+	case cliFetchTsaCerts:
+		suffix = sourcePathFetchTsaCerts(osName, arch)
+	case cliCreatetree:
+		suffix = sourcePathCreatetree(osName, arch)
+	case cliUpdatetree:
+		suffix = sourcePathUpdatetree(osName, arch)
+	default:
+		return ""
+	}
+	if suffix == "" {
+		return ""
+	}
+	return base + suffix
 }
 
 // multiArchCLIs is the list of CLI names that use multiarch (manifest list) source images.
