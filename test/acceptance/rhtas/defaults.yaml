@@ -16,7 +16,6 @@ operator:
     - ctlog-image
     - client-server-image
     - timestamp-authority-image
-    - ctlog-monitor-image
   otherImageKeys:
     - trillian-netcat-image
     - http-server-image
@@ -54,7 +53,6 @@ fbc:
     - stable-v1.1
     - stable-v1.2
     - stable-v1.3
-    - stable-v1.4
   expectedDeprecations:
     - stable-v1.1
     - rhtas-operator.v1.1.0
@@ -65,5 +63,4 @@ fbc:
       expectedChannels:
         - stable
         - stable-v1.3
-        - stable-v1.4
       expectedDeprecations: []
