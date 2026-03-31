@@ -164,6 +164,11 @@
       "repository": "rhtas/model-validation-operator-bundle",
       "_id": "68c02cbc097737a4a148bbaa",
       "published": true
+    },
+    {
+      "repository": "rhtas/model-validation-agent-rhel9",
+      "_id": "69c539d43eaaa3169568a7d0",
+      "published": true
     }
   ]
 }
