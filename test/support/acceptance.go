@@ -77,12 +77,12 @@ func ParseMVOperatorImages(valuesFile string) OperatorMap {
 
 	const reFirstCapture = 1
 
-	helpRe := regexp.MustCompile(`(?s)-{1,2}model-transparency-cli-image\b.*?\(default\s+"([^"]+)"\)`)
+	helpRe := regexp.MustCompile(`(?s)-{1,2}validation-agent-image\b.*?\(default\s+"([^"]+)"\)`)
 	m := helpRe.FindStringSubmatch(valuesFile)
 	if len(m) > reFirstCapture {
 		img := strings.TrimSpace(m[reFirstCapture])
 		if img != "" {
-			operatorMvoImages["model-transparency-image"] = img
+			operatorMvoImages["model-validation-agent-image"] = img
 			return operatorMvoImages
 		}
 	}
