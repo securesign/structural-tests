@@ -26,53 +26,8 @@
       "published": false
     },
     {
-      "repository": "rhtas/fetch-tsa-certs-rhel9",
-      "_id": "66bd0627b45b9ab255bbaa91",
-      "published": false
-    },
-    {
-      "repository": "rhtas/policy-controller-rhel9-operator",
-      "_id": "684c3637e9bee0b505a2c854",
-      "published": false
-    },
-    {
-      "repository": "rhtas/policy-controller-operator-bundle",
-      "_id": "684c3703b6603f6203b958f6",
-      "published": false
-    },
-    {
-      "repository": "rhtas/policy-controller-rhel9",
-      "_id": "684c47e98de4bcf89749e168",
-      "published": false
-    },
-    {
-      "repository": "rhtas/rekor-monitor-rhel9",
-      "_id": "688a24d736269c658560f934",
-      "published": false
-    },
-    {
-      "repository": "rhtas/rhtas-console-rhel9",
-      "_id": "68a380bc0b357c7050adfe6a",
-      "published": false
-    },
-    {
-      "repository": "rhtas/rhtas-console-ui-rhel9",
-      "_id": "68a38124312ed425e3215226",
-      "published": false
-    },
-    {
-      "repository": "rhtas/model-validation-rhel9-operator",
-      "_id": "68c0295377ceb0bccde13cb6",
-      "published": false
-    },
-    {
-      "repository": "rhtas/model-transparency-rhel9",
-      "_id": "68c02bb7097737a4a148b6c6",
-      "published": false
-    },
-    {
-      "repository": "rhtas/model-validation-operator-bundle",
-      "_id": "68c02cbc097737a4a148bbaa",
+      "repository": "rhtas/ctlog-monitor-rhel9",
+      "_id": "696ff34dec75adad72d28ac1",
       "published": false
     },
     {
@@ -94,11 +49,6 @@
       "repository": "rhtas/certificate-transparency-rhel9",
       "_id": "65f1bc90be2720152f91b063",
       "published": true
-    },
-    {
-      "repository": "rhtas/ctlog-monitor-rhel9",
-      "_id": "696ff34dec75adad72d28ac1",
-      "published": false
     },
     {
       "repository": "rhtas/rekor-server-rhel9",
@@ -146,6 +96,11 @@
       "published": true
     },
     {
+      "repository": "rhtas/fetch-tsa-certs-rhel9",
+      "_id": "66bd0627b45b9ab255bbaa91",
+      "published": true
+    },
+    {
       "repository": "rhtas/timestamp-authority-rhel9",
       "_id": "66bd082b3baec585c5866d02",
       "published": true
@@ -163,6 +118,56 @@
     {
       "repository": "rhtas/client-server-rhel9",
       "_id": "66ed754e54a9155cfb958033",
+      "published": true
+    },
+    {
+      "repository": "rhtas/policy-controller-rhel9-operator",
+      "_id": "684c3637e9bee0b505a2c854",
+      "published": true
+    },
+    {
+      "repository": "rhtas/policy-controller-operator-bundle",
+      "_id": "684c3703b6603f6203b958f6",
+      "published": true
+    },
+    {
+      "repository": "rhtas/policy-controller-rhel9",
+      "_id": "684c47e98de4bcf89749e168",
+      "published": true
+    },
+    {
+      "repository": "rhtas/rekor-monitor-rhel9",
+      "_id": "688a24d736269c658560f934",
+      "published": true
+    },
+    {
+      "repository": "rhtas/rhtas-console-rhel9",
+      "_id": "68a380bc0b357c7050adfe6a",
+      "published": true
+    },
+    {
+      "repository": "rhtas/rhtas-console-ui-rhel9",
+      "_id": "68a38124312ed425e3215226",
+      "published": true
+    },
+    {
+      "repository": "rhtas/model-validation-rhel9-operator",
+      "_id": "68c0295377ceb0bccde13cb6",
+      "published": true
+    },
+    {
+      "repository": "rhtas/model-transparency-rhel9",
+      "_id": "68c02bb7097737a4a148b6c6",
+      "published": true
+    },
+    {
+      "repository": "rhtas/model-validation-operator-bundle",
+      "_id": "68c02cbc097737a4a148bbaa",
+      "published": true
+    },
+    {
+      "repository": "rhtas/model-validation-agent-rhel9",
+      "_id": "69c539d43eaaa3169568a7d0",
       "published": true
     }
   ]

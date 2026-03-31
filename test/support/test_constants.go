@@ -45,7 +45,7 @@ func OtherPCOOperatorImageKeys() []string {
 
 func MandatoryMvoOperatorImageKeys() []string {
 	return []string{
-		"model-transparency-image",
+		"model-validation-agent-image",
 	}
 }
 
