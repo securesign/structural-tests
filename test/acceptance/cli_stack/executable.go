@@ -37,7 +37,7 @@ func verifyBinaryExecutable(filePath, osName, arch string) error {
 		if err != nil {
 			return fmt.Errorf("failed to read Mach-O file %s: %w", filePath, err)
 		}
-		if machoFile.Cpu != machoCpuType(arch) {
+		if machoFile.Cpu != machoCPUType(arch) {
 			return fmt.Errorf("architecture mismatch: expected %s, got %v", arch, machoFile.Cpu)
 		}
 	default:
@@ -48,9 +48,9 @@ func verifyBinaryExecutable(filePath, osName, arch string) error {
 
 func elfArchType(arch string) elf.Machine {
 	switch arch {
-	case "amd64":
+	case "amd64": //nolint:goconst
 		return elf.EM_X86_64
-	case "arm64":
+	case "arm64": //nolint:goconst
 		return elf.EM_AARCH64
 	case "ppc64le":
 		return elf.EM_PPC64
@@ -72,7 +72,7 @@ func peMachineType(arch string) uint16 {
 	}
 }
 
-func machoCpuType(arch string) macho.Cpu {
+func machoCPUType(arch string) macho.Cpu {
 	switch arch {
 	case "amd64":
 		return macho.CpuAmd64

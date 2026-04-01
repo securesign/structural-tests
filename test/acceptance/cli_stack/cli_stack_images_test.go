@@ -184,7 +184,6 @@ var _ = Describe("CLI Stack Images", Ordered, func() {
 			})
 
 			for _, bin := range entry.binaries {
-				bin := bin // capture loop variable
 				It(fmt.Sprintf("contains valid %s binary for %s/%s", filepath.Base(bin.pathInImage), bin.osName, bin.arch), func() {
 					Expect(image).NotTo(BeEmpty(), "image not loaded — prerequisite 'image present in snapshot' failed")
 

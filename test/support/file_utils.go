@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -117,22 +118,22 @@ func DecompressGzipFile(gzipPath string, outputPath string) error {
 // ExtractFirstFileFromTarGz opens a .tar.gz file and extracts the first regular file it finds
 // into destDir, returning the path to the extracted file.
 func ExtractFirstFileFromTarGz(tarGzPath, destDir string) (string, error) {
-	f, err := os.Open(tarGzPath)
+	archiveFile, err := os.Open(tarGzPath)
 	if err != nil {
 		return "", fmt.Errorf("open %s: %w", tarGzPath, err)
 	}
-	defer f.Close()
+	defer archiveFile.Close()
 
-	gr, err := gzip.NewReader(f)
+	gzipReader, err := gzip.NewReader(archiveFile)
 	if err != nil {
 		return "", fmt.Errorf("gzip reader for %s: %w", tarGzPath, err)
 	}
-	defer gr.Close()
+	defer gzipReader.Close()
 
-	tr := tar.NewReader(gr)
+	tarReader := tar.NewReader(gzipReader)
 	for {
-		hdr, err := tr.Next()
-		if err == io.EOF {
+		hdr, err := tarReader.Next()
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
@@ -142,12 +143,12 @@ func ExtractFirstFileFromTarGz(tarGzPath, destDir string) (string, error) {
 			continue
 		}
 		outPath := filepath.Join(destDir, filepath.Base(hdr.Name))
-		out, err := os.Create(outPath)
+		outFile, err := os.Create(outPath)
 		if err != nil {
 			return "", fmt.Errorf("create output file %s: %w", outPath, err)
 		}
-		_, copyErr := io.Copy(out, tr) //nolint:gosec
-		out.Close()
+		_, copyErr := io.Copy(outFile, tarReader) //nolint:gosec
+		outFile.Close()
 		if copyErr != nil {
 			return "", fmt.Errorf("write %s: %w", outPath, copyErr)
 		}
