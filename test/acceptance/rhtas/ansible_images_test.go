@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/securesign/structural-tests/test/support"
+	"github.com/securesign/structural-tests/test/support/pyxis"
 )
 
 var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
@@ -131,6 +132,16 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 		}
 		Expect(hashesCounts).To(HaveEach(1))
 		Expect(ansibleTasImages).To(HaveLen(len(hashesCounts)))
+	})
+
+	It("other images have acceptable grades", func() {
+		Expect(ansibleOtherImages).NotTo(BeEmpty(), "No other images found to check grades for")
+		results, err := pyxis.FetchGradesForImages(ansibleOtherImages)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(results.NotFound).To(BeEmpty(), "Some ansible other images were not found in Pyxis")
+		Expect(results.Grades).NotTo(BeEmpty())
+		errs := pyxis.ValidateGrades(results.Grades, pyxis.GradeB, 7)
+		Expect(errs).To(BeEmpty(), "Some ansible other images have unacceptable grades")
 	})
 
 })

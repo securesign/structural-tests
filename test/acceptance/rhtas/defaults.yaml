@@ -36,12 +36,12 @@ ansible:
     - tas_single_node_createtree_image
     - tas_single_node_client_server_image
     - tas_single_node_backfill_redis_image
+    - tas_single_node_rekor_monitor_image
+    - tas_single_node_ctlog_monitor_image
   otherImageKeys:
     - tas_single_node_http_server_image
     - tas_single_node_trillian_netcat_image
     - tas_single_node_nginx_image
-    - tas_single_node_rekor_monitor_image
-    - tas_single_node_ctlog_monitor_image
 
 fbc:
   olmPackage: "rhtas-operator"

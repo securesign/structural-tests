@@ -12,6 +12,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/securesign/structural-tests/test/support"
+	"github.com/securesign/structural-tests/test/support/pyxis"
 )
 
 var ErrNotFoundInRegistry = errors.New("not found in registry")
@@ -143,5 +144,15 @@ var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
 		matches := re.FindAllString(string(fileContent), -1)
 		Expect(matches).NotTo(BeEmpty())
 		support.LogArray("Operator images found in operator-bundle:", matches)
+	})
+
+	It("other images have acceptable grades", func() {
+		Expect(operatorOtherImages).NotTo(BeEmpty(), "No other images found to check grades for")
+		results, err := pyxis.FetchGradesForImages(operatorOtherImages)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(results.NotFound).To(BeEmpty(), "Some operator other images were not found in Pyxis")
+		Expect(results.Grades).NotTo(BeEmpty())
+		errs := pyxis.ValidateGrades(results.Grades, pyxis.GradeB, 7)
+		Expect(errs).To(BeEmpty(), "Some operator other images have unacceptable grades")
 	})
 })
