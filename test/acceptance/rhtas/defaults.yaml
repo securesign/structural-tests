@@ -5,7 +5,7 @@ operator:
   entrypointcmd: "-h"
   parseFormat: "help"
   bundleImageKey: "rhtas-operator-bundle-image"
-  bundleCSVPath: "manifests/rhtas-operator.clusterserviceversion.yaml"
+  bundleCsvPath: "manifests/rhtas-operator.clusterserviceversion.yaml"
   imageKeys:
     - trillian-log-server-image
     - trillian-log-signer-image

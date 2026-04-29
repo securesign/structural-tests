@@ -18,7 +18,7 @@ type OperatorConfig struct {
 	OtherImageKeys   []string          `yaml:"otherImageKeys,omitempty"`
 	ImageKeyMap      map[string]string `yaml:"imageKeyMap,omitempty"`
 	BundleImageKey   string            `yaml:"bundleImageKey"`
-	BundleCSVPath    string            `yaml:"bundleCSVPath"`
+	BundleCSVPath    string            `yaml:"bundleCsvPath"`
 }
 
 type operatorSuiteSection struct {
@@ -69,7 +69,7 @@ func backfillOperatorFromMap(conv interface{}, out *operatorSuiteSection) {
 		}
 	}
 	if out.BundleCSVPath == "" {
-		if v, ok := convMap["bundleCSVPath"].(string); ok {
+		if v, ok := convMap["bundleCsvPath"].(string); ok {
 			out.BundleCSVPath = v
 		}
 	}

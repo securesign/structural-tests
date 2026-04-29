@@ -5,7 +5,7 @@ operator:
   entrypointcmd: "helm-charts/policy-controller-operator/values.yaml"
   parseFormat: "values"
   bundleImageKey: "policy-controller-operator-bundle-image"
-  bundleCSVPath: "manifests/policy-controller-operator.clusterserviceversion.yaml"
+  bundleCsvPath: "manifests/policy-controller-operator.clusterserviceversion.yaml"
   imageKeys:
     - policy-controller-image
   otherImageKeys:

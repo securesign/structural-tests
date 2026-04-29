@@ -3,7 +3,7 @@ operator:
   entrypointcmd: "-h"
   parseFormat: "help"
   bundleImageKey: "model-validation-operator-bundle-image"
-  bundleCSVPath: "manifests/model-validation-operator.clusterserviceversion.yaml"
+  bundleCsvPath: "manifests/model-validation-operator.clusterserviceversion.yaml"
   imageKeys:
     - validation-agent-image
   imageKeyMap:

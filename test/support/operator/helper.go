@@ -15,6 +15,9 @@ import (
 	"github.com/securesign/structural-tests/test/support/pyxis"
 )
 
+const maxFreshnessAgeDays = 7
+
+//nolint:funlen,gocognit
 func DescribeOperatorImageTests(product string, defaultsData []byte) bool {
 	return Describe("Operator images", Ordered, func() {
 		var (
@@ -157,7 +160,7 @@ func DescribeOperatorImageTests(product string, defaultsData []byte) bool {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(results.NotFound).To(BeEmpty(), "Some operator other images were not found in Pyxis")
 				Expect(results.Grades).NotTo(BeEmpty())
-				errs := pyxis.ValidateGrades(results.Grades, pyxis.GradeB, 7)
+				errs := pyxis.ValidateGrades(results.Grades, pyxis.GradeB, maxFreshnessAgeDays)
 				Expect(errs).To(BeEmpty(), "Some operator other images have unacceptable grades")
 			})
 		}
