@@ -1,8 +1,23 @@
+operator:
+  operatorImageKey: "policy-controller-operator-image"
+  entrypoint:
+    - "cat"
+  entrypointcmd: "helm-charts/policy-controller-operator/values.yaml"
+  parseFormat: "values"
+  bundleImageKey: "policy-controller-operator-bundle-image"
+  bundleCSVPath: "manifests/policy-controller-operator.clusterserviceversion.yaml"
+  imageKeys:
+    - policy-controller-image
+  otherImageKeys:
+    - ose-cli-image
+
 fbc:
   olmPackage: "policy-controller-operator"
   operatorBundleImage: "registry.redhat.io/rhtas/policy-controller-operator-bundle"
   catalogPath: "/configs/policy-controller-operator/catalog.json"
   imageKeyPrefix: "pco-fbc-"
-  defaultChannel: "tech-preview"
+  defaultChannel: "stable"
   expectedChannels:
+    - stable
+    - stable-v1.0
     - tech-preview

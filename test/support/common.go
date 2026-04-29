@@ -144,3 +144,28 @@ func LogMapByProvidedKeys[V any](message string, data map[string]V, keysToLog []
 	}
 	log.Print(result)
 }
+
+// EnsureStringKeys converts map[interface{}]interface{} to map[string]interface{} recursively
+// so yaml.Marshal produces correct keys (e.g. catalogPath) when decoding from parsed YAML.
+func EnsureStringKeys(input interface{}) interface{} {
+	if input == nil {
+		return nil
+	}
+	if m, ok := input.(map[interface{}]interface{}); ok {
+		out := make(map[string]interface{}, len(m))
+		for k, val := range m {
+			if ks, ok := k.(string); ok {
+				out[ks] = EnsureStringKeys(val)
+			}
+		}
+		return out
+	}
+	if s, ok := input.([]interface{}); ok {
+		out := make([]interface{}, len(s))
+		for i, val := range s {
+			out[i] = EnsureStringKeys(val)
+		}
+		return out
+	}
+	return input
+}

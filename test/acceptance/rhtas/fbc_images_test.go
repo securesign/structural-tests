@@ -10,7 +10,7 @@ func fbcDefaults() []byte {
 	if err != nil || len(content) == 0 {
 		return defaults
 	}
-	merged, err := support.MergeRhtasConfig(defaults, content)
+	merged, err := support.MergeDefaultsConfig(defaults, content)
 	if err != nil {
 		return defaults
 	}

@@ -7,22 +7,12 @@ const (
 	EnvVersion              = "VERSION"
 	EnvTestConfig           = "TEST_CONFIG"
 
-	PolicyControllerOperatorImageKey       = "policy-controller-operator-image"
-	PolicyControllerOperatorBundleImageKey = "policy-controller-operator-bundle-image"
-	ModelValidationOperatorImageKey        = "model-validation-operator-image"
-	ModelValidationOperatorBundleImageKey  = "model-validation-operator-bundle-image"
-	OperatorImageKey                       = "rhtas-operator-image"
-	OperatorBundleImageKey                 = "rhtas-operator-bundle-image"
-	AnsibleCollectionImageKey              = "artifact-signer-ansible.collection.image"
-	AnsibleCollectionPathInImage           = "/releases"
+	OperatorImageKey             = "rhtas-operator-image"
+	OperatorBundleImageKey       = "rhtas-operator-bundle-image"
+	AnsibleCollectionImageKey    = "artifact-signer-ansible.collection.image"
+	AnsibleCollectionPathInImage = "/releases"
 
-	AnsibleCollectionSnapshotFile                           = "roles/tas_single_node/defaults/main.yml"
-	OperatorBundleClusterServiceVersionFile                 = "rhtas-operator.clusterserviceversion.yaml"
-	PolicyControllerOperatorBundleClusterServiceVersionFile = "policy-controller-operator.clusterserviceversion.yaml"
-	ModelValidationOperatorBundleClusterServiceVersionFile  = "model-validation-operator.clusterserviceversion.yaml"
-	OperatorBundleClusterServiceVersionPath                 = "manifests/" + OperatorBundleClusterServiceVersionFile
-	PolicyControllerOperatorBundleClusterServiceVersionPath = "manifests/" + PolicyControllerOperatorBundleClusterServiceVersionFile
-	ModelValidationOperatorBundleClusterServiceVersionPath  = "manifests/" + ModelValidationOperatorBundleClusterServiceVersionFile
+	AnsibleCollectionSnapshotFile = "roles/tas_single_node/defaults/main.yml"
 
 	TasImageDefinitionRegexp      = `^registry.redhat.io/rhtas/[\w/-]+@sha256:\w{64}$`
 	OtherImageDefinitionRegexp    = `^(registry.redhat.io|registry.access.redhat.com)`
@@ -30,24 +20,6 @@ const (
 
 	DefaultRepositoriesFile = "testdata/repositories.json"
 )
-
-func MandatoryPcoOperatorImageKeys() []string {
-	return []string{
-		"policy-controller-image",
-	}
-}
-
-func OtherPCOOperatorImageKeys() []string {
-	return []string{
-		"ose-cli-image",
-	}
-}
-
-func MandatoryMvoOperatorImageKeys() []string {
-	return []string{
-		"model-validation-agent-image",
-	}
-}
 
 type OSArchMatrix map[string][]string
 

@@ -1,3 +1,14 @@
+operator:
+  operatorImageKey: "model-validation-operator-image"
+  entrypointcmd: "-h"
+  parseFormat: "help"
+  bundleImageKey: "model-validation-operator-bundle-image"
+  bundleCSVPath: "manifests/model-validation-operator.clusterserviceversion.yaml"
+  imageKeys:
+    - validation-agent-image
+  imageKeyMap:
+    validation-agent-image: model-validation-agent-image
+
 fbc:
   olmPackage: "model-validation-operator"
   operatorBundleImage: "registry.redhat.io/rhtas/model-validation-operator-bundle"

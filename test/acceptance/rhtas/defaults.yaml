@@ -1,6 +1,11 @@
 # Suite-based config: operator, ansible, fbc. No package top-level (file is in test/acceptance/rhtas/).
 
 operator:
+  operatorImageKey: "rhtas-operator-image"
+  entrypointcmd: "-h"
+  parseFormat: "help"
+  bundleImageKey: "rhtas-operator-bundle-image"
+  bundleCSVPath: "manifests/rhtas-operator.clusterserviceversion.yaml"
   imageKeys:
     - trillian-log-server-image
     - trillian-log-signer-image
