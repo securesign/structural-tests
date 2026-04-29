@@ -1,158 +1,20 @@
 package acceptance
 
 import (
-	"context"
-	"errors"
-	"fmt"
-	"log"
-	"os"
-	"path/filepath"
-	"regexp"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/securesign/structural-tests/test/support"
-	"github.com/securesign/structural-tests/test/support/pyxis"
+	"github.com/securesign/structural-tests/test/support/operator"
 )
 
-var ErrNotFoundInRegistry = errors.New("not found in registry")
+func operatorDefaults() []byte {
+	content, err := support.GetTestConfigContent()
+	if err != nil || len(content) == 0 {
+		return defaults
+	}
+	merged, err := support.MergeDefaultsConfig(defaults, content)
+	if err != nil {
+		return defaults
+	}
+	return merged
+}
 
-var _ = Describe("Trusted Artifact Signer Operator", Ordered, func() {
-
-	var (
-		snapshotData        support.SnapshotData
-		repositories        *support.RepositoryList
-		operatorTasImages   support.OperatorMap
-		operatorOtherImages support.OperatorMap
-		operator            string
-		mandatoryTasKeys    []string
-		otherOperatorKeys   []string
-	)
-
-	BeforeAll(func() {
-		defaultsToUse := defaults
-		if content, err := support.GetTestConfigContent(); err == nil && len(content) > 0 {
-			defaultsToUse, err = support.MergeRhtasConfig(defaults, content)
-			Expect(err).NotTo(HaveOccurred())
-		}
-		var err error
-		mandatoryTasKeys, err = support.GetOperatorImageKeysFromConfig(defaultsToUse)
-		Expect(err).NotTo(HaveOccurred())
-		otherOperatorKeys, err = support.GetOperatorOtherImageKeysFromConfig(defaultsToUse)
-		Expect(err).NotTo(HaveOccurred())
-	})
-
-	It("get and parse snapshot file", func() {
-		var err error
-		snapshotData, err = support.ParseSnapshotData()
-		Expect(err).NotTo(HaveOccurred())
-		Expect(snapshotData.Images).NotTo(BeEmpty(), "No images were detected in snapshot file")
-
-		repositories, err = support.LoadRepositoryList()
-		Expect(err).NotTo(HaveOccurred())
-		Expect(repositories.Data).NotTo(BeEmpty(), "No images were detected in repositories file")
-	})
-
-	It("get operator image", func() {
-		operator = snapshotData.Images[support.OperatorImageKey]
-		Expect(operator).NotTo(BeEmpty(), "Operator image not detected in snapshot file")
-		log.Printf("Using %s\n", operator)
-	})
-
-	It("get all TAS images used by this operator", func() {
-		helpLogs, err := support.RunImage(operator, []string{}, []string{"-h"})
-		Expect(err).NotTo(HaveOccurred())
-
-		operatorTasImages, operatorOtherImages = support.ParseOperatorImages(helpLogs, otherOperatorKeys)
-		support.LogMap(fmt.Sprintf("Operator TAS images (%d):", len(operatorTasImages)), operatorTasImages)
-		support.LogMap(fmt.Sprintf("Operator other images (%d):", len(operatorOtherImages)), operatorOtherImages)
-		Expect(operatorTasImages).NotTo(BeEmpty())
-		Expect(operatorOtherImages).NotTo(BeEmpty())
-	})
-
-	It("operator images are listed in registry.redhat.io", func() {
-		var errs []error
-		for _, image := range operatorTasImages {
-			if repositories.FindByImage(image) == nil {
-				errs = append(errs, fmt.Errorf("%w: %s", ErrNotFoundInRegistry, image))
-			}
-		}
-		Expect(errs).To(BeEmpty())
-	})
-
-	It("operator TAS images are all valid", func() {
-		Expect(support.GetMapKeys(operatorTasImages)).To(ContainElements(mandatoryTasKeys))
-		Expect(len(operatorTasImages)).To(BeNumerically("==", len(mandatoryTasKeys)))
-		Expect(operatorTasImages).To(HaveEach(MatchRegexp(support.TasImageDefinitionRegexp)))
-	})
-
-	It("operator other images are all valid", func() {
-		Expect(support.GetMapKeys(operatorOtherImages)).To(ContainElements(otherOperatorKeys))
-		Expect(len(operatorOtherImages)).To(BeNumerically("==", len(otherOperatorKeys)))
-		Expect(operatorOtherImages).To(HaveEach(MatchRegexp(support.OtherImageDefinitionRegexp)))
-	})
-
-	It("all image hashes are also defined in releases snapshot", func() {
-		mapped := make(map[string]string)
-		for _, imageKey := range mandatoryTasKeys {
-			oSha := support.ExtractHash(operatorTasImages[imageKey])
-			if _, keyExist := snapshotData.Images[imageKey]; !keyExist {
-				mapped[imageKey] = "MISSING"
-				continue
-			}
-			sSha := support.ExtractHash(snapshotData.Images[imageKey])
-			if oSha == sSha {
-				mapped[imageKey] = "match"
-			} else {
-				mapped[imageKey] = "DIFFERENT HASHES"
-			}
-		}
-		Expect(mapped).To(HaveEach("match"), "Operator images are missing or have different hashes in snapshot file")
-	})
-
-	It("image hashes are all unique", func() {
-		operatorHashes := support.ExtractHashes(support.GetMapValues(operatorTasImages))
-		mapped := make(map[string]int)
-		for _, hash := range operatorHashes {
-			_, exist := mapped[hash]
-			if exist {
-				mapped[hash]++
-			} else {
-				mapped[hash] = 1
-			}
-		}
-		Expect(mapped).To(HaveEach(1))
-		Expect(operatorTasImages).To(HaveLen(len(mapped)))
-	})
-
-	It("operator-bundle use the right operator", func() {
-		dir, err := os.MkdirTemp("", "bundle")
-		Expect(err).NotTo(HaveOccurred())
-		defer os.RemoveAll(dir)
-
-		Expect(support.FileFromImage(
-			context.Background(),
-			snapshotData.Images[support.OperatorBundleImageKey],
-			support.OperatorBundleClusterServiceVersionPath, dir),
-		).To(Succeed())
-		fileContent, err := os.ReadFile(filepath.Join(dir, support.OperatorBundleClusterServiceVersionFile))
-		Expect(err).NotTo(HaveOccurred())
-		Expect(fileContent).NotTo(BeEmpty())
-
-		operatorHash := support.ExtractHash(snapshotData.Images[support.OperatorImageKey])
-		re := regexp.MustCompile(`(\w+:\s*[\w./-]+operator[\w-]*@sha256:` + operatorHash + `)`)
-		matches := re.FindAllString(string(fileContent), -1)
-		Expect(matches).NotTo(BeEmpty())
-		support.LogArray("Operator images found in operator-bundle:", matches)
-	})
-
-	It("other images have acceptable grades", func() {
-		Expect(operatorOtherImages).NotTo(BeEmpty(), "No other images found to check grades for")
-		results, err := pyxis.FetchGradesForImages(operatorOtherImages)
-		Expect(err).NotTo(HaveOccurred())
-		Expect(results.NotFound).To(BeEmpty(), "Some operator other images were not found in Pyxis")
-		Expect(results.Grades).NotTo(BeEmpty())
-		errs := pyxis.ValidateGrades(results.Grades, pyxis.GradeB, 7)
-		Expect(errs).To(BeEmpty(), "Some operator other images have unacceptable grades")
-	})
-})
+var _ = operator.DescribeOperatorImageTests(product, operatorDefaults())

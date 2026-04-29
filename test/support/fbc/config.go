@@ -26,37 +26,12 @@ type fbcSuiteSection struct {
 	Override  map[string]*FBCConfig `yaml:"override,omitempty"`
 }
 
-// ensureStringKeys converts map[interface{}]interface{} to map[string]interface{} recursively
-// so yaml.Marshal produces correct keys (e.g. catalogPath) when decoding from parsed YAML.
-func ensureStringKeys(input interface{}) interface{} {
-	if input == nil {
-		return nil
-	}
-	if m, ok := input.(map[interface{}]interface{}); ok {
-		out := make(map[string]interface{}, len(m))
-		for k, val := range m {
-			if ks, ok := k.(string); ok {
-				out[ks] = ensureStringKeys(val)
-			}
-		}
-		return out
-	}
-	if s, ok := input.([]interface{}); ok {
-		out := make([]interface{}, len(s))
-		for i, val := range s {
-			out[i] = ensureStringKeys(val)
-		}
-		return out
-	}
-	return input
-}
-
 func decodeFBCSection(in interface{}) (fbcSuiteSection, error) {
 	var out fbcSuiteSection
 	if in == nil {
 		return out, errors.New("fbc section is nil")
 	}
-	conv := ensureStringKeys(in)
+	conv := support.EnsureStringKeys(in)
 	bytes, err := yaml.Marshal(conv)
 	if err != nil {
 		return out, fmt.Errorf("marshal fbc section: %w", err)

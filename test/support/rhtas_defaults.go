@@ -44,9 +44,9 @@ func toMapAny(input interface{}) (map[string]interface{}, bool) {
 	return nil, false
 }
 
-// MergeRhtasConfig overlays fileContent on top of baseDefaults. Both may use package wrapper (rhtas:)
+// MergeDefaultsConfig overlays fileContent on top of baseDefaults. Both may use package wrapper (rhtas:)
 // or suite-level (operator, ansible, fbc). Result is always suite-level. Keys in fileContent override baseDefaults.
-func MergeRhtasConfig(baseDefaults, fileContent []byte) ([]byte, error) {
+func MergeDefaultsConfig(baseDefaults, fileContent []byte) ([]byte, error) {
 	if len(fileContent) == 0 {
 		return baseDefaults, nil
 	}
@@ -59,15 +59,14 @@ func MergeRhtasConfig(baseDefaults, fileContent []byte) ([]byte, error) {
 		return nil, fmt.Errorf("config file: %w", err)
 	}
 	for key, overlayVal := range overlay {
-		if key == "fbc" {
-			// Deep-merge fbc so overlay does not wipe base fields (e.g. catalogPath)
-			baseFbc, ok1 := toMapAny(base["fbc"])
-			overlayFbc, ok2 := toMapAny(overlayVal)
+		if key == "fbc" || key == "operator" {
+			baseSection, ok1 := toMapAny(base[key])
+			overlaySection, ok2 := toMapAny(overlayVal)
 			if ok1 && ok2 {
-				for kk, vv := range overlayFbc {
-					baseFbc[kk] = vv
+				for kk, vv := range overlaySection {
+					baseSection[kk] = vv
 				}
-				base["fbc"] = baseFbc
+				base[key] = baseSection
 				continue
 			}
 		}
@@ -80,12 +79,7 @@ func MergeRhtasConfig(baseDefaults, fileContent []byte) ([]byte, error) {
 	return merged, nil
 }
 
-// rhtasSuites is the suite-based config: operator, ansible, fbc (no package level).
 type rhtasSuites struct {
-	Operator struct {
-		ImageKeys      []string `yaml:"imageKeys"`
-		OtherImageKeys []string `yaml:"otherImageKeys"`
-	} `yaml:"operator"`
 	Ansible struct {
 		ImageKeys      []string `yaml:"imageKeys"`
 		OtherImageKeys []string `yaml:"otherImageKeys"`
@@ -106,36 +100,6 @@ func parseSuites(defaultsYaml []byte) (rhtasSuites, error) {
 		return parsed, fmt.Errorf("parse rhtas suites: %w", err)
 	}
 	return parsed, nil
-}
-
-// GetOperatorImageKeysFromConfig returns the TAS operator image key list (operator.imageKeys).
-func GetOperatorImageKeysFromConfig(defaultsYaml []byte) ([]string, error) {
-	if len(defaultsYaml) == 0 {
-		return nil, errors.New("defaults config is required for operator.imageKeys")
-	}
-	parsed, err := parseSuites(defaultsYaml)
-	if err != nil {
-		return nil, err
-	}
-	if len(parsed.Operator.ImageKeys) == 0 {
-		return nil, errors.New("operator.imageKeys is missing or empty in config")
-	}
-	return parsed.Operator.ImageKeys, nil
-}
-
-// GetOperatorOtherImageKeysFromConfig returns the other operator image key list (operator.otherImageKeys).
-func GetOperatorOtherImageKeysFromConfig(defaultsYaml []byte) ([]string, error) {
-	if len(defaultsYaml) == 0 {
-		return nil, errors.New("defaults config is required for operator.otherImageKeys")
-	}
-	parsed, err := parseSuites(defaultsYaml)
-	if err != nil {
-		return nil, err
-	}
-	if len(parsed.Operator.OtherImageKeys) == 0 {
-		return nil, errors.New("operator.otherImageKeys is missing or empty in config")
-	}
-	return parsed.Operator.OtherImageKeys, nil
 }
 
 // GetAnsibleImageKeysFromConfig returns ansible imageKeys and otherImageKeys (ansible.imageKeys, ansible.otherImageKeys).

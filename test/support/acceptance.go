@@ -62,32 +62,20 @@ func ParsePCOperatorImages(valuesFile string) (OperatorMap, OperatorMap) {
 			continue
 		}
 		repo, version := match[1], match[2]
+		var fullRef string
+		if strings.Contains(repo, "@") {
+			fullRef = fmt.Sprintf("%s:%s", repo, version)
+		} else {
+			fullRef = fmt.Sprintf("%s@%s", repo, version)
+		}
 		switch {
 		case strings.Contains(repo, "registry.redhat.io/rhtas/policy-controller-rhel9"):
-			operatorPcoImages["policy-controller-image"] = fmt.Sprintf("%s@%s", repo, version)
+			operatorPcoImages["policy-controller-image"] = fullRef
 		case strings.Contains(repo, "registry.redhat.io/openshift4/ose-cli"):
-			operatorOtherImages["ose-cli-image"] = fmt.Sprintf("%s@sha256:%s", repo, version)
+			operatorOtherImages["ose-cli-image"] = fullRef
 		}
 	}
 	return operatorPcoImages, operatorOtherImages
-}
-
-func ParseMVOperatorImages(valuesFile string) OperatorMap {
-	operatorMvoImages := make(OperatorMap)
-
-	const reFirstCapture = 1
-
-	helpRe := regexp.MustCompile(`(?s)-{1,2}validation-agent-image\b.*?\(default\s+"([^"]+)"\)`)
-	m := helpRe.FindStringSubmatch(valuesFile)
-	if len(m) > reFirstCapture {
-		img := strings.TrimSpace(m[reFirstCapture])
-		if img != "" {
-			operatorMvoImages["model-validation-agent-image"] = img
-			return operatorMvoImages
-		}
-	}
-
-	return operatorMvoImages
 }
 
 func MapAnsibleImages(ansibleDefinitionFileContent []byte) (AnsibleMap, error) {

@@ -2,6 +2,7 @@ package acceptance
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 
@@ -53,7 +54,7 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 		By("load ansible image key lists from config")
 		defaultsToUse := defaults
 		if content, err := support.GetTestConfigContent(); err == nil && len(content) > 0 {
-			defaultsToUse, err = support.MergeRhtasConfig(defaults, content)
+			defaultsToUse, err = support.MergeDefaultsConfig(defaults, content)
 			Expect(err).NotTo(HaveOccurred())
 		}
 		ansibleTasKeys, ansibleOtherKeys, err = support.GetAnsibleImageKeysFromConfig(defaultsToUse)
@@ -83,7 +84,7 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 		var errs []error
 		for _, ansibleImage := range ansibleTasImages {
 			if repositories.FindByImage(ansibleImage) == nil {
-				errs = append(errs, fmt.Errorf("%w: %s", ErrNotFoundInRegistry, ansibleImage))
+				errs = append(errs, fmt.Errorf("%w: %s", errors.New("not found in registry"), ansibleImage))
 			}
 		}
 		Expect(errs).To(BeEmpty())
