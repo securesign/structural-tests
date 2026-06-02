@@ -8,7 +8,7 @@ import (
 	"github.com/securesign/structural-tests/test/support"
 )
 
-var _ = Describe("Model Transparency Releases", Ordered, func() {
+var _ = Describe("Model Validation Operator Releases", Ordered, func() {
 
 	var (
 		snapshotData support.SnapshotData
