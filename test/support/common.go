@@ -23,11 +23,15 @@ func IsVersion(testedVersion string) bool {
 }
 
 func IsBeforeVersion(testedVersion string) bool {
+	return !IsVersionAtLeast(testedVersion)
+}
+
+func IsVersionAtLeast(testedVersion string) bool {
 	actualVersion := parseVersion()
 	if actualVersion == "" {
-		return false
+		return true
 	}
-	return semver.Compare("v"+actualVersion, "v"+testedVersion) < 0
+	return semver.Compare("v"+actualVersion, "v"+testedVersion) >= 0
 }
 
 func parseVersion() string {
