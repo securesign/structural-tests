@@ -10,7 +10,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-const product = "model_transparency"
+const product = "model_validation_operator"
 
 //go:embed defaults.yaml
 var defaults []byte
@@ -20,5 +20,5 @@ func TestAcceptance(t *testing.T) {
 
 	RegisterFailHandler(Fail)
 	log.SetLogger(GinkgoLogr)
-	RunSpecs(t, "Model Transparency Acceptance Tests Suite")
+	RunSpecs(t, "Model Validation Operator Acceptance Tests Suite")
 }
