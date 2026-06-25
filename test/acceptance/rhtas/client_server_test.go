@@ -252,7 +252,30 @@ var _ = Describe("Client server", Ordered, func() {
 						serverChecksums[cli+"/"+osName+"/"+arch] = append([]byte(nil), gzipServerSHA...)
 					})
 
-					if support.IsBeforeVersion("1.4.0") || !isMultiArchImageKey(snapshotKeyForCLI(cli)) {
+					if support.IsVersionAtLeast("1.4.0") && isMultiArchImageKey(snapshotKeyForCLI(cli)) {
+						It(fmt.Sprintf("compare checksum of %s-%s with multiarch source image", osName, arch), func() {
+							srcPath := sourcePathInImageMultiArch(cli, osName, arch)
+							Expect(srcPath).NotTo(BeEmpty(), "no source path for %s %s/%s", cli, osName, arch)
+
+							By(fmt.Sprintf("resolve linux/%s variant of source image", arch))
+							ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+							defer cancel()
+							platformImage, err := support.ResolveManifestListForPlatform(ctx, image, "linux/"+arch)
+							Expect(err).NotTo(HaveOccurred())
+
+							By("get gzip file from source image")
+							targetPath := tmpDir
+							Expect(support.FileFromImage(ctx, platformImage, srcPath, targetPath)).To(Succeed())
+
+							By("checksums of gzip file")
+							fileName := filepath.Base(srcPath)
+							gzipImageSHA, err := checksumFile(filepath.Join(targetPath, fileName))
+							Expect(err).NotTo(HaveOccurred())
+
+							By("compare checksum with client server file")
+							Expect(gzipImageSHA).To(Equal(gzipServerSHA))
+						})
+					} else {
 						It(fmt.Sprintf("compare checkum of %s-%s with source image", osName, arch), func() {
 							var (
 								targetPath = tmpDir
