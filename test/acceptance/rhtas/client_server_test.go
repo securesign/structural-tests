@@ -350,14 +350,21 @@ var _ = Describe("Client server", Ordered, func() {
 
 							// Step 3: Verify cli-stack → tas-tools chain (Linux targets only)
 							// Note: cli-stack gets Linux binaries from tas-tools, but darwin/windows from cross-compilation
-							if osName == osLinux && isMultiArchImageKey(snapshotKeyForCLI(cli)) {
+							// tuftool is a special case: it's only built for linux/amd64 and comes from tuf-tool-image
+							if osName == osLinux && (isMultiArchImageKey(snapshotKeyForCLI(cli)) || cli == cliTuftool) {
 								By("verify cli-stack binary matches tas-tools source")
 								tasToolsImage := snapshotData.Images[snapshotKeyForCLI(cli)]
 								Expect(tasToolsImage).NotTo(BeEmpty())
 
 								By(fmt.Sprintf("resolve linux/%s variant of tas-tools image", arch))
-								tasPlatformImage, err := support.ResolveManifestListForPlatform(ctx, tasToolsImage, "linux/"+arch)
-								Expect(err).NotTo(HaveOccurred())
+								var tasPlatformImage string
+								if cli == cliTuftool {
+									// tuftool's tuf-tool-image is a single-arch image, not a manifest list
+									tasPlatformImage = tasToolsImage
+								} else {
+									tasPlatformImage, err = support.ResolveManifestListForPlatform(ctx, tasToolsImage, "linux/"+arch)
+									Expect(err).NotTo(HaveOccurred())
+								}
 
 								tasToolsDir := filepath.Join(tmpDir, "verify-chain", "tas-tools", cli, osName, arch)
 								Expect(os.MkdirAll(tasToolsDir, 0755)).To(Succeed())
@@ -376,6 +383,8 @@ var _ = Describe("Client server", Ordered, func() {
 									binaryName = "createtree"
 								case cliUpdatetree:
 									binaryName = "updatetree"
+								case cliTuftool:
+									binaryName = "tuftool"
 								default:
 									binaryName = cli
 								}
@@ -385,6 +394,9 @@ var _ = Describe("Client server", Ordered, func() {
 								if cli == cliCreatetree || cli == cliUpdatetree {
 									// createtree and updatetree are at root directory
 									tasToolsImagePath = "/" + binaryName
+								} else if cli == cliTuftool {
+									// tuftool is in /usr/bin/
+									tasToolsImagePath = "/usr/bin/" + binaryName
 								} else {
 									// Others are in /usr/local/bin/
 									tasToolsImagePath = "/usr/local/bin/" + binaryName
