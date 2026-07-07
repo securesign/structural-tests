@@ -314,6 +314,9 @@ var _ = Describe("Client server", Ordered, func() {
 							clientBinarySHA, err := checksumFile(clientBinaryPath)
 							Expect(err).NotTo(HaveOccurred())
 
+							// Clean up client-server binary immediately after checksum
+							_ = os.Remove(clientBinaryPath)
+
 							// Step 2: Get binary from cli-stack (.tar.gz format)
 							stackKey := snapshotKeyForCLIStack(cli)
 							stackImage := snapshotData.Images[stackKey]
@@ -343,6 +346,10 @@ var _ = Describe("Client server", Ordered, func() {
 
 							stackBinarySHA, err := checksumFile(stackBinaryPath)
 							Expect(err).NotTo(HaveOccurred())
+
+							// Clean up cli-stack files immediately after checksum
+							_ = os.Remove(stackBinaryPath)
+							_ = os.Remove(tarGzPath)
 
 							By("compare client-server binary with cli-stack binary")
 							Expect(clientBinarySHA).To(Equal(stackBinarySHA),
@@ -414,6 +421,9 @@ var _ = Describe("Client server", Ordered, func() {
 								tasToolsBinarySHA, err := checksumFile(tasToolsBinaryPath)
 								Expect(err).NotTo(HaveOccurred())
 
+								// Clean up tas-tools binary immediately after checksum
+								_ = os.Remove(tasToolsBinaryPath)
+
 								By("compare cli-stack binary with tas-tools binary")
 								Expect(stackBinarySHA).To(Equal(tasToolsBinarySHA),
 									"cli-stack binary should match tas-tools binary")
@@ -436,8 +446,12 @@ var _ = Describe("Client server", Ordered, func() {
 
 							By("checksums of gzip file")
 							fileName := filepath.Base(srcPath)
-							gzipImageSHA, err := checksumFile(filepath.Join(targetPath, fileName))
+							filePath := filepath.Join(targetPath, fileName)
+							gzipImageSHA, err := checksumFile(filePath)
 							Expect(err).NotTo(HaveOccurred())
+
+							// Clean up extracted file immediately after checksum
+							_ = os.Remove(filePath)
 
 							By("compare checksum with client server file")
 							Expect(gzipImageSHA).To(Equal(gzipServerSHA))
@@ -484,8 +498,12 @@ var _ = Describe("Client server", Ordered, func() {
 							Expect(support.FileFromImage(ctx, image, filePath, targetPath)).To(Succeed())
 
 							By("checksums of gzip file")
-							gzipImageSHA, err := checksumFile(filepath.Join(targetPath, fileName))
+							extractedFile := filepath.Join(targetPath, fileName)
+							gzipImageSHA, err := checksumFile(extractedFile)
 							Expect(err).NotTo(HaveOccurred())
+
+							// Clean up extracted file immediately after checksum
+							_ = os.Remove(extractedFile)
 
 							By("compare checksum with client server file")
 							Expect(gzipImageSHA).To(Equal(gzipServerSHA))
