@@ -23,10 +23,10 @@ const (
 	cliServerFileMask = "%s-%s.gz"
 	cliServerPathMask = "/var/www/html/clients/%s/" + cliServerFileMask
 
-	cliImageBasePath        = "/usr/local/bin"
-	cliImageFileMask        = "%s_cli_%s_%s.gz"
-	cliStackImageBasePath   = "/binaries"
-	cliStackImageFileMask   = "%s_%s_%s.tar.gz"
+	cliImageBasePath      = "/usr/local/bin"
+	cliImageFileMask      = "%s_cli_%s_%s.gz"
+	cliStackImageBasePath = "/binaries"
+	cliStackImageFileMask = "%s_%s_%s.tar.gz"
 
 	osLinux   = "linux"
 	osDarwin  = "darwin"
@@ -65,7 +65,7 @@ func snapshotKeyForCLI(cli string) string {
 	}
 }
 
-// snapshotKeyForCLIStack returns the snapshot key for cli-stack images (1.4.2+)
+// snapshotKeyForCLIStack returns the snapshot key for cli-stack images (1.4.2+).
 func snapshotKeyForCLIStack(cli string) string {
 	switch cli {
 	case cliCreatetree, cliUpdatetree:

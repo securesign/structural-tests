@@ -167,7 +167,7 @@ func InspectImagesForLabelsParallel(images map[string]string, maxConcurrency int
 	// Launch goroutines for each image
 	for imageName, imageDefinition := range images {
 		go func(name, definition string) {
-			semaphore <- struct{}{} // acquire
+			semaphore <- struct{}{}        // acquire
 			defer func() { <-semaphore }() // release
 
 			labels, err := InspectImageForLabels(definition)
@@ -186,7 +186,7 @@ func InspectImagesForLabelsParallel(images map[string]string, maxConcurrency int
 	imageDataList := make([]ImageData, 0, len(images))
 	var errs []error
 
-	for i := 0; i < len(images); i++ {
+	for range len(images) {
 		res := <-results
 		if res.err != nil {
 			errs = append(errs, fmt.Errorf("image %s (%s): %w", res.imageName, res.data.Image, res.err))
