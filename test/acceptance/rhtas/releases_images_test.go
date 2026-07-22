@@ -53,20 +53,11 @@ var _ = Describe("Trusted Artifact Signer Releases", Ordered, func() {
 	})
 
 	It("snapshot.json images have correct labels", func() {
-		var imageDataList []support.ImageData
 		imageLabelsErrors := make(map[string][]string)
 
-		// Collect all images and their labels
-		for imageName, imageDefinition := range snapshotData.Images {
-			labels, err := support.InspectImageForLabels(imageDefinition)
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed to inspect labels for image %s (%s)", imageName, imageDefinition))
-
-			imageData := support.ImageData{
-				Image:  imageDefinition,
-				Labels: labels,
-			}
-			imageDataList = append(imageDataList, imageData)
-		}
+		// Collect all images and their labels in parallel (10 concurrent pulls)
+		imageDataList, err := support.InspectImagesForLabelsParallel(snapshotData.Images, 10)
+		Expect(err).NotTo(HaveOccurred(), "Failed to inspect images for labels")
 
 		// Check that all images have required labels with correct values
 		requiredLabels := support.RequiredImageLabels()

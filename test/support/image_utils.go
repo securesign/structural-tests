@@ -148,6 +148,64 @@ func GetImageLabel(imageDefinition, labelName string) (string, error) {
 	return "", fmt.Errorf("label [%s] not found in image %s", labelName, imageDefinition)
 }
 
+// InspectImagesForLabelsParallel inspects multiple images concurrently and returns their labels.
+// maxConcurrency controls how many images are inspected at once (0 = unlimited).
+func InspectImagesForLabelsParallel(images map[string]string, maxConcurrency int) ([]ImageData, error) {
+	if maxConcurrency <= 0 {
+		maxConcurrency = 10 // default to 10 concurrent pulls
+	}
+
+	type result struct {
+		imageName string
+		data      ImageData
+		err       error
+	}
+
+	results := make(chan result, len(images))
+	semaphore := make(chan struct{}, maxConcurrency)
+
+	// Launch goroutines for each image
+	for imageName, imageDefinition := range images {
+		go func(name, definition string) {
+			semaphore <- struct{}{}        // acquire
+			defer func() { <-semaphore }() // release
+
+			labels, err := InspectImageForLabels(definition)
+			results <- result{
+				imageName: name,
+				data: ImageData{
+					Image:  definition,
+					Labels: labels,
+				},
+				err: err,
+			}
+		}(imageName, imageDefinition)
+	}
+
+	// Collect results
+	imageDataList := make([]ImageData, 0, len(images))
+	var errs []error
+
+	for range len(images) {
+		res := <-results
+		if res.err != nil {
+			errs = append(errs, fmt.Errorf("image %s (%s): %w", res.imageName, res.data.Image, res.err))
+		} else {
+			imageDataList = append(imageDataList, res.data)
+		}
+	}
+
+	if len(errs) > 0 {
+		// Return first error, but log all
+		for _, err := range errs {
+			log.Printf("Image inspection error: %v", err)
+		}
+		return imageDataList, errs[0]
+	}
+
+	return imageDataList, nil
+}
+
 func FileFromImage(ctx context.Context, imageName, filePath, outputPath string) error {
 	err := PullImageIfNotPresentLocally(ctx, imageName)
 	if err != nil {

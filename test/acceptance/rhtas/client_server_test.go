@@ -23,8 +23,10 @@ const (
 	cliServerFileMask = "%s-%s.gz"
 	cliServerPathMask = "/var/www/html/clients/%s/" + cliServerFileMask
 
-	cliImageBasePath = "/usr/local/bin"
-	cliImageFileMask = "%s_cli_%s_%s.gz"
+	cliImageBasePath      = "/usr/local/bin"
+	cliImageFileMask      = "%s_cli_%s_%s.gz"
+	cliStackImageBasePath = "/binaries"
+	cliStackImageFileMask = "%s_%s_%s.tar.gz"
 
 	osLinux   = "linux"
 	osDarwin  = "darwin"
@@ -63,6 +65,26 @@ func snapshotKeyForCLI(cli string) string {
 	}
 }
 
+// snapshotKeyForCLIStack returns the snapshot key for cli-stack images (1.4.2+).
+func snapshotKeyForCLIStack(cli string) string {
+	switch cli {
+	case cliCreatetree, cliUpdatetree:
+		return "trillian-cli-stack-image"
+	case cliTuftool:
+		return "tuftool-cli-stack-image"
+	case cliRekorCli:
+		return "rekor-cli-stack-image"
+	case cliFetchTsaCerts:
+		return "fetch-tsa-certs-cli-stack-image"
+	case cliCosign:
+		return "cosign-cli-stack-image"
+	case cliGitsign:
+		return "gitsign-cli-stack-image"
+	default:
+		return ""
+	}
+}
+
 func isMultiArchImageKey(key string) bool {
 	for _, k := range multiArchCLISnapshotKeys {
 		if k == key {
@@ -70,6 +92,31 @@ func isMultiArchImageKey(key string) bool {
 		}
 	}
 	return false
+}
+
+// sourcePathInStackImage returns the path inside CLI stack images (1.4.0+).
+// CLI stack images use /binaries/ base path and .tar.gz format.
+func sourcePathInStackImage(cli, osName, arch string) string {
+	var binaryName string
+	switch cli {
+	case cliCosign:
+		binaryName = "cosign"
+	case cliGitsign:
+		binaryName = "gitsign_cli"
+	case cliRekorCli:
+		binaryName = "rekor_cli"
+	case cliFetchTsaCerts:
+		binaryName = "fetch_tsa_certs"
+	case cliCreatetree:
+		binaryName = "createtree"
+	case cliUpdatetree:
+		binaryName = "updatetree"
+	case cliTuftool:
+		binaryName = "tuftool"
+	default:
+		return ""
+	}
+	return fmt.Sprintf("%s/%s_%s_%s.tar.gz", cliStackImageBasePath, binaryName, osName, arch)
 }
 
 func sourcePathCosign(osName, arch string) string {
@@ -144,8 +191,9 @@ func sourcePathUpdatetree(osName, arch string) string {
 	return ""
 }
 
-// sourcePathInImageMultiArch returns the path inside the CLI source image for the given (os, arch).
+// sourcePathInImageMultiArch returns the path inside the tas-tools CLI source image for the given (os, arch).
 // Only for multiarch CLIs (cosign, gitsign, rekor-cli, fetch-tsa-certs, createtree, updatetree).
+// tas-tools images use /usr/local/bin/ base path and .gz format for all versions.
 func sourcePathInImageMultiArch(cli, osName, arch string) string {
 	base := cliImageBasePath + "/"
 	var suffix string
@@ -252,7 +300,136 @@ var _ = Describe("Client server", Ordered, func() {
 						serverChecksums[cli+"/"+osName+"/"+arch] = append([]byte(nil), gzipServerSHA...)
 					})
 
-					if support.IsVersionAtLeast("1.4.0") && isMultiArchImageKey(snapshotKeyForCLI(cli)) {
+					if support.IsVersionAtLeast("1.4.2") && snapshotKeyForCLIStack(cli) != "" {
+						// For 1.4.2+: verify the full chain: tas-tools → cli-stack → client-server
+						It(fmt.Sprintf("verify %s-%s binary matches cli-stack and tas-tools", osName, arch), func() {
+							// Step 1: Get binary from client-server (.gz format)
+							clientServerDir := filepath.Join(tmpDir, "verify-chain", "client-server", cli, osName, arch)
+							Expect(os.MkdirAll(clientServerDir, 0755)).To(Succeed())
+
+							gzPath := filepath.Join(tmpDir, osName, fmt.Sprintf(cliServerFileMask, cli, arch))
+							clientBinaryPath := filepath.Join(clientServerDir, "binary-from-client-server")
+							Expect(support.DecompressGzipFile(gzPath, clientBinaryPath)).To(Succeed())
+
+							clientBinarySHA, err := checksumFile(clientBinaryPath)
+							Expect(err).NotTo(HaveOccurred())
+
+							// Clean up client-server binary immediately after checksum
+							_ = os.Remove(clientBinaryPath)
+
+							// Step 2: Get binary from cli-stack (.tar.gz format)
+							stackKey := snapshotKeyForCLIStack(cli)
+							stackImage := snapshotData.Images[stackKey]
+							Expect(stackImage).NotTo(BeEmpty(), "cli-stack image not found: %s", stackKey)
+
+							srcPath := sourcePathInStackImage(cli, osName, arch)
+							Expect(srcPath).NotTo(BeEmpty(), "no source path for %s %s/%s", cli, osName, arch)
+
+							ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+							defer cancel()
+
+							By(fmt.Sprintf("resolve linux/%s variant of cli-stack image", arch))
+							platformImage, err := support.ResolveManifestListForPlatform(ctx, stackImage, "linux/"+arch)
+							if err != nil {
+								platformImage = stackImage
+							}
+
+							By("get tar.gz file from cli-stack image")
+							stackDir := filepath.Join(tmpDir, "verify-chain", "cli-stack", cli, osName, arch)
+							Expect(os.MkdirAll(stackDir, 0755)).To(Succeed())
+							Expect(support.FileFromImage(ctx, platformImage, srcPath, stackDir)).To(Succeed())
+
+							By("extract binary from tar.gz")
+							tarGzPath := filepath.Join(stackDir, filepath.Base(srcPath))
+							stackBinaryPath, err := support.ExtractFirstFileFromTarGz(tarGzPath, stackDir)
+							Expect(err).NotTo(HaveOccurred())
+
+							stackBinarySHA, err := checksumFile(stackBinaryPath)
+							Expect(err).NotTo(HaveOccurred())
+
+							// Clean up cli-stack files immediately after checksum
+							_ = os.Remove(stackBinaryPath)
+							_ = os.Remove(tarGzPath)
+
+							By("compare client-server binary with cli-stack binary")
+							Expect(clientBinarySHA).To(Equal(stackBinarySHA),
+								"client-server binary should match cli-stack binary")
+
+							// Step 3: Verify cli-stack → tas-tools chain (Linux targets only)
+							// Note: cli-stack gets Linux binaries from tas-tools, but darwin/windows from cross-compilation
+							// tuftool is a special case: it's only built for linux/amd64 and comes from tuf-tool-image
+							if osName == osLinux && (isMultiArchImageKey(snapshotKeyForCLI(cli)) || cli == cliTuftool) {
+								By("verify cli-stack binary matches tas-tools source")
+								tasToolsImage := snapshotData.Images[snapshotKeyForCLI(cli)]
+								Expect(tasToolsImage).NotTo(BeEmpty())
+
+								By(fmt.Sprintf("resolve linux/%s variant of tas-tools image", arch))
+								var tasPlatformImage string
+								if cli == cliTuftool {
+									// tuftool's tuf-tool-image is a single-arch image, not a manifest list
+									tasPlatformImage = tasToolsImage
+								} else {
+									tasPlatformImage, err = support.ResolveManifestListForPlatform(ctx, tasToolsImage, "linux/"+arch)
+									Expect(err).NotTo(HaveOccurred())
+								}
+
+								tasToolsDir := filepath.Join(tmpDir, "verify-chain", "tas-tools", cli, osName, arch)
+								Expect(os.MkdirAll(tasToolsDir, 0755)).To(Succeed())
+
+								// tas-tools has binary at /usr/local/bin/{binary} (not tarred)
+								// Binary names in tas-tools images differ from CLI names
+								var binaryName string
+								switch cli {
+								case cliGitsign:
+									binaryName = "gitsign_cli_linux"
+								case cliRekorCli:
+									binaryName = "rekor_cli_linux"
+								case cliFetchTsaCerts:
+									binaryName = "fetch_tsa_certs"
+								case cliCreatetree:
+									binaryName = "createtree"
+								case cliUpdatetree:
+									binaryName = "updatetree"
+								case cliTuftool:
+									binaryName = "tuftool"
+								default:
+									binaryName = cli
+								}
+
+								// Binary path in tas-tools images
+								var tasToolsImagePath string
+								if cli == cliCreatetree || cli == cliUpdatetree {
+									// createtree and updatetree are at root directory
+									tasToolsImagePath = "/" + binaryName
+								} else if cli == cliTuftool {
+									// tuftool is in /usr/bin/
+									tasToolsImagePath = "/usr/bin/" + binaryName
+								} else {
+									// Others are in /usr/local/bin/
+									tasToolsImagePath = "/usr/local/bin/" + binaryName
+								}
+
+								tasToolsBinaryPath := filepath.Join(tasToolsDir, "binary-from-tas-tools")
+								Expect(support.FileFromImage(ctx, tasPlatformImage, tasToolsImagePath, tasToolsDir)).To(Succeed())
+
+								// The file is downloaded with the basename, rename it
+								downloadedPath := filepath.Join(tasToolsDir, filepath.Base(tasToolsImagePath))
+								if downloadedPath != tasToolsBinaryPath {
+									Expect(os.Rename(downloadedPath, tasToolsBinaryPath)).To(Succeed())
+								}
+
+								tasToolsBinarySHA, err := checksumFile(tasToolsBinaryPath)
+								Expect(err).NotTo(HaveOccurred())
+
+								// Clean up tas-tools binary immediately after checksum
+								_ = os.Remove(tasToolsBinaryPath)
+
+								By("compare cli-stack binary with tas-tools binary")
+								Expect(stackBinarySHA).To(Equal(tasToolsBinarySHA),
+									"cli-stack binary should match tas-tools binary")
+							}
+						})
+					} else if support.IsVersionAtLeast("1.4.0") && isMultiArchImageKey(snapshotKeyForCLI(cli)) {
 						It(fmt.Sprintf("compare checksum of %s-%s with multiarch source image", osName, arch), func() {
 							srcPath := sourcePathInImageMultiArch(cli, osName, arch)
 							Expect(srcPath).NotTo(BeEmpty(), "no source path for %s %s/%s", cli, osName, arch)
@@ -269,8 +446,12 @@ var _ = Describe("Client server", Ordered, func() {
 
 							By("checksums of gzip file")
 							fileName := filepath.Base(srcPath)
-							gzipImageSHA, err := checksumFile(filepath.Join(targetPath, fileName))
+							filePath := filepath.Join(targetPath, fileName)
+							gzipImageSHA, err := checksumFile(filePath)
 							Expect(err).NotTo(HaveOccurred())
+
+							// Clean up extracted file immediately after checksum
+							_ = os.Remove(filePath)
 
 							By("compare checksum with client server file")
 							Expect(gzipImageSHA).To(Equal(gzipServerSHA))
@@ -317,8 +498,12 @@ var _ = Describe("Client server", Ordered, func() {
 							Expect(support.FileFromImage(ctx, image, filePath, targetPath)).To(Succeed())
 
 							By("checksums of gzip file")
-							gzipImageSHA, err := checksumFile(filepath.Join(targetPath, fileName))
+							extractedFile := filepath.Join(targetPath, fileName)
+							gzipImageSHA, err := checksumFile(extractedFile)
 							Expect(err).NotTo(HaveOccurred())
+
+							// Clean up extracted file immediately after checksum
+							_ = os.Remove(extractedFile)
 
 							By("compare checksum with client server file")
 							Expect(gzipImageSHA).To(Equal(gzipServerSHA))
@@ -342,6 +527,9 @@ var _ = Describe("Client server", Ordered, func() {
 	It("compare all multiarch binaries (all CLIs) with source images", func() {
 		if support.IsBeforeVersion("1.4.0") {
 			Skip("multiarch comparison only for version 1.4.0 and later")
+		}
+		if support.IsVersionAtLeast("1.4.2") {
+			Skip("multiarch comparison skipped for 1.4.2+, client-server uses cli-stack images")
 		}
 		matrix := support.GetOSArchMatrix()
 		var errMsgs []string
