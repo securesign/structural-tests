@@ -1,6 +1,6 @@
 module github.com/securesign/structural-tests
 
-go 1.23.0
+go 1.26.3
 
 require (
 	github.com/docker/docker v27.4.1+incompatible
