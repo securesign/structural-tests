@@ -169,6 +169,26 @@
       "repository": "rhtas/model-validation-agent-rhel9",
       "_id": "69c539d43eaaa3169568a7d0",
       "published": true
+    },
+    {
+      "repository": "rhtas/tufcli-rhel9",
+      "_id": "6a68ff01e48f019588c1388a",
+      "published": true
+    },
+    {
+      "repository": "rhtas/tufcli-init-rhel9",
+      "_id": "6a68ff009d6faa17f5ae1f5e",
+      "published": true
+    },
+    {
+      "repository": "rhtas/model-transparency-cli-rhel9",
+      "_id": "699d8f59fefbe6caed37d7a2",
+      "published": true
+    },
+    {
+      "repository": "rhtas/rh-sigstore-a2a-rhel9",
+      "_id": "6a5110c042915460cccbc0dd",
+      "published": true
     }
   ]
 }
