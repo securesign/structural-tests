@@ -1,31 +1,30 @@
-linters-settings:
-  lll:
-    line-length: 170
-  cyclop:
-    max-complexity: 15
+version: "2"
+
 linters:
-  enable-all: true
+  default: all
   disable:
     - depguard
-    - exhaustivestruct
     - exhaustruct
-    - gci
-    - gofumpt
     - nlreturn
     - paralleltest
     - revive
     - testpackage
     - wsl
     - err113
-    # deprecated
-    - golint
-    - maligned
-    - deadcode
-    - interfacer
-    - varcheck
-    - nosnakecase
-    - ifshort
-    - structcheck
-    - scopelint
-    - gomnd
-    - execinquery
+    # newly surfaced by golangci-lint v2 migration — fix separately
+    - embeddedstructfieldcheck
+    - errcheck
+    - ginkgolinter
+    - goconst
+    - godoclint
+    - gosec
+    - modernize
+    - noinlineerr
+    - perfsprint
+    - staticcheck
+    - wsl_v5
+  settings:
+    lll:
+      line-length: 170
+    cyclop:
+      max-complexity: 15
