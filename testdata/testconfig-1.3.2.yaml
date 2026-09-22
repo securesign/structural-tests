@@ -66,3 +66,6 @@ rhtas:
           - stable-v1.3
           - stable-v1.4
         expectedDeprecations: []
+
+  cliStack:
+    images: []

@@ -1,4 +1,4 @@
-# Suite-based config: operator, ansible, fbc. No package top-level (file is in test/acceptance/rhtas/).
+# Suite-based config: operator, ansible, fbc, cliStack. No product wrapper.
 
 operator:
   operatorImageKey: "rhtas-operator-image"
@@ -72,3 +72,76 @@ fbc:
         - stable-v1.3
         - stable-v1.4
       expectedDeprecations: []
+
+cliStack:
+  images:
+    - imageKey: cosign-cli-stack-image
+      binaries:
+        - {path: /binaries/cosign_linux_amd64.tar.gz, os: linux, arch: amd64}
+        - {path: /binaries/cosign_linux_arm64.tar.gz, os: linux, arch: arm64}
+        - {path: /binaries/cosign_linux_ppc64le.tar.gz, os: linux, arch: ppc64le}
+        - {path: /binaries/cosign_linux_s390x.tar.gz, os: linux, arch: s390x}
+        - {path: /binaries/cosign_darwin_amd64.tar.gz, os: darwin, arch: amd64}
+        - {path: /binaries/cosign_darwin_arm64.tar.gz, os: darwin, arch: arm64}
+        - {path: /binaries/cosign_windows_amd64.tar.gz, os: windows, arch: amd64}
+    - imageKey: gitsign-cli-stack-image
+      binaries:
+        - {path: /binaries/gitsign_cli_linux_amd64.tar.gz, os: linux, arch: amd64}
+        - {path: /binaries/gitsign_cli_linux_arm64.tar.gz, os: linux, arch: arm64}
+        - {path: /binaries/gitsign_cli_linux_ppc64le.tar.gz, os: linux, arch: ppc64le}
+        - {path: /binaries/gitsign_cli_linux_s390x.tar.gz, os: linux, arch: s390x}
+        - {path: /binaries/gitsign_cli_darwin_amd64.tar.gz, os: darwin, arch: amd64}
+        - {path: /binaries/gitsign_cli_darwin_arm64.tar.gz, os: darwin, arch: arm64}
+        - {path: /binaries/gitsign_cli_windows_amd64.tar.gz, os: windows, arch: amd64}
+    - imageKey: rekor-cli-stack-image
+      binaries:
+        - {path: /binaries/rekor_cli_linux_amd64.tar.gz, os: linux, arch: amd64}
+        - {path: /binaries/rekor_cli_linux_arm64.tar.gz, os: linux, arch: arm64}
+        - {path: /binaries/rekor_cli_linux_ppc64le.tar.gz, os: linux, arch: ppc64le}
+        - {path: /binaries/rekor_cli_linux_s390x.tar.gz, os: linux, arch: s390x}
+        - {path: /binaries/rekor_cli_darwin_amd64.tar.gz, os: darwin, arch: amd64}
+        - {path: /binaries/rekor_cli_darwin_arm64.tar.gz, os: darwin, arch: arm64}
+        - {path: /binaries/rekor_cli_windows_amd64.tar.gz, os: windows, arch: amd64}
+    - imageKey: fetch-tsa-certs-cli-stack-image
+      binaries:
+        - {path: /binaries/fetch_tsa_certs_linux_amd64.tar.gz, os: linux, arch: amd64}
+        - {path: /binaries/fetch_tsa_certs_linux_arm64.tar.gz, os: linux, arch: arm64}
+        - {path: /binaries/fetch_tsa_certs_linux_ppc64le.tar.gz, os: linux, arch: ppc64le}
+        - {path: /binaries/fetch_tsa_certs_linux_s390x.tar.gz, os: linux, arch: s390x}
+        - {path: /binaries/fetch_tsa_certs_darwin_amd64.tar.gz, os: darwin, arch: amd64}
+        - {path: /binaries/fetch_tsa_certs_darwin_arm64.tar.gz, os: darwin, arch: arm64}
+        - {path: /binaries/fetch_tsa_certs_windows_amd64.tar.gz, os: windows, arch: amd64}
+    - imageKey: trillian-cli-stack-image
+      binaries:
+        - {path: /binaries/createtree_linux_amd64.tar.gz, os: linux, arch: amd64}
+        - {path: /binaries/createtree_linux_arm64.tar.gz, os: linux, arch: arm64}
+        - {path: /binaries/createtree_linux_ppc64le.tar.gz, os: linux, arch: ppc64le}
+        - {path: /binaries/createtree_linux_s390x.tar.gz, os: linux, arch: s390x}
+        - {path: /binaries/createtree_darwin_amd64.tar.gz, os: darwin, arch: amd64}
+        - {path: /binaries/createtree_darwin_arm64.tar.gz, os: darwin, arch: arm64}
+        - {path: /binaries/createtree_windows_amd64.tar.gz, os: windows, arch: amd64}
+        - {path: /binaries/updatetree_linux_amd64.tar.gz, os: linux, arch: amd64}
+        - {path: /binaries/updatetree_linux_arm64.tar.gz, os: linux, arch: arm64}
+        - {path: /binaries/updatetree_linux_ppc64le.tar.gz, os: linux, arch: ppc64le}
+        - {path: /binaries/updatetree_linux_s390x.tar.gz, os: linux, arch: s390x}
+        - {path: /binaries/updatetree_darwin_amd64.tar.gz, os: darwin, arch: amd64}
+        - {path: /binaries/updatetree_darwin_arm64.tar.gz, os: darwin, arch: arm64}
+        - {path: /binaries/updatetree_windows_amd64.tar.gz, os: windows, arch: amd64}
+    - imageKey: tufcli-cli-stack-image
+      binaries:
+        - {path: /binaries/tufcli_linux_amd64.tar.gz, os: linux, arch: amd64}
+        - {path: /binaries/tufcli_linux_arm64.tar.gz, os: linux, arch: arm64}
+        - {path: /binaries/tufcli_linux_ppc64le.tar.gz, os: linux, arch: ppc64le}
+        - {path: /binaries/tufcli_linux_s390x.tar.gz, os: linux, arch: s390x}
+        - {path: /binaries/tufcli_darwin_amd64.tar.gz, os: darwin, arch: amd64}
+        - {path: /binaries/tufcli_darwin_arm64.tar.gz, os: darwin, arch: arm64}
+        - {path: /binaries/tufcli_windows_amd64.tar.gz, os: windows, arch: amd64}
+    - imageKey: conforma-cli-stack-image
+      binaries:
+        - {path: /binaries/ec_linux_amd64.tar.gz, os: linux, arch: amd64}
+        - {path: /binaries/ec_linux_arm64.tar.gz, os: linux, arch: arm64}
+        - {path: /binaries/ec_linux_ppc64le.tar.gz, os: linux, arch: ppc64le}
+        - {path: /binaries/ec_linux_s390x.tar.gz, os: linux, arch: s390x}
+        - {path: /binaries/ec_darwin_amd64.tar.gz, os: darwin, arch: amd64}
+        - {path: /binaries/ec_darwin_arm64.tar.gz, os: darwin, arch: arm64}
+        - {path: /binaries/ec_windows_amd64.tar.gz, os: windows, arch: amd64}

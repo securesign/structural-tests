@@ -21,3 +21,6 @@ fbc:
     - stable
     - stable-v1.0
     - tech-preview
+
+cliStack:
+  images: []

@@ -1,4 +1,4 @@
-package acceptance
+package cli
 
 import (
 	"debug/elf"
@@ -6,6 +6,11 @@ import (
 	"debug/pe"
 	"fmt"
 	"os"
+)
+
+const (
+	archAMD64 = "amd64"
+	archARM64 = "arm64"
 )
 
 func verifyBinaryExecutable(filePath, osName, arch string) error {
@@ -48,9 +53,9 @@ func verifyBinaryExecutable(filePath, osName, arch string) error {
 
 func elfArchType(arch string) elf.Machine {
 	switch arch {
-	case "amd64": //nolint:goconst
+	case archAMD64:
 		return elf.EM_X86_64
-	case "arm64": //nolint:goconst
+	case archARM64:
 		return elf.EM_AARCH64
 	case "ppc64le":
 		return elf.EM_PPC64
@@ -63,9 +68,9 @@ func elfArchType(arch string) elf.Machine {
 
 func peMachineType(arch string) uint16 {
 	switch arch {
-	case "amd64":
+	case archAMD64:
 		return pe.IMAGE_FILE_MACHINE_AMD64
-	case "arm64":
+	case archARM64:
 		return pe.IMAGE_FILE_MACHINE_ARM64
 	default:
 		return pe.IMAGE_FILE_MACHINE_UNKNOWN
@@ -74,9 +79,9 @@ func peMachineType(arch string) uint16 {
 
 func machoCPUType(arch string) macho.Cpu {
 	switch arch {
-	case "amd64":
+	case archAMD64:
 		return macho.CpuAmd64
-	case "arm64":
+	case archARM64:
 		return macho.CpuArm64
 	default:
 		return 0

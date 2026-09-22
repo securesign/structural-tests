@@ -60,6 +60,59 @@ To run model validation operator tests use:
 go test -v ./test/acceptance/model_transparency/... --ginkgo.v
 ```
 
+## CLI stack configuration
+
+CLI stack checks run inside the `rhtas`, `model_transparency`, and
+`policy_controller` acceptance suites. Each product owns its expected inventory:
+
+```yaml
+rhtas:
+  cliStack:
+    images:
+      - imageKey: tufcli-cli-stack-image
+        binaries:
+          - {path: /binaries/tufcli_linux_amd64.tar.gz, os: linux, arch: amd64}
+```
+
+Set `TEST_CONFIG` to a local or remote YAML file, as for operator and FBC tests.
+The example above replaces the complete default inventory with one archive;
+list every image and archive the release must publish. Missing configured images
+or archives fail the tests. Invalid CLI configuration also fails. Archive paths
+must be under `/binaries/`; both `.tar.gz` and `.exe.gz` packages are read as tar
+archives. Executable format and architecture are checked without running binaries.
+
+Omitting `cliStack` or its `images` field inherits the product defaults.
+`cliStack: {images: []}` explicitly disables CLI stack checks. An unwrapped
+`cliStack` section applies only to RHTAS. Product sections remain independent.
+
+RHTAS defaults describe 1.5.x (including tufcli). The 1.4.x override retains tuftool
+and model-transparency archives. Older example configurations disable CLI stack
+checks. Model Transparency and Policy Controller default to empty inventories;
+their release YAML can supply their own lists.
+
+```sh
+VERSION=1.5.0 SNAPSHOT=/path/to/1.5.0/snapshot.json \
+  go test -v ./test/acceptance/rhtas --ginkgo.focus='CLI Stack Images'
+
+VERSION=1.4.3 SNAPSHOT=/path/to/1.4.3/snapshot.json \
+  TEST_CONFIG=testdata/testconfig-1.4.yaml \
+  go test -v ./test/acceptance/rhtas --ginkgo.focus='CLI Stack Images'
+```
+
+Relative `TEST_CONFIG` paths resolve from this repository's root. The 1.4.x
+example overrides only CLI checks; combine its `cliStack`
+section with the release's operator, Ansible, and FBC overrides for a full run.
+Client-server checks retain the legacy tuftool comparisons and skip RHTAS 1.5+.
+Set `VERSION` when the snapshot path does not contain a release version; existing
+version resolution treats an unspecified version as the latest release.
+
+Release CI migration (in `securesign/releases`, separately): remove the standalone
+`cli_stack` package selection/`CLI_STACK` flag, run the appropriate product suite,
+and supply that release's inventory in `testingResources/structural-tests.yaml`.
+Use explicit empty inventories for releases without CLI stacks. Existing FBC suite
+registration reads the snapshot even when CLI checks are focused, so these examples
+use complete product snapshots.
+
 ## Repository List
 The [repositories.json](testdata/repositories.json) file is used to check of all images are published correctly. To pull the list of repositories from Pyxis API:
 
