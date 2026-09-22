@@ -87,8 +87,9 @@ Omitting `cliStack` or its `images` field inherits the product defaults.
 
 RHTAS defaults describe 1.5.x (including tufcli). The 1.4.x override retains tuftool
 and model-transparency archives. Older example configurations disable CLI stack
-checks. Model Transparency and Policy Controller default to empty inventories;
-their release YAML can supply their own lists.
+checks. Model Transparency defaults include its CLI stack with standard, PKCS11,
+and OTel variants. Policy Controller defaults to an empty inventory. Each product’s
+release YAML can replace its inventory or explicitly disable it.
 
 ```sh
 VERSION=1.5.0 SNAPSHOT=/path/to/1.5.0/snapshot.json \
