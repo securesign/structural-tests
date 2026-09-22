@@ -59,7 +59,7 @@ func MergeDefaultsConfig(baseDefaults, fileContent []byte) ([]byte, error) {
 		return nil, fmt.Errorf("config file: %w", err)
 	}
 	for key, overlayVal := range overlay {
-		if key == "fbc" || key == "operator" {
+		if key == "fbc" || key == "operator" || key == "ansible" {
 			baseSection, ok1 := toMapAny(base[key])
 			overlaySection, ok2 := toMapAny(overlayVal)
 			if ok1 && ok2 {
@@ -81,6 +81,7 @@ func MergeDefaultsConfig(baseDefaults, fileContent []byte) ([]byte, error) {
 
 type rhtasSuites struct {
 	Ansible struct {
+		Enabled        bool     `yaml:"enabled"`
 		ImageKeys      []string `yaml:"imageKeys"`
 		OtherImageKeys []string `yaml:"otherImageKeys"`
 	} `yaml:"ansible"`
@@ -88,6 +89,7 @@ type rhtasSuites struct {
 
 func parseSuites(defaultsYaml []byte) (rhtasSuites, error) {
 	var parsed rhtasSuites
+	parsed.Ansible.Enabled = true
 	suites, err := SuiteLevelMap(defaultsYaml)
 	if err != nil {
 		return parsed, err
@@ -100,6 +102,12 @@ func parseSuites(defaultsYaml []byte) (rhtasSuites, error) {
 		return parsed, fmt.Errorf("parse rhtas suites: %w", err)
 	}
 	return parsed, nil
+}
+
+// GetAnsibleEnabledFromConfig preserves legacy enabled behavior when the flag is omitted.
+func GetAnsibleEnabledFromConfig(defaultsYaml []byte) (bool, error) {
+	parsed, err := parseSuites(defaultsYaml)
+	return parsed.Ansible.Enabled, err
 }
 
 // GetAnsibleImageKeysFromConfig returns ansible imageKeys and otherImageKeys (ansible.imageKeys, ansible.otherImageKeys).

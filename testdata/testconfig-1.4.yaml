@@ -1,5 +1,7 @@
-# CLI stack overrides for RHTAS 1.4.x; other suites retain their defaults.
+# CLI stack and Ansible overrides for RHTAS 1.4.x; other suites retain their defaults.
 rhtas:
+  ansible:
+    enabled: true
   cliStack:
     images:
       - imageKey: cosign-cli-stack-image
