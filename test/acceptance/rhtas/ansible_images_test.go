@@ -28,8 +28,18 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 	)
 
 	BeforeAll(func() {
+		By("load ansible configuration")
+		content, err := support.GetTestConfigContent()
+		Expect(err).NotTo(HaveOccurred())
+		defaultsToUse, err := support.MergeDefaultsConfig(defaults, content)
+		Expect(err).NotTo(HaveOccurred())
+		enabled, err := support.GetAnsibleEnabledFromConfig(defaultsToUse)
+		Expect(err).NotTo(HaveOccurred())
+		if !enabled {
+			Skip("Ansible checks disabled by rhtas.ansible.enabled")
+		}
+
 		By("get and parse snapshot file")
-		var err error
 		snapshotData, err = support.ParseSnapshotData()
 		support.LogMap(fmt.Sprintf("Snapshot images (%d):", len(snapshotData.Images)), snapshotData.Images)
 		Expect(err).NotTo(HaveOccurred())
@@ -52,11 +62,6 @@ var _ = Describe("Trusted Artifact Signer Ansible", Ordered, func() {
 		}
 
 		By("load ansible image key lists from config")
-		defaultsToUse := defaults
-		if content, err := support.GetTestConfigContent(); err == nil && len(content) > 0 {
-			defaultsToUse, err = support.MergeDefaultsConfig(defaults, content)
-			Expect(err).NotTo(HaveOccurred())
-		}
 		ansibleTasKeys, ansibleOtherKeys, err = support.GetAnsibleImageKeysFromConfig(defaultsToUse)
 		Expect(err).NotTo(HaveOccurred())
 	})

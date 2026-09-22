@@ -23,6 +23,7 @@ rhtas:
       - http-server-image
 
   ansible:
+    enabled: true
     imageKeys:
       - tas_single_node_fulcio_server_image
       - tas_single_node_trillian_log_server_image

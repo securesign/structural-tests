@@ -101,8 +101,8 @@ VERSION=1.4.3 SNAPSHOT=/path/to/1.4.3/snapshot.json \
 ```
 
 Relative `TEST_CONFIG` paths resolve from this repository's root. The 1.4.x
-example overrides only CLI checks; combine its `cliStack`
-section with the release's operator, Ansible, and FBC overrides for a full run.
+example configures CLI checks and enables Ansible; combine these sections
+with the release's operator, Ansible image lists, and FBC overrides for a full run.
 Client-server checks retain the legacy tuftool comparisons and skip RHTAS 1.5+.
 Set `VERSION` when the snapshot path does not contain a release version; existing
 version resolution treats an unspecified version as the latest release.
@@ -113,6 +113,24 @@ and supply that release's inventory in `testingResources/structural-tests.yaml`.
 Use explicit empty inventories for releases without CLI stacks. Existing FBC suite
 registration reads the snapshot even when CLI checks are focused, so these examples
 use complete product snapshots.
+
+## Optional Ansible checks
+
+RHTAS 1.5 defaults disable Ansible because the release no longer publishes it.
+Control the suite in each release's `TEST_CONFIG`, independently of its version:
+
+```yaml
+rhtas:
+  ansible:
+    enabled: false
+```
+
+Set `enabled: true` for older releases that ship Ansible, or a future release
+that restores it. The older-stream example configurations enable it explicitly.
+Partial Ansible overrides preserve the default flag and image lists; setting
+only `enabled` does not discard those lists. When enabled, the collection image
+is still required for releases from 1.2 onward. Disabled checks skip before
+loading the collection, snapshot, or repository metadata.
 
 ## Repository List
 The [repositories.json](testdata/repositories.json) file is used to check of all images are published correctly. To pull the list of repositories from Pyxis API:
