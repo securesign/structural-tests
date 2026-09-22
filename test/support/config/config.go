@@ -38,18 +38,24 @@ func resolveTestConfig() (TestConfig, error) {
 
 	for key, value := range raw {
 		switch key {
-		case "operator", "ansible", "fbc":
+		case "operator", "ansible", "fbc", "cliStack":
 			continue
 		}
 		if productMap, ok := toMap(value); ok {
 			cfg[key] = productMap
+		} else {
+			return nil, fmt.Errorf("product %q configuration must be a mapping", key)
 		}
 	}
 	if len(cfg) > 0 {
 		return cfg, nil
 	}
 
-	// Suite-level file (operator, ansible, fbc at top level) without package wrapper
+	// Suite-level file without package wrapper.
+	if _, hasCLIStack := raw["cliStack"]; hasCLIStack {
+		cfg["rhtas"] = raw
+		return cfg, nil
+	}
 	if _, hasOperator := raw["operator"]; hasOperator {
 		cfg["rhtas"] = raw
 		return cfg, nil

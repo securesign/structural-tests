@@ -223,6 +223,11 @@ func sourcePathInImageMultiArch(cli, osName, arch string) string {
 var multiArchCLIs = []string{cliCosign, cliGitsign, cliRekorCli, cliFetchTsaCerts, cliCreatetree, cliUpdatetree} //nolint:gochecknoglobals // test CLI list
 
 var _ = Describe("Client server", Ordered, func() {
+	BeforeAll(func() {
+		if support.IsVersionAtLeast("1.5.0") {
+			Skip("client-server was removed in RHTAS 1.5")
+		}
+	})
 
 	var clientServerImage string
 	var snapshotData support.SnapshotData
