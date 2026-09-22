@@ -80,30 +80,33 @@ func TestGetCLIStackConfig(t *testing.T) {
 }
 
 func TestReleaseInventories(t *testing.T) {
-	defaults, err := os.ReadFile("../../acceptance/rhtas/defaults.yaml")
-	if err != nil {
-		t.Fatal(err)
-	}
 	for _, testCase := range []struct {
-		name   string
-		config string
-		keys   []string
-		count  int
+		product string
+		name    string
+		config  string
+		keys    []string
+		count   int
 	}{
-		{name: "1.5", keys: []string{
+		{product: "rhtas", name: "1.5", keys: []string{
 			"cosign-cli-stack-image", "gitsign-cli-stack-image", "rekor-cli-stack-image", "fetch-tsa-certs-cli-stack-image",
 			"trillian-cli-stack-image", "tufcli-cli-stack-image", "conforma-cli-stack-image",
 		}, count: 56},
-		{name: "1.4", config: "testdata/testconfig-1.4.yaml", keys: []string{
+		{product: "rhtas", name: "1.4", config: "testdata/testconfig-1.4.yaml", keys: []string{
 			"cosign-cli-stack-image", "gitsign-cli-stack-image", "rekor-cli-stack-image", "fetch-tsa-certs-cli-stack-image",
 			"trillian-cli-stack-image", "tuftool-cli-stack-image", "conforma-cli-stack-image", "model-transparency-cli-stack-image",
 		}, count: 65},
-		{name: "1.3", config: "testdata/testconfig-1.3.2.yaml"},
-		{name: "1.2", config: "testdata/testconfig-1.2.2.yaml"},
+		{product: "rhtas", name: "1.3", config: "testdata/testconfig-1.3.2.yaml"},
+		{product: "rhtas", name: "1.2", config: "testdata/testconfig-1.2.2.yaml"},
+		{product: "model_transparency", name: "defaults", keys: []string{"model-transparency-cli-stack-image"}, count: 15},
+		{product: "policy_controller", name: "defaults"},
 	} {
-		t.Run(testCase.name, func(t *testing.T) {
+		t.Run(testCase.product+"/"+testCase.name, func(t *testing.T) {
 			t.Setenv(support.EnvTestConfig, testCase.config)
-			cfg, err := GetCLIStackConfig("rhtas", defaults)
+			defaults, err := os.ReadFile("../../acceptance/" + testCase.product + "/defaults.yaml")
+			if err != nil {
+				t.Fatal(err)
+			}
+			cfg, err := GetCLIStackConfig(testCase.product, defaults)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -115,19 +118,6 @@ func TestReleaseInventories(t *testing.T) {
 			}
 			if !reflect.DeepEqual(keys, testCase.keys) || count != testCase.count {
 				t.Fatalf("unexpected inventory: keys=%v, archives=%d", keys, count)
-			}
-		})
-	}
-	for _, product := range []string{"policy_controller", "model_transparency"} {
-		t.Run(product, func(t *testing.T) {
-			t.Setenv(support.EnvTestConfig, "")
-			data, err := os.ReadFile("../../acceptance/" + product + "/defaults.yaml")
-			if err != nil {
-				t.Fatal(err)
-			}
-			cfg, err := GetCLIStackConfig(product, data)
-			if err != nil || len(cfg.Images) != 0 {
-				t.Fatalf("expected empty product defaults: config=%+v, error=%v", cfg, err)
 			}
 		})
 	}
