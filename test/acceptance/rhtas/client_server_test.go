@@ -2,12 +2,10 @@ package acceptance
 
 import (
 	"context"
-	"crypto/sha256"
 	"debug/elf"
 	"debug/macho"
 	"debug/pe"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -300,7 +298,7 @@ var _ = Describe("Client server", Ordered, func() {
 
 						By("checksums of gzip file")
 						var err error
-						gzipServerSHA, err = checksumFile(filepath.Join(osPath, fmt.Sprintf(cliServerFileMask, cli, arch)))
+						gzipServerSHA, err = support.ChecksumFile(filepath.Join(osPath, fmt.Sprintf(cliServerFileMask, cli, arch)))
 						Expect(err).NotTo(HaveOccurred())
 						serverChecksums[cli+"/"+osName+"/"+arch] = append([]byte(nil), gzipServerSHA...)
 					})
@@ -316,7 +314,7 @@ var _ = Describe("Client server", Ordered, func() {
 							clientBinaryPath := filepath.Join(clientServerDir, "binary-from-client-server")
 							Expect(support.DecompressGzipFile(gzPath, clientBinaryPath)).To(Succeed())
 
-							clientBinarySHA, err := checksumFile(clientBinaryPath)
+							clientBinarySHA, err := support.ChecksumFile(clientBinaryPath)
 							Expect(err).NotTo(HaveOccurred())
 
 							// Clean up client-server binary immediately after checksum
@@ -349,7 +347,7 @@ var _ = Describe("Client server", Ordered, func() {
 							stackBinaryPath, err := support.ExtractFirstFileFromTarGz(tarGzPath, stackDir)
 							Expect(err).NotTo(HaveOccurred())
 
-							stackBinarySHA, err := checksumFile(stackBinaryPath)
+							stackBinarySHA, err := support.ChecksumFile(stackBinaryPath)
 							Expect(err).NotTo(HaveOccurred())
 
 							// Clean up cli-stack files immediately after checksum
@@ -423,7 +421,7 @@ var _ = Describe("Client server", Ordered, func() {
 									Expect(os.Rename(downloadedPath, tasToolsBinaryPath)).To(Succeed())
 								}
 
-								tasToolsBinarySHA, err := checksumFile(tasToolsBinaryPath)
+								tasToolsBinarySHA, err := support.ChecksumFile(tasToolsBinaryPath)
 								Expect(err).NotTo(HaveOccurred())
 
 								// Clean up tas-tools binary immediately after checksum
@@ -452,7 +450,7 @@ var _ = Describe("Client server", Ordered, func() {
 							By("checksums of gzip file")
 							fileName := filepath.Base(srcPath)
 							filePath := filepath.Join(targetPath, fileName)
-							gzipImageSHA, err := checksumFile(filePath)
+							gzipImageSHA, err := support.ChecksumFile(filePath)
 							Expect(err).NotTo(HaveOccurred())
 
 							// Clean up extracted file immediately after checksum
@@ -504,7 +502,7 @@ var _ = Describe("Client server", Ordered, func() {
 
 							By("checksums of gzip file")
 							extractedFile := filepath.Join(targetPath, fileName)
-							gzipImageSHA, err := checksumFile(extractedFile)
+							gzipImageSHA, err := support.ChecksumFile(extractedFile)
 							Expect(err).NotTo(HaveOccurred())
 
 							// Clean up extracted file immediately after checksum
@@ -574,7 +572,7 @@ var _ = Describe("Client server", Ordered, func() {
 					cancel()
 
 					sourceGzipPath := filepath.Join(srcDir, filepath.Base(cliImagePath))
-					gzipSourceSHA, err := checksumFile(sourceGzipPath)
+					gzipSourceSHA, err := support.ChecksumFile(sourceGzipPath)
 					if err != nil {
 						errMsgs = append(errMsgs, fmt.Sprintf("%s %s-%s: checksum: %v", cli, osName, arch, err))
 						continue
@@ -678,20 +676,4 @@ func getMachOCpuType(arch string) macho.Cpu {
 	default:
 		return 0 // Unsupported architecture
 	}
-}
-
-// checksumFile computes the SHA256 checksum of a given file.
-func checksumFile(filePath string) ([]byte, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open file %s: %w", filePath, err)
-	}
-	defer func() { _ = file.Close() }()
-
-	hasher := sha256.New()
-	if _, err := io.Copy(hasher, file); err != nil {
-		return nil, fmt.Errorf("failed to hash file %s: %w", filePath, err)
-	}
-
-	return hasher.Sum(nil), nil
 }

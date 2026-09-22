@@ -86,15 +86,16 @@ func TestReleaseInventories(t *testing.T) {
 		config  string
 		keys    []string
 		count   int
+		parity  int
 	}{
 		{product: "rhtas", name: "1.5", keys: []string{
 			"cosign-cli-stack-image", "gitsign-cli-stack-image", "rekor-cli-stack-image", "fetch-tsa-certs-cli-stack-image",
 			"trillian-cli-stack-image", "tufcli-cli-stack-image", "conforma-cli-stack-image",
-		}, count: 56},
+		}, count: 56, parity: 28},
 		{product: "rhtas", name: "1.4", config: "testdata/testconfig-1.4.yaml", keys: []string{
 			"cosign-cli-stack-image", "gitsign-cli-stack-image", "rekor-cli-stack-image", "fetch-tsa-certs-cli-stack-image",
 			"trillian-cli-stack-image", "tuftool-cli-stack-image", "conforma-cli-stack-image", "model-transparency-cli-stack-image",
-		}, count: 65},
+		}, count: 65, parity: 25},
 		{product: "rhtas", name: "1.3", config: "testdata/testconfig-1.3.2.yaml"},
 		{product: "rhtas", name: "1.2", config: "testdata/testconfig-1.2.2.yaml"},
 		{product: "model_transparency", name: "defaults", keys: []string{"model-transparency-cli-stack-image"}, count: 15},
@@ -111,13 +112,18 @@ func TestReleaseInventories(t *testing.T) {
 				t.Fatal(err)
 			}
 			var keys []string
-			count := 0
+			count, parity := 0, 0
 			for _, image := range cfg.Images {
 				keys = append(keys, image.ImageKey)
 				count += len(image.Binaries)
+				for _, binary := range image.Binaries {
+					if binary.Runtime != nil {
+						parity++
+					}
+				}
 			}
-			if !reflect.DeepEqual(keys, testCase.keys) || count != testCase.count {
-				t.Fatalf("unexpected inventory: keys=%v, archives=%d", keys, count)
+			if !reflect.DeepEqual(keys, testCase.keys) || count != testCase.count || parity != testCase.parity {
+				t.Fatalf("unexpected inventory: keys=%v, archives=%d, parity=%d", keys, count, parity)
 			}
 		})
 	}
@@ -130,4 +136,58 @@ func setTestConfig(t *testing.T, content string) {
 		t.Fatal(err)
 	}
 	t.Setenv(support.EnvTestConfig, file)
+}
+
+func TestRuntimeConfiguration(t *testing.T) {
+	withRuntime := strings.ReplaceAll(testDefaults, "arch: amd64}", "arch: amd64, runtime: {imageKey: tufcli-image, path: /tufcli}}")
+	for _, testCase := range []struct {
+		name    string
+		yaml    string
+		wantErr bool
+	}{
+		{"valid", withRuntime, false},
+		{"archive only", testDefaults, false},
+		{"empty mapping", strings.ReplaceAll(withRuntime, "imageKey: tufcli-image, path: /tufcli", ""), true},
+		{"missing path", strings.ReplaceAll(withRuntime, ", path: /tufcli", ""), true},
+		{"missing image", strings.ReplaceAll(withRuntime, "imageKey: tufcli-image, ", ""), true},
+		{"relative path", strings.ReplaceAll(withRuntime, "path: /tufcli", "path: tufcli"), true},
+		{"unclean path", strings.ReplaceAll(withRuntime, "path: /tufcli", "path: /bin/../tufcli"), true},
+		{"root path", strings.ReplaceAll(withRuntime, "path: /tufcli", "path: /"), true},
+		{"non Linux", strings.ReplaceAll(withRuntime, "os: linux", "os: darwin"), true},
+		{"unknown field", strings.ReplaceAll(withRuntime, "path: /tufcli", "file: /tufcli"), true},
+		{"wrong type", strings.ReplaceAll(withRuntime, "{imageKey: tufcli-image, path: /tufcli}", "false"), true},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			setTestConfig(t, testCase.yaml)
+			_, err := GetCLIStackConfig("rhtas", []byte(testDefaults))
+			if (err != nil) != testCase.wantErr {
+				t.Fatalf("error=%v, wantErr=%v", err, testCase.wantErr)
+			}
+		})
+	}
+	for _, testCase := range []struct {
+		name, config, product string
+		want                  bool
+	}{
+		{"inherited", "", "rhtas", true},
+		{"removed by replacement", testDefaults, "rhtas", false},
+		{"unwrapped mapping", withRuntime, "rhtas", true},
+		{"other product", "policy_controller: {cliStack: {images: []}}", "rhtas", true},
+		{"disabled", "cliStack: {images: []}", "rhtas", false},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Setenv(support.EnvTestConfig, "")
+			if testCase.config != "" {
+				setTestConfig(t, testCase.config)
+			}
+			cfg, err := GetCLIStackConfig(testCase.product, []byte(withRuntime))
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := len(cfg.Images) > 0 && cfg.Images[0].Binaries[0].Runtime != nil
+			if got != testCase.want {
+				t.Fatalf("runtime present=%v, want %v", got, testCase.want)
+			}
+		})
+	}
 }

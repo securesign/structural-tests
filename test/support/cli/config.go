@@ -12,6 +12,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const osLinux = "linux"
+
 type StackConfig struct {
 	Images []StackImage `yaml:"images"`
 }
@@ -22,9 +24,15 @@ type StackImage struct {
 }
 
 type StackBinary struct {
-	Path string `yaml:"path"`
-	OS   string `yaml:"os"`
-	Arch string `yaml:"arch"`
+	Path    string         `yaml:"path"`
+	OS      string         `yaml:"os"`
+	Arch    string         `yaml:"arch"`
+	Runtime *RuntimeBinary `yaml:"runtime,omitempty"`
+}
+
+type RuntimeBinary struct {
+	ImageKey string `yaml:"imageKey"`
+	Path     string `yaml:"path"`
 }
 
 // GetCLIStackConfig overlays the product's TEST_CONFIG inventory on embedded defaults.
@@ -84,6 +92,12 @@ func (cfg StackConfig) validate() error {
 			if !validPlatform(binary.OS, binary.Arch) {
 				return fmt.Errorf("CLI stack %q: unsupported platform %s/%s", image.ImageKey, binary.OS, binary.Arch)
 			}
+			if runtime := binary.Runtime; runtime != nil {
+				if binary.OS != osLinux || strings.TrimSpace(runtime.ImageKey) == "" ||
+					!path.IsAbs(runtime.Path) || path.Clean(runtime.Path) != runtime.Path || runtime.Path == "/" {
+					return fmt.Errorf("CLI stack %q archive %q: runtime requires Linux, imageKey and a canonical absolute executable path", image.ImageKey, binary.Path)
+				}
+			}
 		}
 	}
 	return nil
@@ -91,7 +105,7 @@ func (cfg StackConfig) validate() error {
 
 func validPlatform(osName, arch string) bool {
 	switch osName {
-	case "linux":
+	case osLinux:
 		return arch == archAMD64 || arch == archARM64 || arch == "ppc64le" || arch == "s390x"
 	case "darwin", "windows":
 		return arch == archAMD64 || arch == archARM64

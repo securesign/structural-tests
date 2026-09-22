@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
@@ -197,4 +198,20 @@ func lookThroughTarFile(reader io.Reader, filePath string) ([]byte, error) {
 		}
 	}
 	return nil, nil
+}
+
+// ChecksumFile computes the SHA256 checksum of a given file.
+func ChecksumFile(filePath string) ([]byte, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open file %s: %w", filePath, err)
+	}
+	defer func() { _ = file.Close() }()
+
+	hasher := sha256.New()
+	if _, err := io.Copy(hasher, file); err != nil {
+		return nil, fmt.Errorf("failed to hash file %s: %w", filePath, err)
+	}
+
+	return hasher.Sum(nil), nil
 }

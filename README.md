@@ -71,7 +71,12 @@ rhtas:
     images:
       - imageKey: tufcli-cli-stack-image
         binaries:
-          - {path: /binaries/tufcli_linux_amd64.tar.gz, os: linux, arch: amd64}
+          - path: /binaries/tufcli_linux_amd64.tar.gz
+            os: linux
+            arch: amd64
+            runtime:
+              imageKey: tufcli-image
+              path: /tufcli
 ```
 
 Set `TEST_CONFIG` to a local or remote YAML file, as for operator and FBC tests.
@@ -80,6 +85,21 @@ list every image and archive the release must publish. Missing configured images
 or archives fail the tests. Invalid CLI configuration also fails. Archive paths
 must be under `/binaries/`; both `.tar.gz` and `.exe.gz` packages are read as tar
 archives. Executable format and architecture are checked without running binaries.
+
+For Linux archives, an optional `runtime` mapping requires the executable in the
+named snapshot image to have the same SHA-256 hash as the extracted archive binary.
+Both `imageKey` and a canonical absolute executable `path` are required. The archive's
+`os` and `arch` select the runtime image platform. Containers are never started, so
+foreign architectures require no emulation. Missing runtime images, platforms or
+files, and differing binaries fail with image, path, platform and checksum details.
+Omitting `runtime` retains archive-only validation; mappings on non-Linux archives
+are invalid.
+
+RHTAS defaults compare cosign, gitsign, rekor, fetch-tsa-certs, createtree, updatetree
+and tufcli on all four Linux architectures. The 1.4 example uses amd64 tuftool instead
+of tufcli. Conforma and Model Transparency remain archive-only because their
+inspected snapshots do not contain both distribution channels. Product inventories
+can enable additional verified runtime mappings independently.
 
 Omitting `cliStack` or its `images` field inherits the product defaults.
 `cliStack: {images: []}` explicitly disables CLI stack checks. An unwrapped

@@ -6,59 +6,59 @@ rhtas:
     images:
       - imageKey: cosign-cli-stack-image
         binaries:
-          - {path: /binaries/cosign_linux_amd64.tar.gz, os: linux, arch: amd64}
-          - {path: /binaries/cosign_linux_arm64.tar.gz, os: linux, arch: arm64}
-          - {path: /binaries/cosign_linux_ppc64le.tar.gz, os: linux, arch: ppc64le}
-          - {path: /binaries/cosign_linux_s390x.tar.gz, os: linux, arch: s390x}
+          - {path: /binaries/cosign_linux_amd64.tar.gz, os: linux, arch: amd64, runtime: {imageKey: cosign-cli-image, path: /usr/local/bin/cosign}}
+          - {path: /binaries/cosign_linux_arm64.tar.gz, os: linux, arch: arm64, runtime: {imageKey: cosign-cli-image, path: /usr/local/bin/cosign}}
+          - {path: /binaries/cosign_linux_ppc64le.tar.gz, os: linux, arch: ppc64le, runtime: {imageKey: cosign-cli-image, path: /usr/local/bin/cosign}}
+          - {path: /binaries/cosign_linux_s390x.tar.gz, os: linux, arch: s390x, runtime: {imageKey: cosign-cli-image, path: /usr/local/bin/cosign}}
           - {path: /binaries/cosign_darwin_amd64.tar.gz, os: darwin, arch: amd64}
           - {path: /binaries/cosign_darwin_arm64.tar.gz, os: darwin, arch: arm64}
           - {path: /binaries/cosign_windows_amd64.tar.gz, os: windows, arch: amd64}
       - imageKey: gitsign-cli-stack-image
         binaries:
-          - {path: /binaries/gitsign_cli_linux_amd64.tar.gz, os: linux, arch: amd64}
-          - {path: /binaries/gitsign_cli_linux_arm64.tar.gz, os: linux, arch: arm64}
-          - {path: /binaries/gitsign_cli_linux_ppc64le.tar.gz, os: linux, arch: ppc64le}
-          - {path: /binaries/gitsign_cli_linux_s390x.tar.gz, os: linux, arch: s390x}
+          - {path: /binaries/gitsign_cli_linux_amd64.tar.gz, os: linux, arch: amd64, runtime: {imageKey: gitsign-cli-image, path: /usr/local/bin/gitsign_cli_linux}}
+          - {path: /binaries/gitsign_cli_linux_arm64.tar.gz, os: linux, arch: arm64, runtime: {imageKey: gitsign-cli-image, path: /usr/local/bin/gitsign_cli_linux}}
+          - {path: /binaries/gitsign_cli_linux_ppc64le.tar.gz, os: linux, arch: ppc64le, runtime: {imageKey: gitsign-cli-image, path: /usr/local/bin/gitsign_cli_linux}}
+          - {path: /binaries/gitsign_cli_linux_s390x.tar.gz, os: linux, arch: s390x, runtime: {imageKey: gitsign-cli-image, path: /usr/local/bin/gitsign_cli_linux}}
           - {path: /binaries/gitsign_cli_darwin_amd64.tar.gz, os: darwin, arch: amd64}
           - {path: /binaries/gitsign_cli_darwin_arm64.tar.gz, os: darwin, arch: arm64}
           - {path: /binaries/gitsign_cli_windows_amd64.tar.gz, os: windows, arch: amd64}
       - imageKey: rekor-cli-stack-image
         binaries:
-          - {path: /binaries/rekor_cli_linux_amd64.tar.gz, os: linux, arch: amd64}
-          - {path: /binaries/rekor_cli_linux_arm64.tar.gz, os: linux, arch: arm64}
-          - {path: /binaries/rekor_cli_linux_ppc64le.tar.gz, os: linux, arch: ppc64le}
-          - {path: /binaries/rekor_cli_linux_s390x.tar.gz, os: linux, arch: s390x}
+          - {path: /binaries/rekor_cli_linux_amd64.tar.gz, os: linux, arch: amd64, runtime: {imageKey: rekor-cli-image, path: /usr/local/bin/rekor_cli_linux}}
+          - {path: /binaries/rekor_cli_linux_arm64.tar.gz, os: linux, arch: arm64, runtime: {imageKey: rekor-cli-image, path: /usr/local/bin/rekor_cli_linux}}
+          - {path: /binaries/rekor_cli_linux_ppc64le.tar.gz, os: linux, arch: ppc64le, runtime: {imageKey: rekor-cli-image, path: /usr/local/bin/rekor_cli_linux}}
+          - {path: /binaries/rekor_cli_linux_s390x.tar.gz, os: linux, arch: s390x, runtime: {imageKey: rekor-cli-image, path: /usr/local/bin/rekor_cli_linux}}
           - {path: /binaries/rekor_cli_darwin_amd64.tar.gz, os: darwin, arch: amd64}
           - {path: /binaries/rekor_cli_darwin_arm64.tar.gz, os: darwin, arch: arm64}
           - {path: /binaries/rekor_cli_windows_amd64.tar.gz, os: windows, arch: amd64}
       - imageKey: fetch-tsa-certs-cli-stack-image
         binaries:
-          - {path: /binaries/fetch_tsa_certs_linux_amd64.tar.gz, os: linux, arch: amd64}
-          - {path: /binaries/fetch_tsa_certs_linux_arm64.tar.gz, os: linux, arch: arm64}
-          - {path: /binaries/fetch_tsa_certs_linux_ppc64le.tar.gz, os: linux, arch: ppc64le}
-          - {path: /binaries/fetch_tsa_certs_linux_s390x.tar.gz, os: linux, arch: s390x}
+          - {path: /binaries/fetch_tsa_certs_linux_amd64.tar.gz, os: linux, arch: amd64, runtime: {imageKey: fetch-tsa-certs-cli-image, path: /usr/local/bin/fetch_tsa_certs}}
+          - {path: /binaries/fetch_tsa_certs_linux_arm64.tar.gz, os: linux, arch: arm64, runtime: {imageKey: fetch-tsa-certs-cli-image, path: /usr/local/bin/fetch_tsa_certs}}
+          - {path: /binaries/fetch_tsa_certs_linux_ppc64le.tar.gz, os: linux, arch: ppc64le, runtime: {imageKey: fetch-tsa-certs-cli-image, path: /usr/local/bin/fetch_tsa_certs}}
+          - {path: /binaries/fetch_tsa_certs_linux_s390x.tar.gz, os: linux, arch: s390x, runtime: {imageKey: fetch-tsa-certs-cli-image, path: /usr/local/bin/fetch_tsa_certs}}
           - {path: /binaries/fetch_tsa_certs_darwin_amd64.tar.gz, os: darwin, arch: amd64}
           - {path: /binaries/fetch_tsa_certs_darwin_arm64.tar.gz, os: darwin, arch: arm64}
           - {path: /binaries/fetch_tsa_certs_windows_amd64.tar.gz, os: windows, arch: amd64}
       - imageKey: trillian-cli-stack-image
         binaries:
-          - {path: /binaries/createtree_linux_amd64.tar.gz, os: linux, arch: amd64}
-          - {path: /binaries/createtree_linux_arm64.tar.gz, os: linux, arch: arm64}
-          - {path: /binaries/createtree_linux_ppc64le.tar.gz, os: linux, arch: ppc64le}
-          - {path: /binaries/createtree_linux_s390x.tar.gz, os: linux, arch: s390x}
+          - {path: /binaries/createtree_linux_amd64.tar.gz, os: linux, arch: amd64, runtime: {imageKey: createtree-image, path: /createtree}}
+          - {path: /binaries/createtree_linux_arm64.tar.gz, os: linux, arch: arm64, runtime: {imageKey: createtree-image, path: /createtree}}
+          - {path: /binaries/createtree_linux_ppc64le.tar.gz, os: linux, arch: ppc64le, runtime: {imageKey: createtree-image, path: /createtree}}
+          - {path: /binaries/createtree_linux_s390x.tar.gz, os: linux, arch: s390x, runtime: {imageKey: createtree-image, path: /createtree}}
           - {path: /binaries/createtree_darwin_amd64.tar.gz, os: darwin, arch: amd64}
           - {path: /binaries/createtree_darwin_arm64.tar.gz, os: darwin, arch: arm64}
           - {path: /binaries/createtree_windows_amd64.tar.gz, os: windows, arch: amd64}
-          - {path: /binaries/updatetree_linux_amd64.tar.gz, os: linux, arch: amd64}
-          - {path: /binaries/updatetree_linux_arm64.tar.gz, os: linux, arch: arm64}
-          - {path: /binaries/updatetree_linux_ppc64le.tar.gz, os: linux, arch: ppc64le}
-          - {path: /binaries/updatetree_linux_s390x.tar.gz, os: linux, arch: s390x}
+          - {path: /binaries/updatetree_linux_amd64.tar.gz, os: linux, arch: amd64, runtime: {imageKey: updatetree-image, path: /updatetree}}
+          - {path: /binaries/updatetree_linux_arm64.tar.gz, os: linux, arch: arm64, runtime: {imageKey: updatetree-image, path: /updatetree}}
+          - {path: /binaries/updatetree_linux_ppc64le.tar.gz, os: linux, arch: ppc64le, runtime: {imageKey: updatetree-image, path: /updatetree}}
+          - {path: /binaries/updatetree_linux_s390x.tar.gz, os: linux, arch: s390x, runtime: {imageKey: updatetree-image, path: /updatetree}}
           - {path: /binaries/updatetree_darwin_amd64.tar.gz, os: darwin, arch: amd64}
           - {path: /binaries/updatetree_darwin_arm64.tar.gz, os: darwin, arch: arm64}
           - {path: /binaries/updatetree_windows_amd64.tar.gz, os: windows, arch: amd64}
       - imageKey: tuftool-cli-stack-image
         binaries:
-          - {path: /binaries/tuftool_linux_amd64.tar.gz, os: linux, arch: amd64}
+          - {path: /binaries/tuftool_linux_amd64.tar.gz, os: linux, arch: amd64, runtime: {imageKey: tuf-tool-image, path: /usr/bin/tuftool}}
       - imageKey: conforma-cli-stack-image
         binaries:
           - {path: /binaries/ec_linux_amd64.tar.gz, os: linux, arch: amd64}
