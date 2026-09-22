@@ -33,10 +33,12 @@ func DescribeCLIStackImageTests(product string, defaultsData []byte) bool {
 		for _, entry := range cfg.Images {
 			Describe(entry.ImageKey, Ordered, func() {
 				var image string
+				var images map[string]string
 				It("image present in snapshot", func() {
 					snapshot, err := support.ParseSnapshotData()
 					Expect(err).NotTo(HaveOccurred())
 					image = snapshot.Images[entry.ImageKey]
+					images = snapshot.Images
 					Expect(image).NotTo(BeEmpty(), "image key %q not found in snapshot", entry.ImageKey)
 				})
 				for _, binary := range entry.Binaries {
@@ -53,6 +55,9 @@ func DescribeCLIStackImageTests(product string, defaultsData []byte) bool {
 						executable, err := support.ExtractFirstFileFromTarGz(filepath.Join(workDir, filepath.Base(binary.Path)), workDir)
 						Expect(err).NotTo(HaveOccurred())
 						Expect(verifyBinaryExecutable(executable, binary.OS, binary.Arch)).To(Succeed())
+						if binary.Runtime != nil {
+							Expect(compareRuntimeBinary(ctx, images, entry.ImageKey, binary, executable, workDir)).To(Succeed())
+						}
 					})
 				}
 			})

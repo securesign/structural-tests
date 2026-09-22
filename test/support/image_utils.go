@@ -17,6 +17,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 type ImageData struct {
@@ -209,20 +210,70 @@ func InspectImagesForLabelsParallel(images map[string]string, maxConcurrency int
 func FileFromImage(ctx context.Context, imageName, filePath, outputPath string) error {
 	err := PullImageIfNotPresentLocally(ctx, imageName)
 	if err != nil {
-		return err
+		return fmt.Errorf("prepare image extraction: %w", err)
 	}
 
 	// Initialize the Docker client
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("prepare image extraction: %w", err)
 	}
+	defer cli.Close()
+	return fileFromImage(ctx, cli, imageName, filePath, outputPath, nil)
+}
 
+// FileFromImageForPlatform copies a file without starting the container, even for foreign architectures.
+func FileFromImageForPlatform(ctx context.Context, imageName, filePath, outputPath, platform string) error {
+	osName, arch, ok := strings.Cut(platform, "/")
+	if !ok || osName == "" || arch == "" || strings.Contains(arch, "/") {
+		return fmt.Errorf("platform must be os/arch, got %q", platform)
+	}
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return fmt.Errorf("prepare image extraction: %w", err)
+	}
+	defer cli.Close()
+	want := ocispec.Platform{OS: osName, Architecture: arch}
+	id, err := imageForPlatform(ctx, cli, imageName, want)
+	if err != nil {
+		return fmt.Errorf("prepare image extraction: %w", err)
+	}
+	return fileFromImage(ctx, cli, id, filePath, outputPath, &want)
+}
+
+func imageForPlatform(ctx context.Context, cli *client.Client, imageName string, platform ocispec.Platform) (string, error) {
+	info, _, err := cli.ImageInspectWithRaw(ctx, imageName)
+	if err != nil && !client.IsErrNotFound(err) {
+		return "", fmt.Errorf("inspect %s: %w", imageName, err)
+	}
+	if err == nil && info.Os == platform.OS && info.Architecture == platform.Architecture {
+		return info.ID, nil
+	}
+	want := platform.OS + "/" + platform.Architecture
+	reader, err := cli.ImagePull(ctx, imageName, image.PullOptions{Platform: want})
+	if err != nil {
+		return "", fmt.Errorf("pull %s for %s: %w", imageName, want, err)
+	}
+	defer reader.Close()
+	if _, err := io.Copy(io.Discard, reader); err != nil {
+		return "", fmt.Errorf("read pull response for %s: %w", imageName, err)
+	}
+	info, _, err = cli.ImageInspectWithRaw(ctx, imageName)
+	if err != nil {
+		return "", fmt.Errorf("inspect pulled %s: %w", imageName, err)
+	}
+	if info.Os != platform.OS || info.Architecture != platform.Architecture {
+		return "", fmt.Errorf("image %s: expected %s, got %s/%s", imageName, want, info.Os, info.Architecture)
+	}
+	return info.ID, nil
+}
+
+func fileFromImage(ctx context.Context, cli *client.Client, imageName, filePath, outputPath string, platform *ocispec.Platform) error {
 	// Create a container from the image
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 		Image: imageName,
 		Cmd:   []string{"echo", "dummy"},
-	}, nil, nil, nil, "")
+	}, nil, nil, platform, "")
 	if err != nil {
 		return fmt.Errorf("failed to create container: %w", err)
 	}
