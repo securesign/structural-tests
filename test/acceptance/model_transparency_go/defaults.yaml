@@ -1,0 +1,19 @@
+cliStack:
+  images:
+    - imageKey: model-transparency-cli-stack-image
+      binaries:
+        - {path: /binaries/model_transparency_cli_linux_amd64.tar.gz, os: linux, arch: amd64, runtime: {imageKey: model-transparency-cli-image, path: /usr/local/bin/model_transparency_cli}}
+        - {path: /binaries/model_transparency_cli_linux_arm64.tar.gz, os: linux, arch: arm64, runtime: {imageKey: model-transparency-cli-image, path: /usr/local/bin/model_transparency_cli}}
+        - {path: /binaries/model_transparency_cli_linux_ppc64le.tar.gz, os: linux, arch: ppc64le, runtime: {imageKey: model-transparency-cli-image, path: /usr/local/bin/model_transparency_cli}}
+        - {path: /binaries/model_transparency_cli_linux_s390x.tar.gz, os: linux, arch: s390x, runtime: {imageKey: model-transparency-cli-image, path: /usr/local/bin/model_transparency_cli}}
+        - {path: /binaries/model_transparency_cli_pkcs11_linux_amd64.tar.gz, os: linux, arch: amd64}
+        - {path: /binaries/model_transparency_cli_pkcs11_linux_arm64.tar.gz, os: linux, arch: arm64}
+        - {path: /binaries/model_transparency_cli_pkcs11_linux_ppc64le.tar.gz, os: linux, arch: ppc64le}
+        - {path: /binaries/model_transparency_cli_pkcs11_linux_s390x.tar.gz, os: linux, arch: s390x}
+        - {path: /binaries/model_transparency_cli_otel_linux_amd64.tar.gz, os: linux, arch: amd64}
+        - {path: /binaries/model_transparency_cli_otel_linux_arm64.tar.gz, os: linux, arch: arm64}
+        - {path: /binaries/model_transparency_cli_otel_linux_ppc64le.tar.gz, os: linux, arch: ppc64le}
+        - {path: /binaries/model_transparency_cli_otel_linux_s390x.tar.gz, os: linux, arch: s390x}
+        - {path: /binaries/model_transparency_cli_darwin_amd64.tar.gz, os: darwin, arch: amd64}
+        - {path: /binaries/model_transparency_cli_darwin_arm64.tar.gz, os: darwin, arch: arm64}
+        - {path: /binaries/model_transparency_cli_windows_amd64.exe.gz, os: windows, arch: amd64}
