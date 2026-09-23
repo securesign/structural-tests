@@ -7,7 +7,7 @@ operator:
   imageKeys:
     - validation-agent-image
   imageKeyMap:
-    validation-agent-image: model-validation-agent-image
+    validation-agent-image: model-validation-operator-agent-image
 
 fbc:
   olmPackage: "model-validation-operator"
