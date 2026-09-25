@@ -49,10 +49,10 @@ func TestRuntimeFailures(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), `runtime image key "runtime-image" not found`) {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	t.Setenv("DOCKER_HOST", "invalid://endpoint")
+	t.Setenv("PATH", "")
 	images["runtime-image"] = "runtime@sha256:def"
 	err = compareRuntimeBinary(context.Background(), images, "stack-image", binary, "unused", t.TempDir())
-	for _, want := range []string{"extract runtime binary", "stack@sha256:abc", "runtime@sha256:def", "linux/arm64", "/tool"} {
+	for _, want := range []string{"resolve runtime image", "stack@sha256:abc", "runtime@sha256:def", "linux/arm64", "/tool"} {
 		if err == nil || !strings.Contains(err.Error(), want) {
 			t.Fatalf("error %v missing %q", err, want)
 		}
