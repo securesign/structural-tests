@@ -21,11 +21,16 @@ func compareRuntimeBinary(ctx context.Context, images map[string]string, stackKe
 	platform := binary.OS + "/" + binary.Arch
 	description := fmt.Sprintf("%s (%s):%s versus %s (%s):%s for %s",
 		stackKey, images[stackKey], binary.Path, runtime.ImageKey, image, runtime.Path, platform)
+	// Pull the platform manifest by its own digest so other tests keep the snapshot index reference.
+	runtimeImage, err := support.ResolveManifestListForPlatform(ctx, image, platform)
+	if err != nil {
+		return fmt.Errorf("%s: resolve runtime image: %w", description, err)
+	}
 	runtimeDir := filepath.Join(workDir, "runtime")
 	if err := os.MkdirAll(runtimeDir, runtimeDirectoryMode); err != nil {
 		return fmt.Errorf("%s: %w", description, err)
 	}
-	if err := support.FileFromImageForPlatform(ctx, image, runtime.Path, runtimeDir, platform); err != nil {
+	if err := support.FileFromImageForPlatform(ctx, runtimeImage, runtime.Path, runtimeDir, platform); err != nil {
 		return fmt.Errorf("%s: extract runtime binary: %w", description, err)
 	}
 	if err := compareBinaryFiles(executable, filepath.Join(runtimeDir, filepath.Base(runtime.Path))); err != nil {

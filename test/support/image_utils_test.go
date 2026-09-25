@@ -18,13 +18,13 @@ import (
 
 func TestFileFromImageForPlatform(t *testing.T) {
 	for _, testCase := range []imageExtractionCase{
-		{name: "cached single arch", cachedArch: "amd64", platform: "linux/amd64"},
-		{name: "cached foreign arch", cachedArch: "s390x", platform: "linux/s390x"},
-		{name: "replace wrong cache", cachedArch: "amd64", pulledArch: "arm64", platform: "linux/arm64"},
+		{name: "native arch", pulledArch: "amd64", platform: "linux/amd64"},
+		{name: "arm64 arch", pulledArch: "arm64", platform: "linux/arm64"},
+		{name: "foreign arch", pulledArch: "s390x", platform: "linux/s390x"},
 		{name: "uncached foreign arch", pulledArch: "ppc64le", platform: "linux/ppc64le"},
-		{name: "wrong pulled arch", cachedArch: "amd64", pulledArch: "amd64", platform: "linux/arm64", wantErr: "expected linux/arm64"},
+		{name: "wrong pulled arch", pulledArch: "amd64", platform: "linux/arm64", wantErr: "expected linux/arm64"},
 		{name: "missing platform", platform: "linux/s390x", pullFailure: true, wantErr: "no matching manifest"},
-		{name: "missing file", cachedArch: "amd64", platform: "linux/amd64", missingFile: true, wantErr: "file missing"},
+		{name: "missing file", pulledArch: "amd64", platform: "linux/amd64", missingFile: true, wantErr: "file missing"},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			fixture := &imageExtractionFixture{t: t, testCase: testCase}
@@ -50,16 +50,16 @@ func TestFileFromImageForPlatform(t *testing.T) {
 			if fixture.created != fixture.removed {
 				t.Fatal("container was not cleaned up")
 			}
-			if want := testCase.cachedArch != strings.TrimPrefix(testCase.platform, "linux/"); fixture.pulled != want {
-				t.Fatalf("pulled=%v, want %v", fixture.pulled, want)
+			if !fixture.pulled {
+				t.Fatal("platform-specific image was not pulled")
 			}
 		})
 	}
 }
 
 type imageExtractionCase struct {
-	name, cachedArch, pulledArch, platform, wantErr string
-	pullFailure, missingFile                        bool
+	name, pulledArch, platform, wantErr string
+	pullFailure, missingFile            bool
 }
 
 type imageExtractionFixture struct {
@@ -73,27 +73,21 @@ func (fixture *imageExtractionFixture) ServeHTTP(writer http.ResponseWriter, req
 	writer.Header().Set("Content-Type", "application/json")
 	switch {
 	case strings.HasPrefix(path, "/images/") && strings.HasSuffix(path, "/json"):
-		arch := fixture.testCase.cachedArch
-		if fixture.pulled {
-			arch = fixture.testCase.pulledArch
-		}
-		if arch == "" {
-			http.Error(writer, `{"message":"image missing"}`, http.StatusNotFound)
-			return
-		}
-		_, _ = fmt.Fprintf(writer, `{"Id":"verified-%s","Os":"linux","Architecture":%q}`, arch, arch)
+		fixture.inspectImage(writer, path)
 	case path == "/images/create":
 		fixture.pulled = true
 		if got := request.URL.Query().Get("platform"); got != fixture.testCase.platform {
 			fixture.t.Errorf("pull platform=%q, want %q", got, fixture.testCase.platform)
 		}
 		if fixture.testCase.pullFailure {
-			http.Error(writer, `{"message":"no matching manifest"}`, http.StatusNotFound)
+			_, _ = writer.Write([]byte(`{"errorDetail":{"message":"no matching manifest"},"error":"no matching manifest"}`))
 			return
 		}
 		_, _ = writer.Write([]byte(`{"status":"done"}`))
 	case path == "/containers/create":
 		fixture.createContainer(writer, request)
+	case path == "/containers/test-container/json":
+		fixture.inspectContainer(writer)
 	case path == "/containers/test-container/archive":
 		if request.URL.Query().Get("path") != "/tool" {
 			fixture.t.Error("wrong executable path")
@@ -112,6 +106,18 @@ func (fixture *imageExtractionFixture) ServeHTTP(writer http.ResponseWriter, req
 	}
 }
 
+func (fixture *imageExtractionFixture) inspectImage(writer http.ResponseWriter, path string) {
+	if !strings.HasPrefix(path, "/images/verified-") {
+		fixture.t.Error("inspected multi-platform reference instead of selected image")
+	}
+	arch := strings.TrimSuffix(strings.TrimPrefix(path, "/images/verified-"), "/json")
+	_, _ = fmt.Fprintf(writer, `{"Id":"verified-%s","Os":"linux","Architecture":%q}`, arch, arch)
+}
+
+func (fixture *imageExtractionFixture) inspectContainer(writer http.ResponseWriter) {
+	_, _ = fmt.Fprintf(writer, `{"Image":"verified-%s"}`, fixture.testCase.pulledArch)
+}
+
 func (fixture *imageExtractionFixture) writeArchive(writer http.ResponseWriter) {
 	writer.Header().Set("X-Docker-Container-Path-Stat", base64.StdEncoding.EncodeToString([]byte(`{"name":"tool","size":6,"mode":493}`)))
 	writer.Header().Set("Content-Type", "application/x-tar")
@@ -128,17 +134,48 @@ func (fixture *imageExtractionFixture) writeArchive(writer http.ResponseWriter) 
 }
 
 func (fixture *imageExtractionFixture) createContainer(writer http.ResponseWriter, request *http.Request) {
-	fixture.created = true
 	var body container.Config
 	if err := json.NewDecoder(request.Body).Decode(&body); err != nil {
 		fixture.t.Error(err)
 	}
-	arch := strings.TrimPrefix(fixture.testCase.platform, "linux/")
-	if body.Image != "verified-"+arch {
-		fixture.t.Errorf("container image=%q, expected verified ID", body.Image)
+	if body.Image != "example/image:release" {
+		fixture.t.Errorf("container image=%q, want original reference", body.Image)
 	}
 	if got := request.URL.Query().Get("platform"); got != fixture.testCase.platform {
 		fixture.t.Errorf("create platform=%q, want %q", got, fixture.testCase.platform)
 	}
+	fixture.created = true
 	_, _ = writer.Write([]byte(`{"Id":"test-container"}`))
+}
+
+func TestPlatformManifestReference(t *testing.T) {
+	indexRef := "example/image@sha256:" + strings.Repeat("a", 64)
+	childDigest := "sha256:" + strings.Repeat("b", 64)
+	index := fmt.Sprintf(`{"manifests":[
+		{"digest":"sha256:%s","platform":{"os":"linux","architecture":"amd64"}},
+		{"digest":%q,"platform":{"os":"linux","architecture":"arm64"}}
+	]}`, strings.Repeat("c", 64), childDigest)
+	for _, testCase := range []struct {
+		name, manifest, arch, wantRef string
+		wantErr                       bool
+	}{
+		{name: "exact platform", manifest: index, arch: "arm64", wantRef: "example/image@" + childDigest},
+		{name: "missing platform", manifest: index, arch: "s390x", wantErr: true},
+		{name: "empty index", manifest: `{"manifests":[]}`, arch: "arm64", wantErr: true},
+		{name: "invalid JSON", manifest: `{`, arch: "arm64", wantErr: true},
+		{
+			name: "single image", manifest: `{"mediaType":"application/vnd.docker.distribution.manifest.v2+json"}`,
+			arch: "arm64", wantRef: indexRef,
+		},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			got, err := platformManifestReference([]byte(testCase.manifest), indexRef, "linux", testCase.arch)
+			if (err != nil) != testCase.wantErr {
+				t.Fatalf("error=%v, want error=%t", err, testCase.wantErr)
+			}
+			if !testCase.wantErr && got != testCase.wantRef {
+				t.Fatalf("reference=%q, want %q", got, testCase.wantRef)
+			}
+		})
+	}
 }
